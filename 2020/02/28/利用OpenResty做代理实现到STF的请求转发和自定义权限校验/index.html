@@ -21,7 +21,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/openresty_phases.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/midway_architecture.png">
-<meta property="og:updated_time" content="2020-03-04T04:05:31.326Z">
+<meta property="og:updated_time" content="2020-03-04T04:07:23.806Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="利用OpenResty做代理实现到STF的请求转发和自定义权限校验">
 <meta name="twitter:description" content="本文将介绍一种在两个独立系统之间搭建中间层来做请求转发和权限校验的方案。">
@@ -190,7 +190,7 @@
 <ol>
 <li>在Redis中设置hash，key: code, value: session，并设置过期时间为timeout。</li>
 <li>在Redis中设置hash，key: device, value: session，并设置过期时间为timeout。</li>
-<li>在Redis中设置hash，key: session, value: 1。</li>
+<li>在Redis中设置hash，key: session, value: 1，并设置过期时间为timeout。</li>
 <li>SSH到STF的服务器上（会使用nginx.conf文件中声明的那三个环境变量），然后执行<code>adb connect {device_ip}:{adb_port}</code>。</li>
 </ol>
 <h3 id="用户浏览器授权"><a href="#用户浏览器授权" class="headerlink" title="用户浏览器授权"></a>用户浏览器授权</h3><p>midway的<code>/auth?code=xxx</code>API的行为：</p>
