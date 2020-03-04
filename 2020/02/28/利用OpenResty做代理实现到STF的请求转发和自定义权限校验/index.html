@@ -21,7 +21,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/openresty_phases.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/midway_architecture.png">
-<meta property="og:updated_time" content="2020-03-03T12:41:33.390Z">
+<meta property="og:updated_time" content="2020-03-04T04:05:31.326Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="利用OpenResty做代理实现到STF的请求转发和自定义权限校验">
 <meta name="twitter:description" content="本文将介绍一种在两个独立系统之间搭建中间层来做请求转发和权限校验的方案。">
@@ -190,6 +190,7 @@
 <ol>
 <li>在Redis中设置hash，key: code, value: session，并设置过期时间为timeout。</li>
 <li>在Redis中设置hash，key: device, value: session，并设置过期时间为timeout。</li>
+<li>在Redis中设置hash，key: session, value: 1。</li>
 <li>SSH到STF的服务器上（会使用nginx.conf文件中声明的那三个环境变量），然后执行<code>adb connect {device_ip}:{adb_port}</code>。</li>
 </ol>
 <h3 id="用户浏览器授权"><a href="#用户浏览器授权" class="headerlink" title="用户浏览器授权"></a>用户浏览器授权</h3><p>midway的<code>/auth?code=xxx</code>API的行为：</p>
@@ -208,7 +209,8 @@
 <li>将浏览器Cookie中的key为midwaysid的value和第一步查到的session对比，二者相等则认为验证通过，并直接转发请求到STF。</li>
 <li>第二步中验证不通过将会导致返回403 Permission denied。</li>
 </ol>
-<p><code>~ ^/$</code>这个块是针对一个特殊的行为的，下面会详细说明。</p>
+<p>下面这个块是针对一个特殊的行为的，下面会详细说明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># OpenResty injects JS code to STF index page to redirect browser to &apos;/&apos; after timeout</span><br><span class="line">location ~ ^/$ &#123;</span><br><span class="line">    proxy_ssl_name $host;</span><br><span class="line">    lua_code_cache on;</span><br><span class="line">    content_by_lua_file &quot;lua/index.lua&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="使用时遇到的一个问题"><a href="#使用时遇到的一个问题" class="headerlink" title="使用时遇到的一个问题"></a>使用时遇到的一个问题</h2><p>在实现了上述的所有细节后，实际使用时我发现一个问题。当用户进入到STF的设备远程控制页面后，之后的大部分操作都不再需要请求设备信息获取接口了，只需要Websocket连接就够了。由于目前我们只针对设备信息获取的API做了鉴权，假如用户一直停留在某个设备的远程控制页面不出来，就算timeout过了，还是可以继续使用的。</p>
 <p>由于STF是一个单页Web应用，针对这个问题，我想到的最简单的方案是在用户浏览器初次请求STF首页的时候，在其中注入一段特定的JS代码。这段代码是由midway生成并插入到STF的首页响应文本中的。当然，如果session不存在或者为空，则不需要注入JS代码。这段JS代码大致是这样的：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;alert(<span class="string">'Remote control timeout!'</span>);location.href = <span class="string">'/'</span>;&#125;, $&#123;session-ttl&#125;)&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
