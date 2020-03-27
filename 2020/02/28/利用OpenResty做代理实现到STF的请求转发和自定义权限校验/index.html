@@ -21,7 +21,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/openresty_phases.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/midway_architecture.png">
-<meta property="og:updated_time" content="2020-03-17T02:39:49.327Z">
+<meta property="og:updated_time" content="2020-03-27T04:30:25.093Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="利用OpenResty做代理实现到STF的请求转发和自定义权限校验">
 <meta name="twitter:description" content="本文将介绍一种在两个独立系统之间搭建中间层来做请求转发和权限校验的方案。">
@@ -167,7 +167,8 @@
 <li>device-spy向midway注册设备（携带参数code, timeout，device_ip和adb_port）。</li>
 <li>midway用uuid生成一个session key，并在redis里创建(string)code:session，(string)device:session和(hash)session:{ permission, device }，这三个key-value pairs都设置timeout过期时间。</li>
 <li>device-spy重定向浏览器到midway的<code>/auth?code=xxx</code>上。</li>
-<li>midway验证这个code，如果这个code已经注册，就把对应的session key作为cookie设置在浏览器端。<br>7-10. midway会反向代理所有到STF的HTTP和Websocket请求。特别地，只有当浏览器访问STF的<code>/api/v1/devices/{device_ip}</code>:{adb_port}这个API时，midway才会做权限校验，看看用户session是否有权限操作这台设备，如果不可以就返回403，验证通过则直接proxy_pass到STF，最后返回响应。只对这个API做权限校验就可以了，因为这个远程操控制某台设备之前必须请求该API获取相关信息后建立websocket连接。</li>
+<li>midway验证这个code，如果这个code已经注册，就把对应的session key作为cookie设置在浏览器端。</li>
+<li>(7-10) midway会反向代理所有到STF的HTTP和Websocket请求。特别地，只有当浏览器访问STF的<code>/api/v1/devices/{device_ip}</code>:{adb_port}这个API时，midway才会做权限校验，看看用户session是否有权限操作这台设备，如果不可以就返回403，验证通过则直接proxy_pass到STF，最后返回响应。只对这个API做权限校验就可以了，因为这个远程操控制某台设备之前必须请求该API获取相关信息后建立websocket连接。</li>
 <li>(11) 用户在device-spy上主动注销设备，device-spy会请求midway的注销设备API。</li>
 </ol>
 <h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>在实现阶段，我们需要依照上面的架构设计打通所有节点之间的连接，形成功能闭环。由于device-spy上的实现无非就是增加几个API调用不难理解，所以这里我将只讨论midway的详细实现。</p>
@@ -199,7 +200,7 @@
 <li>如果能获取到，就移除key: code。然后设置浏览器的Cookie：”midwaysid={session}; Max-Age={timeout}; path=/“。最后重定向浏览器到midway的根路径下（对应STF的首页）。</li>
 <li>如果获取不到session，返回400 Invalid code。</li>
 </ol>
-<h3 id="设备注销"><a href="#设备注销" class="headerlink" title="设备注销"></a>设备注销</h3><p>midway的<code>/register-device</code>API的行为（参数device）：</p>
+<h3 id="设备注销"><a href="#设备注销" class="headerlink" title="设备注销"></a>设备注销</h3><p>midway的<code>/deregister-device</code>API的行为（参数device）：</p>
 <ol>
 <li>在Redis中移除key: device。</li>
 </ol>
