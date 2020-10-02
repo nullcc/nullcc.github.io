@@ -6,20 +6,20 @@
   <title>理解Scala类型系统中的型变 | 张先森的代码小屋</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="keywords" content="Scala类型系统设计模式">
+  <meta name="keywords" content="设计模式Scala类型系统">
   
   
   
   
   <meta name="description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
-<meta name="keywords" content="Scala,类型系统,设计模式">
+<meta name="keywords" content="设计模式,Scala,类型系统">
 <meta property="og:type" content="article">
 <meta property="og:title" content="理解Scala类型系统中的型变">
 <meta property="og:url" content="https://nullcc.github.io/2020/09/30/理解Scala类型系统中的型变/index.html">
 <meta property="og:site_name" content="张先森的代码小屋">
 <meta property="og:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2020-09-30T07:28:29.492Z">
+<meta property="og:updated_time" content="2020-10-02T01:20:09.227Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="理解Scala类型系统中的型变">
 <meta name="twitter:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
@@ -197,7 +197,7 @@
 <figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Bear</span> <span class="keyword">extends</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Hunter</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">hunt</span></span>(t: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(<span class="string">"Caught "</span> + t)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> bearHunter = <span class="keyword">new</span> <span class="type">Hunter</span>[<span class="type">Bear</span>]</span><br><span class="line"><span class="keyword">val</span> animalHunter: <span class="type">Hunter</span>[<span class="type">Animal</span>] = bearHunter <span class="comment">// Oops!</span></span><br></pre></td></tr></table></figure>
 <p>这段代码会报错：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">error: type mismatch;</span><br><span class="line"> found   : this.Hunter[this.Bear]</span><br><span class="line"> required: this.Hunter[this.Animal]</span><br><span class="line">val animalHunter: Hunter[Animal] = bearHunter</span><br></pre></td></tr></table></figure>
-<p>逆变理解起来不如协变直观。根据逆变的逻辑，在这段代码中，熊(Bear)是一种动物(Animal)，那么动物猎人(Hunter[Animal])是一种<br>猎熊者(Hunter[Bear])。这个逻辑好像有点违反常识，不是应该说猎熊者(Hunter[Bear])是一种动物猎人(Hunter[Animal])吗？但是如果套用里氏替换原则中的概念：在需要基类的地方，都可以用子类替换，但反过来则不行。</p>
+<p>逆变理解起来不如协变直观。根据逆变的逻辑，在这段代码中，熊(Bear)是一种动物(Animal)，那么动物猎人(Hunter[Animal])是一种猎熊者(Hunter[Bear])。这个逻辑好像有点违反常识，不是应该说猎熊者(Hunter[Bear])是一种动物猎人(Hunter[Animal])吗？但是如果套用里氏替换原则中的概念：在需要基类的地方，都可以用子类替换，但反过来则不行。</p>
 <p>逆变的道理也是一样的，在需要Hunter[Bear]的地方，我们用一个Hunter[Animal]去替代是可以的，因为动物猎人掌握狩猎一切动物的技能，这当然也包括猎熊。但是反过来，在需要Hunter[Animal]的地方，我们无法用Hunter[Bear]去替代，因为动物猎人是全能的，猎熊者只知道如何狩猎熊，如果换成麋鹿，Hunter[Bear]就不灵了。</p>
 <p>根据这个逻辑，不难得出Hunter[Animal]应该是Hunter[Bear]的子类型。</p>
 <h2 id="不变"><a href="#不变" class="headerlink" title="不变"></a>不变</h2><p>如果一个泛型类在类型参数上不加任何修饰，那这个泛型类在这个类型参数上就是不变的，比如Foo[T]。不变也是很有用的，这里引用Scala官方文档中的一个例子：</p>
