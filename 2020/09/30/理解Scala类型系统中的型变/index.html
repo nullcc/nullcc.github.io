@@ -19,7 +19,7 @@
 <meta property="og:site_name" content="张先森的代码小屋">
 <meta property="og:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2021-01-22T08:31:09.631Z">
+<meta property="og:updated_time" content="2021-02-02T09:19:34.512Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="理解Scala类型系统中的型变">
 <meta name="twitter:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
@@ -166,7 +166,7 @@
 <p>因此假设二是成立的。</p>
 <p>所以，<strong>SignalProcessor[AnyRef]是SignalProcessor[String]的子类型</strong>，process方法在子类的入参<code>AnyRef</code>也确实比父类的入参<code>String</code>更宽松。此时刚才提到的式替换原则的第二个关键点的上半句：“子类重载（注意不是重写）父类的方法的入参的限制要比父类的相应方法更宽松”就很好理解了。</p>
 <p>回到刚才那段编译报错的代码，应该改为：</p>
-<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ass <span class="type">SignalProcessor</span>[-<span class="type">T</span>] &#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(in: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(in)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(in: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(in)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>由上可见，泛型类的<strong>方法参数</strong>导致了泛型类型在子类和父类关系上发生了逆转。因此，<strong>方法参数的位置被称为逆变点(contravariant position)</strong>。也可以说<strong>泛型类在方法参数上是逆变的</strong>。</p>
 <p>再来看下半句“子类方法的返回值要比父类更严格”，如果process方法返回一个值，这个值一般会被process方法的调用方消费，比如作为另一个方法的参数：</p>
 <figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(): <span class="type">T</span> = &#123;</span><br><span class="line">    <span class="literal">null</span>.asInstanceOf[<span class="type">T</span>]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
