@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>垃圾回收(GC)算法介绍(2)——GC引用计数算法 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="垃圾回收">
+  
+  
+  
+  
+  <meta name="description" content="GC引用计数法概述由于GC会清除那些再也无法被引用到的对象，很自然地可以想到我们可以在对象上设置一个计数器来记录它被引用的次数，示意图如下：">
+<meta name="keywords" content="垃圾回收">
+<meta property="og:type" content="article">
+<meta property="og:title" content="垃圾回收(GC)算法介绍(2)——GC引用计数算法">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/11/垃圾回收(GC)算法介绍(2)——GC引用计数算法/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="GC引用计数法概述由于GC会清除那些再也无法被引用到的对象，很自然地可以想到我们可以在对象上设置一个计数器来记录它被引用的次数，示意图如下：">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_5.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_6.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_7.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_8.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_9.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_10.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.031Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="垃圾回收(GC)算法介绍(2)——GC引用计数算法">
+<meta name="twitter:description" content="GC引用计数法概述由于GC会清除那些再也无法被引用到的对象，很自然地可以想到我们可以在对象上设置一个计数器来记录它被引用的次数，示意图如下：">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-垃圾回收(GC)算法介绍(2)——GC引用计数算法" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      垃圾回收(GC)算法介绍(2)——GC引用计数算法
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/11/垃圾回收(GC)算法介绍(2)——GC引用计数算法/" class="article-date">
+	  <time datetime="2017-11-10T16:00:00.000Z" itemprop="datePublished">十一月 11, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="GC引用计数法概述"><a href="#GC引用计数法概述" class="headerlink" title="GC引用计数法概述"></a>GC引用计数法概述</h2><p>由于GC会清除那些再也无法被引用到的对象，很自然地可以想到我们可以在对象上设置一个计数器来记录它被引用的次数，示意图如下：</p>
+<a id="more"></a>
+<p><img src="/assets/images/post_imgs/gc_1.png" alt="引用技术法中的对象"></p>
+<p>引用技术法的思想很简单，在创建对象和将对象赋值给某个变量时，将对象的引用计数加1，在移除对象和某个变量的引用关系时，将对象的运营计数减1，当对象的引用计数变为0时，递归地将该对象引用的子对象的引用计数器减1，并把该对象的内存块加入空闲链表中（没错，这里又出现了空闲链表）。在之前的标记-清除算法中，应用程序有一个明确且独立的GC过程来回收非活跃对象，引用计数法没有这样的独立的过程，它在通过增减对象的引用计数器来判别活跃对象和非活跃对象，然后在计数器值为0的时候回收对象，这种做法可以在对象不活跃的时候立即回收它。</p>
+<p>先看一下在引用计数法下创建新对象的过程：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">new_obj(size)&#123;</span><br><span class="line">  obj = get_free_space($free_list, size)</span><br><span class="line">  <span class="keyword">if</span>(obj == NULL)</span><br><span class="line">    <span class="keyword">return</span> allocation_failed()</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    obj.ref_cnt = <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> obj</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在引用计数法中创建新对象时，直接从空闲链表中查找可用内存块，如果找不到可用内存块，新对象创建直接就失败了，如果找到了，就将新对象的引用计数加1并返回这个对象。注意到<code>get_free_space</code>一旦失败，就说明空闲链表中没有合适的空间供分配了，因为在引用计数法中，除了空闲链表中的对象以外，堆上其他的对象都是活跃的。</p>
+<p>然后是更新对象指针操作的过程：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">update_obj_ptr(obj)&#123;</span><br><span class="line">  incr_ref_cnt(obj)</span><br><span class="line">  decr_ref_cnt(*ptr)</span><br><span class="line">  *ptr = obj</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">incr_ref_cnt(obj)&#123;</span><br><span class="line">  obj.ref_cnt++</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">decr_ref_cnt(obj)&#123;</span><br><span class="line">  obj.ref_cnt--</span><br><span class="line">  <span class="keyword">if</span>(obj.ref_cnt == <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">for</span>(child in obj.children)&#123;</span><br><span class="line">      decr_ref_cnt(child)</span><br><span class="line">    &#125;</span><br><span class="line">    add_to_free_list(obj)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在将一个指针指向某个对象时，首先要将对象的引用计数加1，然后将原指针指向的对象的引用计数减1，再将这个指针指向这个对象。在<code>update_obj_ptr</code>中之所以先<code>incr_ref_cnt(obj)</code>再<code>decr_ref_cnt(*ptr)</code>是为了防止obj和<em>ptr是同一个对象，如果obj和</em>ptr是同一个对象，我们先<code>decr_ref_cnt(*ptr)</code>，这个对象的引用计数如果为0了，就被回收了，之后<code>incr_ref_cnt(obj)</code>就没用了。另外注意到<code>decr_ref_cnt</code>中当对象的<code>ref_cnt</code>减为0时，要先对它引用的所有对象递归执行<code>decr_ref_cnt</code>后再将其加入空闲链表中。</p>
+<h2 id="优点和缺点"><a href="#优点和缺点" class="headerlink" title="优点和缺点"></a>优点和缺点</h2><p>引用计数法可以在对象不活跃时（引用计数为0）立刻回收其内存。因此可以保证堆上时时刻刻都没有垃圾对象的存在（先不考虑循环引用导致无法回收的情况）。</p>
+<p>引用计数法的最大暂停时间短。由于没有了独立的GC过程，而且不需要遍历整个堆来标记和清除对象，取而代之的是在对象引用计数为0时立即回收对象，这相当于将GC过程“分摊”到了每个对象上，不会有最大暂停时间特别长的情况发生。</p>
+<p>引用计数法也有一些问题，引用计数的增减开销在一些情况下会比较大，比如一些根引用的指针更新非常频繁，此时这种开销是不能忽视的。另外对象引用计数器本身是需要空间的，而计数器要占用多少位也是一个问题，理论上系统内存可寻址的范围越大，对象计数器占用的空间就要越大，这样在一些小对象上就会出现计数器空间比对象本身的域还要大的情况，内存空间利用率就会降低。还有一个问题是循环引用的问题，假设两个对象A和B，A引用B，B也引用A，除此之外它们都没有其他引用关系了，这个时候A和B就形成了循环引用，变成一个“孤岛”，且它们的引用计数都是1，按照引用计数法的要求，它们将无法被回收，造成内存泄漏。</p>
+<h2 id="优化方案"><a href="#优化方案" class="headerlink" title="优化方案"></a>优化方案</h2><h3 id="1-延迟引用计数法"><a href="#1-延迟引用计数法" class="headerlink" title="1. 延迟引用计数法"></a>1. 延迟引用计数法</h3><p>针对跟引用指针会有非常频繁的更新导致增减对象计数器的任务繁重这一问题，我们直接可以想到的一种方案是对根引用对象不维护计数器。非根引用对象更新指针时调用<code>update_ptr</code>，根引用对象直接使用<code>*$ptr = obj</code>，就绕过了这个问题。但这么做还是不行，因为根引用对象没有计数器值了，可能会被当成是垃圾回收掉。对此，可以使用一个ZCT（Zero Count Table），这个表专门用来记录那些计数器值经过<code>decr_ref_cnt</code>后变为0的对象，延迟引用计数法中，引用计数器值为0的对象不一定就是垃圾。如下图：</p>
+<p><img src="/assets/images/post_imgs/gc_2.png" alt="延迟引用计数法_1"></p>
+<p>我们还需要修改<code>decr_ref_cnt</code>函数以适应这种方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">decr_ref_cnt(obj)&#123;</span><br><span class="line">  obj.ref_cnt--;</span><br><span class="line">  <span class="keyword">if</span>(obj.ref_cnt == <span class="number">0</span>)&#123;</span><br><span class="line">    <span class="keyword">if</span>(is_full($zct) == TRUE)</span><br><span class="line">      scan_zct()</span><br><span class="line">    push($zct, obj)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>decr_ref_cnt</code>函数中，减少对象的引用计数后，如果其引用计数为0，需要把该对象放到$zct中，如果此时$zct满了，执行<code>scan_zct</code>函数来清理对象。</p>
+<p>还需要修改<code>new_obj</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">new_obj(size)&#123;</span><br><span class="line">  obj = get_free_space($free_list, size)</span><br><span class="line">  <span class="keyword">if</span>(obj == NULL)&#123;</span><br><span class="line">    scan_zct()</span><br><span class="line">    obj = get_free_space($free_list, size)</span><br><span class="line">    <span class="keyword">if</span>(obj == NULL)&#123;</span><br><span class="line">      allocation_failed()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  obj.ref_cnt = <span class="number">1</span></span><br><span class="line">  <span class="keyword">return</span> obj</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>new_obj</code>函数中，当第一次内存分配失败时，调用<code>scan_zct</code>函数来清理对象，之后再次申请分配，如果还是失败，说明当前堆上没有可用内存块了，直接失败。</p>
+<p>再来看看<code>scan_zct</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">scan_zct()&#123;</span><br><span class="line">  <span class="keyword">for</span>(root_obj in $root)</span><br><span class="line">    root_obj.ref_cnt++</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(obj in $zct)&#123;</span><br><span class="line">    <span class="keyword">if</span>(obj.ref_cnt == <span class="number">0</span>)&#123;</span><br><span class="line">      remove_from_zct($zct, obj)</span><br><span class="line">      delete(obj)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span>(root_obj in $root)</span><br><span class="line">    root_obj.ref_cnt--</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>scan_zct</code>函数首先对所有根引用对象的引用计数加1，然后遍历$zct，将引用计数为0的对象（这些对象肯定不是根对象了）清除出$zct，然后调用<code>delete(obj)</code>删除它们，最后，很重要的一点，需要把所有根引用对象的引用计数减1。</p>
+<p>最后看一下<code>delete</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">delete(obj)&#123;</span><br><span class="line">  <span class="keyword">for</span> (child in obj.children)&#123;</span><br><span class="line">    child.ref_cnt--;</span><br><span class="line">    <span class="keyword">if</span>(child.ref_cnt == <span class="number">0</span>)&#123;</span><br><span class="line">      delete(child)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  add_to_free_list(obj)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>delete</code>函数负责递归地将对象所引用的子对象的引用计数减1，并将对象加入到空闲链表中。<br>延迟引用计数法的优点就是可以大大减轻那些根引用对象指针被频繁更新导致计数器更新操作繁重的问题。它的缺点也很明显，由于在<code>scan_zct</code>中统一做垃圾回收，无法立即收回内存，而且<code>scan_zct</code>的开销和$zct的大小成正比，这会导致GC的最大暂停时间增加。当想要减少最大暂停时间时，势必要减小<code>$zct的大小</code>，但这样一来就需要更频繁地调用<code>scan_zct</code>了，导致吞吐量下降。</p>
+<h3 id="2-sticky引用计数法"><a href="#2-sticky引用计数法" class="headerlink" title="2. sticky引用计数法"></a>2. sticky引用计数法</h3><p>之前提到的引用计数法有一个问题，需要确定给引用计数器分配多少空间。我们假设给它分配5 bits，计数范围0~31，当对象引用计数超过31时，计数器就会溢出。针对计数器溢出的情况，有两个办法，一是完全不理会，不再去增减计数器溢出对象的计数器的值。二是使用标记-清除算法。</p>
+<p>针对第一种，已经有研究表明，绝大多数对象的引用计数只会在0和1之间变化，这些对象创建出来没多久就“死”了，很少有对象的引用计数会有非常大的值，如果有引用计数很大的对象则说明这些对象很重要，短期内不可能被销毁，因此再去操作它的引用计数意义不大。</p>
+<p>第二种方法，使用标记-清除算法来处理：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mark_sweep_for_counter_overflow()&#123;</span><br><span class="line">  reset_all_obj_ref_cnt()</span><br><span class="line">  mark_phase()</span><br><span class="line">  sweep_phase()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先要将堆上的所有对象引用计数设置为0。然后进入标记阶段和清除阶段。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">mark_phase()&#123;</span><br><span class="line">  <span class="keyword">for</span>(root_obj in $root)</span><br><span class="line">    push(root_obj, $mark_stack)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span>(is_empty($mark_stack) == FALSE)&#123;</span><br><span class="line">    obj = pop($mark_stack)</span><br><span class="line">    obj.ref_cnt++</span><br><span class="line">    <span class="keyword">if</span>(obj.ref_cnt == <span class="number">1</span>)&#123;</span><br><span class="line">      <span class="keyword">for</span>(child in obj)&#123;</span><br><span class="line">        push(child, $mark_stack)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>标记阶段，首先把所有根引用对象都放入$mark_stack，然后依次从$mark_stack中取出对象，将其引用计数加1。这里要注意只能对各个对象和它们的子对象进栈一次，以免造成死循环，其中<code>if(obj.ref_cnt == 1)</code>用来判断这种情况。当$mark_stack为空时结束标记阶段。</p>
+<p>接下来是清除阶段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">sweep_phase()&#123;</span><br><span class="line">  sweeping = $heap_start</span><br><span class="line">  <span class="keyword">while</span>(sweeping &lt; $heap_end)&#123;</span><br><span class="line">    <span class="keyword">if</span>(sweeping.ref_cnt == <span class="number">0</span>)&#123;</span><br><span class="line">      add_to_free_list(sweeping)</span><br><span class="line">      sweeping += sweeping.size</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>清除阶段遍历整个堆，将引用计数为0的对象加入空闲链表。</p>
+<p>sticky引用计数法使用了一种标记-清除算法的变体，它可以清除循环引用。这是因为每次处理都会在最开始把所有堆上的对象的引用计数设为0，然后从根引用对象开始递归地将所有可以引用到的对象的计数器加1，很显然循环引用的对象在计数器设置为0后并不能在标记阶段被找到并设置引用计数，那么它们将在清除阶段被清除掉。</p>
+<h3 id="3-1位引用计数法"><a href="#3-1位引用计数法" class="headerlink" title="3. 1位引用计数法"></a>3. 1位引用计数法</h3><p>1位引用计数法的计数器只有1位大小，只有0和1两个取值，分分钟会造成溢出。不过据调查显示，很少有对象的引用计数大于或等于2，大部分对象创建不就后就被回收了。我们可以用计数器的0值表示引用计数为1，计数器的1值表示引用计数大于或等于2。</p>
+<p>由于计数器取值只有0和1两种，之前提到的引用计数法都是让对象持有计数器，在1位引用计数法中，我们让指针持有计数器。将计数器值0的指针称为<code>UNIQUE</code>指针，计数器值1的指针称为<code>MULTIPLE</code>指针。</p>
+<p>在更新对象指针的时候，之前的做法是先增加对象的引用计数，然后减少原指针指向对象的引用计数，最后将这个指针指向对象。1位引用计数法由于将计数器保存在指针中而非对象中，因此使用的是“复制指针”操作而不是“更新指针”。</p>
+<p>下面是1位引用计数法复制指针的示意图：</p>
+<p><img src="/assets/images/post_imgs/gc_3.png" alt="1位引用计数法复制指针"></p>
+<p>最开始A中的指针指向C，现在要将A中的指针指向D，实际上可以将B中指向C的指针复制到A中完成这个操作，我们使用<code>copy_ptr</code>函数来执行这个过程，伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">copy_ptr(dest_ptr, src_ptr)&#123;</span><br><span class="line">  delete_ptr(dest_ptr)</span><br><span class="line">  *dest_ptr = *src_ptr</span><br><span class="line">  set_multiple_tag(dest_ptr)</span><br><span class="line">  <span class="keyword">if</span>(tag(src_ptr) == UNIQUE)</span><br><span class="line">    set_multiple_tag(src_ptr)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">delete_ptr(ptr)&#123;</span><br><span class="line">  <span class="keyword">if</span>(tag(ptr) == UNIQUE)</span><br><span class="line">    add_to_free_list(*ptr)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>1位引用计数法的优点是对象本身不需要保存计数器，只在指针中使用1位来保存计数器，计数器只有0和1两种取值，不会占用太多空间且有效利用指针的空间。另外一方面，由于只是复制指针，并不需要解引用指针获取对象，避免了内存寻址开销。1位引用计数法的缺点是引用计数器溢出的问题，当计数器的tag变成<code>MULTIPLE</code>后，是无法判断能否回收的，这里只有从<code>UNIQUE</code>指针到<code>MULTIPLE</code>指针的单向变化，无法从<code>MULTIPLE</code>指针变回<code>UNIQUE</code>指针，有些<code>MULTIPLE</code>指针引用的对象可能是需要回收的，但在这种场景下肯定是无法回收了。</p>
+<h3 id="4-部分标记-清除算法"><a href="#4-部分标记-清除算法" class="headerlink" title="4. 部分标记-清除算法"></a>4. 部分标记-清除算法</h3><p>引用计数法的一大问题就是没办法清除循环引用的对象，我们知道在标记-清除算法不存在循环引用对象群无法被清除的问题。因此很容易想到正常情况下用引用计数法，在某个时刻使用标记-清除算法来处理。不过存在循环引用关系的对象是极少数，为了回收这么点垃圾就每次固定在某个时间点执行标记-清除算法成本有点高，会有很多无用功。改进的方式是只对“可能存在循环引用”的对象群进行标记-清除，这种方式被称为部分标记-清除算法。</p>
+<p>那么我们就需要识别存在循环引用关系的对象，先来看看循环引用是怎么产生的：</p>
+<p><img src="/assets/images/post_imgs/gc_4.png" alt="循环引用的产生"></p>
+<p>循环引用产生的条件：</p>
+<p>1.一组对象互相引用构成闭环<br>2.删除所有外部到这组对象的引用</p>
+<p>根据上图和循环引用产生的条件，我们可以做出一点假设：</p>
+<p><strong>当移除一个对象的某个外部引用时，如果这个对象的引用计数递减后不为0，则它和它所引用的对象可能构成循环引用关系。</strong></p>
+<p>由于一个对象可能存在多个外部引用，移除一个外部引用后引用计数不为0是完全可能的，因此在上述假设的基础上我们还需要做进一步判断。于是就有了部分标记-清除算法。</p>
+<p>部分标记-清除算法寻找的是非活跃对象，这和之前讨论的标记-清除算法寻找活跃对象是不同的。部分标记-清除算法将对象分为四种颜色来管理：</p>
+<p>1.黑(BLACK)：绝对不是垃圾的对象<br>2.白(WHITE)：绝对是垃圾的对象<br>3.灰(GRAY)：被搜索完毕的对象<br>4.阴影(HATCH)：可能是循环引用的垃圾对象</p>
+<p>我们在对象头部分配2位的空间来保存这个信息，命名为<code>obj.color</code>，00~11可以表示这四种颜色。其中有一个$hatch_queue用来存放所有被标记为HATCH的对象。</p>
+<p>我们构造一个堆，初始状态如下：</p>
+<p><img src="/assets/images/post_imgs/gc_5.png" alt="示例堆初始状态"></p>
+<p>现在将root到A的引用删除，这会在内部调用一次<code>decr_ref_cnt</code>，首先来看<code>decr_ref_cnt</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">decr_ref_cnt(obj)&#123;</span><br><span class="line">  obj.ref_cnt--</span><br><span class="line">  <span class="keyword">if</span>(obj.ref_cnt == <span class="number">0</span>)</span><br><span class="line">    delete(obj)</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span>(obj.color != HATCH)&#123;</span><br><span class="line">    obj.color = HATCH</span><br><span class="line">    enqueue($hatch_queue, obj)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个<code>decr_ref_cnt</code>和以前有所不同，在递减对象的引用计数后，如果为0就回收对象，否则说明对象还被其他对象引用，有可能是循环引用对象群的一个成员，我们在标记它为<code>HATCH</code>后（如果已经是<code>HATCH</code>就说明对象已经在<code>$hatch_queue</code>中，此时什么也不做），将它入队<code>$hatch_queue</code>，之后要遍历<code>$hatch_queue</code>找出循环引用的对象，经过：</p>
+<p><img src="/assets/images/post_imgs/gc_6.png" alt="示例堆删除root到A的引用之后"></p>
+<p>还需要修改<code>new_obj</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">new_obj(size)&#123;</span><br><span class="line">  obj = get_free_space($free_list, size)</span><br><span class="line">  <span class="keyword">if</span>(obj != NULL)&#123;</span><br><span class="line">    obj.ref_cnt = <span class="number">1</span></span><br><span class="line">    obj.color = BLACK</span><br><span class="line">    <span class="keyword">return</span> obj</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (is_empty($hatch_queue) == FALSE)&#123;</span><br><span class="line">    scan_hatch_queue()</span><br><span class="line">    <span class="keyword">return</span> new_obj(size)</span><br><span class="line">  &#125; <span class="keyword">else</span></span><br><span class="line">    allocation_failed()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建新对象时，<code>ref_cnt</code>初始为1，并且要把<code>color</code>设置为<code>BLACK</code>。对象创建失败时，需要扫描<code>$hatch_queue</code>尝试释放循环引用对象，然后递归调用<code>new_obj</code>，否则创建对象失败。</p>
+<p><code>scan_hatch_queue</code>函数搜索整个<code>$hatch_queue</code>，目的是找出循环引用的对象然后释放。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">scan_hatch_queue()&#123;</span><br><span class="line">  obj = dequeue($hatch_queue)</span><br><span class="line">  <span class="keyword">if</span>(obj.color == HATCH)&#123;</span><br><span class="line">    paint_gray(obj)</span><br><span class="line">    scan_gray(obj)</span><br><span class="line">    collect_white(obj)</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span>(is_empty($hatch_queue) == FLASE)&#123;</span><br><span class="line">    scan_hatch_queue()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>scan_hatch_queue</code>函数每次从<code>$hatch_queue</code>中出队一个对象，如果对象颜色为<code>HATCH</code>，就执行<code>paint_gray</code>、<code>scan_gray</code>和<code>collect_white</code>，否则如果<code>$hatch_queue</code>不为空，递归调用<code>scan_hatch_queue</code>。</p>
+<p><code>paint_gray</code>函数递归地标识一个对象和它的所有子对象，将它们的<code>color</code>设置为<code>GRAY</code>，并：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">paint_gray(obj)&#123;</span><br><span class="line">  <span class="keyword">if</span>(obj.color == BLACK || obj.color == HATCH)&#123;</span><br><span class="line">    obj.color = GRAY</span><br><span class="line">    <span class="keyword">for</span>(child in obj.children)&#123;</span><br><span class="line">      child.ref_cnt--</span><br><span class="line">      paint_gray(child)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在理解<code>paint_gray</code>函数之前，我们需要理解一个规则，假设有A-&gt;B-&gt;C-&gt;A这样的引用关系：</p>
+<p><img src="/assets/images/post_imgs/gc_7.png" alt="三个循环引用的对象"></p>
+<p>A、B、C三个对象互相引用，引用计数都是1。如果从A出发，标记它，然后递归地将它的子对象也标记且引用计数递减，直到能到达的所有对象都被标记完。最后的结果就是形成循环引用的那几个对象都被标记且引用计数都变成0。至于那些被在循环引用群里的对象引用的其他对象，有两种情况：</p>
+<p>1.这个对象只被循环引用群里的对象所引用，在经过上面的过程后，这个对象的引用计数也会变成0而被回收。<br>2.这个对象除了被循环引用群里的对象所引用，还被其他对象引用到（假设有1个对象引用它），在经过上面的过程后，这个对象的引用计数大于0。</p>
+<p>执行<code>paint_gray</code>时候的示例堆：</p>
+<p><img src="/assets/images/post_imgs/gc_8.png" alt="示例堆paint_gray之后"></p>
+<p>因此我们可以得到，在经过<code>paint_gray</code>的过程后，引用计数为0的对象都是需要回收的，我们将它的<code>color</code>变为<code>WHITE</code>，引用计数大于0的对象将其<code>color</code>设置为<code>BLACK</code>，于是就有了<code>scan_gray</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">scan_gray(obj)&#123;</span><br><span class="line">  <span class="keyword">if</span>(obj.color == WHITE)&#123;</span><br><span class="line">    <span class="keyword">if</span>(obj.ref_cnt &gt; <span class="number">0</span>)</span><br><span class="line">      paint_black(obj)</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      obj.color = WHITE</span><br><span class="line">      <span class="keyword">for</span>(child in obj.children)</span><br><span class="line">        scan_gray(child)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行<code>scan_gray</code>时候的示例堆：</p>
+<p><img src="/assets/images/post_imgs/gc_9.png" alt="示例堆scan_gray之后"></p>
+<p>最后是<code>collect_white</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">collect_white(obj)&#123;</span><br><span class="line">  <span class="keyword">if</span>(obj.color == WHITE)&#123;</span><br><span class="line">    <span class="keyword">for</span>(child in obj.children)&#123;</span><br><span class="line">      collect_white(child)</span><br><span class="line">    &#125;</span><br><span class="line">    add_to_free_list(obj)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/assets/images/post_imgs/gc_10.png" alt="示例堆collect_white之后"></p>
+<p>调用<code>collect_white</code>之后，就回收了循环引用对象。</p>
+<p>局部标记-清除算法的优点是可以发现并清除循环引用对象群。缺点也很明显，开销比较大，对于一个可能是循环引用的对象，需要执行<code>paint_gray</code>、<code>scan_gray</code>和<code>collect_white</code>，相当于遍历了三次这个对象的和它的子对象，如果需要检查的对象比较多，代价就太大了，并且也失去了引用计数法立即回收对象的这个优势。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/垃圾回收/">垃圾回收</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          垃圾回收(GC)算法介绍(1)——GC标记-清除算法
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Redis中的底层数据结构(1)——双端链表</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#GC引用计数法概述"><span class="nav-number">1.</span> <span class="nav-text">GC引用计数法概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优点和缺点"><span class="nav-number">2.</span> <span class="nav-text">优点和缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化方案"><span class="nav-number">3.</span> <span class="nav-text">优化方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-延迟引用计数法"><span class="nav-number">3.1.</span> <span class="nav-text">1. 延迟引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-sticky引用计数法"><span class="nav-number">3.2.</span> <span class="nav-text">2. sticky引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1位引用计数法"><span class="nav-number">3.3.</span> <span class="nav-text">3. 1位引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-部分标记-清除算法"><span class="nav-number">3.4.</span> <span class="nav-text">4. 部分标记-清除算法</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

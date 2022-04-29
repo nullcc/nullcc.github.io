@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>后端架构设计的一些想法 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="后端架构">
+  
+  
+  
+  
+  <meta name="description" content="存在问题一般的项目，在初始阶段由于团队人力物力有限，不大可能把模块拆分得很细。为了节省资源和快速开发，会选择把所有功能做在一个项目中，一次部署就完成了整个系统的部署。">
+<meta name="keywords" content="后端架构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="后端架构设计的一些想法">
+<meta property="og:url" content="https://nullcc.github.io/2017/08/09/后端架构设计的一些想法/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="存在问题一般的项目，在初始阶段由于团队人力物力有限，不大可能把模块拆分得很细。为了节省资源和快速开发，会选择把所有功能做在一个项目中，一次部署就完成了整个系统的部署。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/backend.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.030Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="后端架构设计的一些想法">
+<meta name="twitter:description" content="存在问题一般的项目，在初始阶段由于团队人力物力有限，不大可能把模块拆分得很细。为了节省资源和快速开发，会选择把所有功能做在一个项目中，一次部署就完成了整个系统的部署。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/backend.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-后端架构设计的一些想法" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      后端架构设计的一些想法
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/08/09/后端架构设计的一些想法/" class="article-date">
+	  <time datetime="2017-08-08T16:00:00.000Z" itemprop="datePublished">八月 9, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="存在问题"><a href="#存在问题" class="headerlink" title="存在问题"></a>存在问题</h2><p>一般的项目，在初始阶段由于团队人力物力有限，不大可能把模块拆分得很细。为了节省资源和快速开发，会选择把所有功能做在一个项目中，一次部署就完成了整个系统的部署。</p>
+<a id="more"></a>
+<p>随着需求的变化、用户数量的增加，并发量提高，系统复杂度也会不断提高，原来的架构和开发模式会带来很多问题。</p>
+<ol>
+<li>系统各个模块之间具有强耦合性。</li>
+<li>很多业务逻辑关联度不大的代码会对实际的业务逻辑代码造成比较强的侵入，比如各种写日志的操作代码会遍布系统的各个角落。</li>
+<li>一些功能可能会重复被开发，且开发人员的水平参差不齐，容易造成代码冗余，严重情况下可能造成性能问题。</li>
+<li>原来的项目协作方式会成为项目推进的瓶颈，所有人都工作在同一份代码上，沟通不顺畅，团队内部一团糟。</li>
+</ol>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>此时是项目架构调整的好时机。需要考虑以下一些问题：</p>
+<ol>
+<li>如何对系统功能进行划分，解耦系统的各个部分。</li>
+<li>各个子系统之间如何沟通？</li>
+<li>如何做到高可用？</li>
+<li>如何把系统设计成可以水平扩展的架构（只要增加机器就能线性地提高性能，理论上可以拥有无限的性能）？</li>
+<li>新架构下的团队协作如何展开？</li>
+</ol>
+<p>一个比较通用的后端架构如下图：</p>
+<p><img src="/assets/images/post_imgs/backend.png" alt="后端架构"></p>
+<p>对于一些可以独立出来开发的功能，比如用户模块、支付模块、日志模块、消息模块、后台模块，都可以考虑单独封装成服务来开发和运维。这些独立的服务对外提供一致的接口，供API端、后台等用户界面调用。这样各个模块之间的耦合度就非常低了，对于一个特定的服务调用，可以由专门的人进行集中维护和优化，调用方也不会直接接触到数据库，提高了整体的安全性和可用性，再也不用担心别的系统用一个效率很差的查询来把数据库拖垮了。对于调用方来说，事情变得简单了，只要调用后端服务提供的接口就好，所有调用方都可以从服务层获得稳定、一致、高效的服务。</p>
+<h2 id="服务拆分粒度"><a href="#服务拆分粒度" class="headerlink" title="服务拆分粒度"></a>服务拆分粒度</h2><p>我们也需要慎重考虑服务拆分的粒度。拆分粒度太粗，还是容易造成原来的那些问题；拆分粒度太细，维护成本又高。服务拆分粒度需要具体问题具体分析，如何判断要不要拆分一个服务呢？下面列举几种可能的情况供参考：</p>
+<ol>
+<li>当系统中的某个功能模块对整体性能造成影响时，应该考虑拆分出来，并且在服务级别做负载均衡。</li>
+<li>一个模块很明显地和很多模块有直接联系，应该考虑拆分出来，独立对外提供服务。</li>
+</ol>
+<h2 id="调用方和服务的交互"><a href="#调用方和服务的交互" class="headerlink" title="调用方和服务的交互"></a>调用方和服务的交互</h2><p>一般来说，存在两种类型的远程调用：</p>
+<ol>
+<li>需要立刻得到响应的调用。</li>
+<li>不需要立刻得到响应的调用。</li>
+</ol>
+<p>需要立刻得到响应的调用的例子有查询用户订单记录、查询用户基本信息等。不需要立刻得到响应的调用有写一个行为日志到日志服务中、请求某个服务执行某个异步操作等。<br>这两种类型的远程调用应该区别对待，对于需要立刻得到响应的，我们可以使用各种RPC方案，比如JSONRPC、thrift、protobuf等，具体RPC方案的选择在此不讨论。对于不需要立刻得到响应的，可以利用消息队列来处理，上游调用方只管往MQ的某些频道中中扔消息，下游相关服务会订阅这些频道，负责消费消息。比如刚才提到的写行为日志的操作，调用方根本不关心如何写日志，这些调用方（生产者）仅仅是把一条日志消息给MQ，由MQ路由这些消息到下游服务（消费者），这样就完成了相关服务和调用方的解耦。而且可以对同一个服务启动多个实例进行消费，MQ会对这些实例做轮询，保证服务的负载均衡。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/后端架构/">后端架构</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/08/15/理解和使用keepalived（部署配置篇）/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          理解和使用keepalived（部署配置篇）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/07/19/node中的module.exports和exports的区别/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">node中的module.exports和exports的区别</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#存在问题"><span class="nav-number">1.</span> <span class="nav-text">存在问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决方法"><span class="nav-number">2.</span> <span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务拆分粒度"><span class="nav-number">3.</span> <span class="nav-text">服务拆分粒度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调用方和服务的交互"><span class="nav-number">4.</span> <span class="nav-text">调用方和服务的交互</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

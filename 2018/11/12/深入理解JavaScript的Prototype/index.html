@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>深入理解JavaScript的Prototype | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="js">
+  
+  
+  
+  
+  <meta name="description" content="本文将展示常常令人迷惑和误解的JavaScript的Prototype到底是什么。">
+<meta name="keywords" content="js">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解JavaScript的Prototype">
+<meta property="og:url" content="https://nullcc.github.io/2018/11/12/深入理解JavaScript的Prototype/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文将展示常常令人迷惑和误解的JavaScript的Prototype到底是什么。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/js-prototype1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/js-prototype2.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.035Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解JavaScript的Prototype">
+<meta name="twitter:description" content="本文将展示常常令人迷惑和误解的JavaScript的Prototype到底是什么。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/js-prototype1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-深入理解JavaScript的Prototype" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      深入理解JavaScript的Prototype
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/11/12/深入理解JavaScript的Prototype/" class="article-date">
+	  <time datetime="2018-11-11T16:00:00.000Z" itemprop="datePublished">十一月 12, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文将展示常常令人迷惑和误解的JavaScript的Prototype到底是什么。</p>
+<a id="more"></a>
+<h2 id="面向对象编程中的类"><a href="#面向对象编程中的类" class="headerlink" title="面向对象编程中的类"></a>面向对象编程中的类</h2><p>在大部分面向对象编程语言中都可以看到“类”的身影，说到“类”，进而就会谈到“继承”、“封装”和“多态”。类是一种蓝图，描述了该类的实例应该具有的数据和行为，我们会调用类的构造函数（构造函数属于类）来<code>实例化</code>一个对象出来。这个实例化出来的对象拥有类所描述的特性和行为。子类继承自父类就相当于将父类复制一份到子类中，子类和父类是相对独立的，在子类中调用或者覆盖父类方法并不会对父类造成影响。因此，类的继承本质就是<code>复制</code>。多态建立在复制这个事实基础上，表面看上去多态是由于子类实例<code>引用</code>了父类方法，实质上多态并不表示子类和父类有关联，而只能说明子类得到了父类的一份副本。</p>
+<p>也就是说，在传统面向对象的设计理念中，类体系的核心是复制。</p>
+<h2 id="JavaScript中的prototype"><a href="#JavaScript中的prototype" class="headerlink" title="JavaScript中的prototype"></a>JavaScript中的prototype</h2><h3 id="prototype的基本行为"><a href="#prototype的基本行为" class="headerlink" title="prototype的基本行为"></a>prototype的基本行为</h3><p>下面的代码定义了一个对象obj，它本身拥有一个属性foo，使用<code>obj.foo</code>可以获取这个属性的值：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo1.js</span></span><br><span class="line"><span class="keyword">const</span> obj = &#123; <span class="attr">foo</span>: <span class="number">1</span> &#125;;</span><br><span class="line"><span class="built_in">console</span>.log(obj.foo); <span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
+<p>这和prototype有什么关系呢？简单来说，在JavaScript中的某个对象上引用属性时，首先会查看这个对象本身是否拥有这个属性，如果有就返回这个属性的值。如果没有，就需要查看该对象的prototype链了。以下代码将obj的prototype关联到另一个对象上：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo2.js</span></span><br><span class="line"><span class="keyword">const</span> obj1 = &#123; <span class="attr">foo</span>: <span class="number">1</span> &#125;;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line"><span class="built_in">console</span>.log(obj.foo); <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(obj) === obj1); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(obj1.isPrototypeOf(obj)); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(obj1) === <span class="built_in">Object</span>.prototype); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.prototype); <span class="comment">// &#123;&#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(<span class="built_in">Object</span>.prototype)); <span class="comment">// null</span></span><br></pre></td></tr></table></figure>
+<p><code>Object.create</code>会创建一个对象，并将这个对象的prototype关联到指定的对象。<br><code>Object.getPrototypeOf</code>用来获取一个对象的prototype。<br><code>isPrototypeOf</code>可以判断一个对象是否存在于另一个对象的prototype链上。</p>
+<p>一般来说，普通对象的prototype链最终将指向<code>Object.prototype</code>，而Object.prototype的prototype是<code>null</code>。如下图所示：</p>
+<p><img src="/assets/images/post_imgs/js-prototype1.png" alt="obj的prototype链"></p>
+<p>上面的代码中，obj本身并没有foo这个属性，所以调用obj.foo时会沿着obj的prototype链查找foo属性，最终在obj1上找到了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo3.js</span></span><br><span class="line"><span class="keyword">const</span> obj2 = &#123; <span class="attr">bar</span>: <span class="number">2</span> &#125;;</span><br><span class="line"><span class="built_in">Object</span>.defineProperty(obj2, <span class="string">'baz'</span>, &#123;</span><br><span class="line">  value: <span class="number">3</span>,</span><br><span class="line">  enumerable: <span class="literal">false</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">const</span> obj1 = <span class="built_in">Object</span>.create(obj2);</span><br><span class="line">obj1.foo = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line">obj.a = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(obj); <span class="comment">// &#123; a: 0 &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(obj1); <span class="comment">// &#123; foo: 1 &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(obj2); <span class="comment">// &#123; bar: 2 &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(obj.foo); <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(obj) === obj1); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(obj1) === obj2); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(obj2) === <span class="built_in">Object</span>.prototype); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.prototype); <span class="comment">// &#123;&#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(<span class="built_in">Object</span>.prototype)); <span class="comment">// null</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(obj2.isPrototypeOf(obj1)); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(obj1.isPrototypeOf(obj)); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(obj2.isPrototypeOf(obj)); <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">const</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行上述代码，for循环部分会打印出：</p>
+<p>a<br>foo<br>bar</p>
+<p>可以发现遍历一个对象时会将其<code>本身</code>的属性(a)和它<code>prototype链上</code>的所有可枚举属性(foo和bar)都遍历出来。</p>
+<p>如果只想遍历对象本身的属性，需要进行<code>hasOwnProperty</code>的判断：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo4.js</span></span><br><span class="line"><span class="keyword">const</span> obj2 = &#123; <span class="attr">bar</span>: <span class="number">2</span> &#125;;</span><br><span class="line"><span class="built_in">Object</span>.defineProperty(obj2, <span class="string">'baz'</span>, &#123;</span><br><span class="line">  value: <span class="number">3</span>,</span><br><span class="line">  enumerable: <span class="literal">false</span>,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">const</span> obj1 = <span class="built_in">Object</span>.create(obj2);</span><br><span class="line">obj1.foo = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line">obj.a = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">const</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">  <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(key)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的将打印出：</p>
+<p>a</p>
+<h3 id="JavaScript的“类”和“构造函数”"><a href="#JavaScript的“类”和“构造函数”" class="headerlink" title="JavaScript的“类”和“构造函数”"></a>JavaScript的“类”和“构造函数”</h3><p>JavaScript中有new关键字，于是人们顺理成章地将它当做调用“构造函数”的标志：至少我们在Java/C++中是这么做的。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo5.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> foo = <span class="keyword">new</span> Foo();</span><br><span class="line"><span class="built_in">console</span>.log(foo); <span class="comment">// Foo &#123;&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Bar</span>(<span class="params">a</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.a = a;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> bar = <span class="keyword">new</span> Bar(<span class="number">1</span>);</span><br><span class="line"><span class="built_in">console</span>.log(bar); <span class="comment">// Bar &#123; a: 1 &#125;</span></span><br></pre></td></tr></table></figure>
+<p>可以发现，对函数使用new会返回一个对象，即使这个函数本身没有返回任何值（此时返回的是{}）。函数内部的<code>this.x = y</code>的赋值语句会使最终返回的对象具有相应的属性。正因为这样，人们认为Foo是一个类。再看下面的代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo6.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.name = name;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> foo = <span class="keyword">new</span> Foo(<span class="string">'a'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(foo); <span class="comment">// Foo &#123; name: 'a' &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.constructor === Foo); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(foo.constructor === Foo); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>我们发现由new Foo()创建出来的foo有一个constructor属性，且<code>foo.constructor</code>指向<code>Foo</code>，所以人们更加笃定foo由Foo“构造”，foo是“Foo类”的一个实例。其实Foo和普调的函数并没有区别，只是JavaScript会让所有带有new的函数调用构造一个对象并返回它。</p>
+<p>再来看看人们怎么处心积虑地在JavaScript模拟类的行为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo7.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.name = name;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Foo.prototype.getName = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.name;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> a = <span class="keyword">new</span> Foo(<span class="string">'a'</span>);</span><br><span class="line"><span class="keyword">const</span> b = <span class="keyword">new</span> Foo(<span class="string">'b'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(a) === Foo.prototype); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(a.getName()); <span class="comment">// a</span></span><br><span class="line"><span class="built_in">console</span>.log(a.getName === b.getName); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">console</span>.log(a.getName === Foo.prototype.getName); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>解释一下上面这段代码，由Foo“构造”出来的对象a有一个name属性，且a的prototype指向Foo.prototype。我们在Foo.prototype上添加一个方法getName，于是再a上执行getName()时，我们成功地通过prototype链找到Foo.prototype.getName，并调用它。接着我们又“构造”了一个对象b，然后我们发现a.getName、b.getName和Foo.prototype.getName指向的是同一个对象。</p>
+<p>这就有点意思了，在传统的类理论中，子类会复制父类的信息，所以子类和父类的同名方法在内存中必然是两个完全不同的对象，我们知道JavaScript中的<code>===</code>是比较对象同一性的。上面的代码意味着不管“构造”出多少个“Foo类”的实例，所有实例的方法都指向Foo.prototype中的方法。这显然和传统面向对象的类理论相违背。</p>
+<p>更神奇的是下面这段代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo8.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.name = name;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.constructor === Foo); <span class="comment">// true</span></span><br><span class="line">Foo.prototype = &#123;&#125;;</span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.constructor === Foo); <span class="comment">// false</span></span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.constructor === <span class="built_in">Object</span>); <span class="comment">// true</span></span><br><span class="line"><span class="keyword">const</span> a = <span class="keyword">new</span> Foo(<span class="string">'a'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(a.constructor === Foo); <span class="comment">// false</span></span><br><span class="line"><span class="built_in">console</span>.log(a.constructor === <span class="built_in">Object</span>); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>上面的代码中改变了Foo.prototype，这导致了后面a.constructor不再指向Foo。也就是说，Foo.prototype的constructor属性默认情况下指向该函数自身，但如果我们在创建新对象后改变了Foo.prototype的指向，那么新对象的constructor属性并不会保持原来的指向（因为是引用）。因此，你无法通过a.constructor来确切地知晓是谁“构造”了a。</p>
+<h3 id="proto和prototype"><a href="#proto和prototype" class="headerlink" title="proto和prototype"></a><strong>proto</strong>和prototype</h3><p>先来看一段代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo9.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.name = name;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Foo.prototype.getName = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.name;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> foo1 = <span class="keyword">new</span> Foo(<span class="string">'a'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(foo1) === foo1.__proto__) <span class="comment">// true, 对象的原型可以用Object.getPrototypeOf或者__proto__属性获得</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(Foo) === Foo.__proto__); <span class="comment">// true, 函数也是对象，因此也可以用Object.getPrototypeOf或者__proto__属性获得其原型</span></span><br><span class="line"><span class="built_in">console</span>.log(foo1.prototype); <span class="comment">// undefined, 只有函数对象才有prototype属性</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getPrototypeOf(foo1) === Foo.prototype); <span class="comment">// true, 由函数“构造”出来的对象的原型默认指向该函数的prototype属性</span></span><br><span class="line"><span class="built_in">console</span>.log(foo1.constructor === Foo) <span class="comment">// true, 由函数“构造”出来的对象的constructor属性默认指向函数本身</span></span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.constructor === Foo) <span class="comment">// true, 函数的prototype的constructor属性默认指向函数本身</span></span><br></pre></td></tr></table></figure>
+<p>这些错综复杂的关系可以用一张图（稍微清晰一点地）表示：</p>
+<p><img src="/assets/images/post_imgs/js-prototype2.png" alt="构造函数中的原型链"></p>
+<h3 id="instanceof"><a href="#instanceof" class="headerlink" title="instanceof"></a>instanceof</h3><p>看下面这段代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo10.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params"></span>) </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> foo = <span class="keyword">new</span> Foo();</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(foo <span class="keyword">instanceof</span> Foo); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>人们往往希望使用<code>instanceof</code>来判断一个对象是否是某个“类”的实例，从字面意思看来这是很直白的。但instanceof回答的问题是，在foo的prototype链中是否有一个对象指向Foo.prototype。通过上面的图我们知道，通过调用<code>new Foo()</code>得到foo，因此foo的原型是Foo.prototype。所以这里结果是true。但是instanceof只能用于对象和函数之间，不能用于对象与对象之间。举个例子，如果是下面这样的代码，用instanceof是不行的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo11.js</span></span><br><span class="line"><span class="keyword">const</span> obj1 = &#123; <span class="attr">a</span>: <span class="number">1</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(obj <span class="keyword">instanceof</span> obj1); <span class="comment">// TypeError: Right-hand side of 'instanceof' is not callable</span></span><br></pre></td></tr></table></figure>
+<p>我们用Object.create创建了一个对象，并将该对象prototype指向obj1，如果要判断一个对象的prototype是否是另一个对象，需要使用<code>isPrototypeOf</code>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo12.js</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Foo</span>(<span class="params"></span>) </span>&#123;&#125;</span><br><span class="line"><span class="keyword">const</span> foo = <span class="keyword">new</span> Foo();</span><br><span class="line"><span class="built_in">console</span>.log(Foo.prototype.isPrototypeOf(foo)); <span class="comment">// true</span></span><br><span class="line"><span class="keyword">const</span> obj1 = &#123; <span class="attr">a</span>: <span class="number">1</span> &#125;;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line"><span class="built_in">console</span>.log(obj1.isPrototypeOf(obj)); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>仔细想想可以发现，实际上根本不存在我们以为的“x是y的实例”这种关系，也就是传统意义上的instanceof，对象间只有引用关系，如果要表示某个对象在另一个对象的prototype链上（不论是普通对象还是函数），最好使用isPrototypeOf。</p>
+<h3 id="JavaScript对象间关系的本质——对象关联"><a href="#JavaScript对象间关系的本质——对象关联" class="headerlink" title="JavaScript对象间关系的本质——对象关联"></a>JavaScript对象间关系的本质——对象关联</h3><p>通过上面的一些例子，我们发现JavaScript中根本不存在所谓的“类继承”机制。对象间是引用、关联的关系。理解了这个事实，很多JavaScript的“神奇”行为也很好解释了，很多人之所以会对JavaScript的“类继承”机制一头雾水，其实完全是因为以错误的方式去尝试理解它。现在再来思考<code>Object.create</code>带来了什么：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo13.js</span></span><br><span class="line"><span class="keyword">const</span> obj1 = &#123; </span><br><span class="line">  a: <span class="number">1</span>,</span><br><span class="line">  foo: <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(obj.a); <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(obj.foo()); <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+<p>obj的prototype是obj1，执行obj.a或者obj.foo()其实是在使用obj的prototype上的属性和方法，这其实是一种<code>委托</code>，而委托本质上是因为对象关联。为了避免属性屏蔽或者冲突，建议在对象上显式地使用委托：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// demo14.js</span></span><br><span class="line"><span class="keyword">const</span> obj1 = &#123; </span><br><span class="line">  a: <span class="number">1</span>,</span><br><span class="line">  foo: <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">const</span> obj = <span class="built_in">Object</span>.create(obj1);</span><br><span class="line">obj.doFoo = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.foo();</span><br><span class="line">&#125;;</span><br><span class="line"><span class="built_in">console</span>.log(obj.a); <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(obj.doFoo()); <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+<p>显式地使用委托也很简单，在对象上新建一个方法，在方法内部使用this来调用委托方法。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/js/">js</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/11/27/使用nginx实现简单的负载均衡和高可用/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          使用nginx实现简单的负载均衡和高可用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/11/04/深入理解Node.js异步编程/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">深入理解Node.js异步编程</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#面向对象编程中的类"><span class="nav-number">1.</span> <span class="nav-text">面向对象编程中的类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JavaScript中的prototype"><span class="nav-number">2.</span> <span class="nav-text">JavaScript中的prototype</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#prototype的基本行为"><span class="nav-number">2.1.</span> <span class="nav-text">prototype的基本行为</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JavaScript的“类”和“构造函数”"><span class="nav-number">2.2.</span> <span class="nav-text">JavaScript的“类”和“构造函数”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#proto和prototype"><span class="nav-number">2.3.</span> <span class="nav-text">proto和prototype</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#instanceof"><span class="nav-number">2.4.</span> <span class="nav-text">instanceof</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JavaScript对象间关系的本质——对象关联"><span class="nav-number">2.5.</span> <span class="nav-text">JavaScript对象间关系的本质——对象关联</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

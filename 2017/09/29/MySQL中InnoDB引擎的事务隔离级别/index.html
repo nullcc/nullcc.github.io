@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>MySQL中InnoDB引擎的事务隔离级别 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="MySQLInnoDB">
+  
+  
+  
+  
+  <meta name="description" content="如果想要对MySQL中的InnoDB引擎的事务特性有深入的了解，就必须掌握它的四种事务隔离级别。如下：">
+<meta name="keywords" content="MySQL,InnoDB">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL中InnoDB引擎的事务隔离级别">
+<meta property="og:url" content="https://nullcc.github.io/2017/09/29/MySQL中InnoDB引擎的事务隔离级别/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="如果想要对MySQL中的InnoDB引擎的事务特性有深入的了解，就必须掌握它的四种事务隔离级别。如下：">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.015Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL中InnoDB引擎的事务隔离级别">
+<meta name="twitter:description" content="如果想要对MySQL中的InnoDB引擎的事务特性有深入的了解，就必须掌握它的四种事务隔离级别。如下：">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-MySQL中InnoDB引擎的事务隔离级别" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      MySQL中InnoDB引擎的事务隔离级别
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/09/29/MySQL中InnoDB引擎的事务隔离级别/" class="article-date">
+	  <time datetime="2017-09-28T16:00:00.000Z" itemprop="datePublished">九月 29, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>如果想要对MySQL中的InnoDB引擎的事务特性有深入的了解，就必须掌握它的四种事务隔离级别。如下：</p>
+<a id="more"></a>
+<ol>
+<li>READ UNCOMMITTED（未提交读）</li>
+<li>READ COMMITTED（提交读）</li>
+<li>REPEATABLE READ（可重复读）</li>
+<li>SERIALIZABLE（可串行化）</li>
+</ol>
+<h2 id="READ-UNCOMMITTED（未提交读）"><a href="#READ-UNCOMMITTED（未提交读）" class="headerlink" title="READ UNCOMMITTED（未提交读）"></a>READ UNCOMMITTED（未提交读）</h2><p>  在READ UNCOMMITTED的隔离级别下，一个事务中的修改，即使还没有被提交，对其他事务也是可见的。这有可能导致“脏读”的问题。设想一种情况，事务A开始，做了一些处理，紧接着事务B也开始，修改了一些数据，但还未提交，此时事务A读取了事务B修改的这部分数据，并用于自己的处理，但之后事务B的其他操作失败导致回滚。这时候事务B的这些修改实际上最终并未应用于数据库，但事务A却依赖了这些修改。一般情况下如果不是特别需要，不会使用READ UNCOMMITTED。</p>
+<h2 id="READ-COMMITTED（提交读）"><a href="#READ-COMMITTED（提交读）" class="headerlink" title="READ COMMITTED（提交读）"></a>READ COMMITTED（提交读）</h2><p>  在READ COMMITTED的隔离级别下，一个事务只能看见已经被提交的事务做的修改。也就是说，一个事务的修改在被提交之前对其他事务都是不可见的。READ COMMITTED又被称为UNREPEATABLE READ（不可重复读），因为在一个事务中，多次读取同一个数据有可能得到不同的结果（如果有其他事务在此期间修改了这个数据并成功提交）。这是大部分数据库的默认隔离级别。</p>
+<h2 id="REPEATABLE-READ（可重复读）"><a href="#REPEATABLE-READ（可重复读）" class="headerlink" title="REPEATABLE READ（可重复读）"></a>REPEATABLE READ（可重复读）</h2><p>  在REPEATABLE READ的隔离级别下，在同一个事务中多次读取相同记录的结果是相同的，因此它解决了“脏读”的问题。这是MySQL InnoDB的默认隔离级别。</p>
+<h2 id="SERIALIZABLE（可串行化）"><a href="#SERIALIZABLE（可串行化）" class="headerlink" title="SERIALIZABLE（可串行化）"></a>SERIALIZABLE（可串行化）</h2><p>  在SERIALIZABLE是最高的隔离级别。读加共享锁，写加排他锁，读写互斥。这可能导致大量的锁争用问题，因此并发能力很低，而且经常会导致死锁的问题，一般很少使用。在某些必须保证请求串行执行的高一致性场合有可能被使用。</p>
+<h2 id="一些名词解释"><a href="#一些名词解释" class="headerlink" title="一些名词解释"></a>一些名词解释</h2><p>解释一下几个重要的名词：脏读、可重复读、不可重复读、幻读、快照读、当前读和加锁读。</p>
+<h3 id="脏读"><a href="#脏读" class="headerlink" title="脏读"></a>脏读</h3><p>  对于事务A和事务B来说，如果事务B对数据做了修改，但还未提交，此时如果事务A能够读取到事务B的这个数据更新，就是脏读。</p>
+<h3 id="可重复读"><a href="#可重复读" class="headerlink" title="可重复读"></a>可重复读</h3><p>  可重复读指的是，对于一个事务来说，在开始后别的事务对数据做的更新都不会被它读取到，这个事务只能读取到事务开始前数据的状态。由于在同一个事务内，多次读取同一行一数据都都会返回同一个结果（不管此时这行数据有没有被其他事务所修改），所以被称为“可重复读”。</p>
+<h3 id="不可重复读"><a href="#不可重复读" class="headerlink" title="不可重复读"></a>不可重复读</h3><p>  假设有这样一种场景，事务A开始，读取了一行数据，然后事务B开始，修改了这行数据，然后事务B提交，之后事务A又读取了这行数据，此时事务A读取到的数据是事务B修改后的样子。由于在同一个事务内，多次读取同一行一数据可能返回不同的结果（因为其他事务修改了这行数据），所以被称为“不可重复读”。</p>
+<h3 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h3><p>  幻读的场景是，事务A开始，用某个条件查询出了一个结果集，然后事务B开始，插入了一行数据，这行数据满足之前的查询条件，然后事务B提交，接着事务A再次用相同的条件查询结果，得到的结果比原来多了这一行事务B新提交的数据。</p>
+<h3 id="快照读"><a href="#快照读" class="headerlink" title="快照读"></a>快照读</h3><p>  在REPEATABLE READ级别，由于是可重复读，实际上我们读到的是历史数据，又叫“快照读”。</p>
+<h3 id="当前读"><a href="#当前读" class="headerlink" title="当前读"></a>当前读</h3><p>  插入、更新和删除操作都属于一种特殊的读操作，叫当前读。因为它们都需要读取出最新的数据而不是历史的“快照”数据。</p>
+<h3 id="加锁读"><a href="#加锁读" class="headerlink" title="加锁读"></a>加锁读</h3><p>  加锁读只出现在SERIALIZABLE级别中，该级别对读操作加共享锁，对写操作加排他锁，读写互斥。</p>
+<h2 id="四种隔离级别的一些特性总结："><a href="#四种隔离级别的一些特性总结：" class="headerlink" title="四种隔离级别的一些特性总结："></a>四种隔离级别的一些特性总结：</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">隔离级别</th>
+<th style="text-align:left">脏读可能性</th>
+<th style="text-align:left">不可重复读可能性</th>
+<th style="text-align:left">幻读可能性</th>
+<th>加锁读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">READ UNCOMMITTED</td>
+<td style="text-align:left">Yes</td>
+<td style="text-align:left">Yes</td>
+<td style="text-align:left">Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td style="text-align:left">READ COMMITTED</td>
+<td style="text-align:left">No</td>
+<td style="text-align:left">Yes</td>
+<td style="text-align:left">Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td style="text-align:left">REPEATABLE READ</td>
+<td style="text-align:left">No</td>
+<td style="text-align:left">No</td>
+<td style="text-align:left">Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td style="text-align:left">SERIALIZABLE</td>
+<td style="text-align:left">No</td>
+<td style="text-align:left">No</td>
+<td style="text-align:left">No</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p><br></p>
+<p>我们知道，行锁可以用来防止不同事务之间对数据的修改操作造成的冲突问题，但是对于插入操作却无能为力。为了满足事务的ACID特性，我们防止插入操作造成的幻读问题，因此就有了Next-Key锁。Next-Key锁是行锁和间隙锁的结合，它可以让InnoDB在REPEATABLE READ级别下不会发生别的事务插入导致的幻读。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/InnoDB/">InnoDB</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MySQL/">MySQL</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/10/11/Python多线程详解/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Python多线程详解
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/08/29/Python中try-except-finally的问题/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Python中try-except-finally的问题</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#READ-UNCOMMITTED（未提交读）"><span class="nav-number">1.</span> <span class="nav-text">READ UNCOMMITTED（未提交读）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#READ-COMMITTED（提交读）"><span class="nav-number">2.</span> <span class="nav-text">READ COMMITTED（提交读）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#REPEATABLE-READ（可重复读）"><span class="nav-number">3.</span> <span class="nav-text">REPEATABLE READ（可重复读）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SERIALIZABLE（可串行化）"><span class="nav-number">4.</span> <span class="nav-text">SERIALIZABLE（可串行化）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一些名词解释"><span class="nav-number">5.</span> <span class="nav-text">一些名词解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#脏读"><span class="nav-number">5.1.</span> <span class="nav-text">脏读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可重复读"><span class="nav-number">5.2.</span> <span class="nav-text">可重复读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#不可重复读"><span class="nav-number">5.3.</span> <span class="nav-text">不可重复读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#幻读"><span class="nav-number">5.4.</span> <span class="nav-text">幻读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#快照读"><span class="nav-number">5.5.</span> <span class="nav-text">快照读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#当前读"><span class="nav-number">5.6.</span> <span class="nav-text">当前读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加锁读"><span class="nav-number">5.7.</span> <span class="nav-text">加锁读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四种隔离级别的一些特性总结："><span class="nav-number">6.</span> <span class="nav-text">四种隔离级别的一些特性总结：</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

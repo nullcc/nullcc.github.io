@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>理解Linux中的I/O多路复用 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="LinuxI/O多路复用">
+  
+  
+  
+  
+  <meta name="description" content="在Linux的I/O多路复用中，主要有这三个系统调用：  select poll epoll">
+<meta name="keywords" content="Linux,I&#x2F;O多路复用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解Linux中的I&#x2F;O多路复用">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/13/理解Linux中的IO多路复用/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="在Linux的I/O多路复用中，主要有这三个系统调用：  select poll epoll">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.036Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解Linux中的I&#x2F;O多路复用">
+<meta name="twitter:description" content="在Linux的I/O多路复用中，主要有这三个系统调用：  select poll epoll">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-理解Linux中的IO多路复用" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      理解Linux中的I/O多路复用
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/13/理解Linux中的IO多路复用/" class="article-date">
+	  <time datetime="2017-11-12T16:00:00.000Z" itemprop="datePublished">十一月 13, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/系统编程/">系统编程</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>在Linux的I/O多路复用中，主要有这三个系统调用：</p>
+<ol>
+<li>select</li>
+<li>poll</li>
+<li>epoll</li>
+</ol>
+<a id="more"></a>
+<h2 id="1-select"><a href="#1-select" class="headerlink" title="1. select"></a>1. select</h2><p>select的函数原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">select</span><span class="params">(<span class="keyword">int</span> nfds, fd_set *readfd, fd_set *writefd, fd_set *expectd, struct timeval *timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="参数解析"><a href="#参数解析" class="headerlink" title="参数解析"></a>参数解析</h3><ol>
+<li>nfds：select监控的文件描述符的最大值+1，用于限制扫描的范围。</li>
+<li>readfd：包含所有因状态变为可读而触发select返回的文件描述符。</li>
+<li>writefd：包含所有因状态变为可写而触发select返回的文件描述符。</li>
+<li>expectd：包含所有因发生异常而触发select返回的文件描述符。</li>
+<li>timeout：select的超时时间。设为NULL表示阻塞住，直到有fd就绪，设为0表示不阻塞直接返回，设为一个大于0的值会让select阻塞一个指定的时间，这期间一旦有fd就绪就返回，否则当超过这个超时时间时，select也返回。</li>
+</ol>
+<h3 id="返回值"><a href="#返回值" class="headerlink" title="返回值"></a>返回值</h3><ol>
+<li>成功时返回一个大于0的整数。</li>
+<li>超时返回0。</li>
+<li>出错返回-1。</li>
+</ol>
+<h3 id="函数原理"><a href="#函数原理" class="headerlink" title="函数原理"></a>函数原理</h3><p>首先把需要监控的文件描述符加载到一个fd_set类型的集合中，然后调用select监控集合中的所有文件描述符。假设我们把timeout设为NULL，阻塞select调用，并且在readfd参数中传入了一个fd_set类型的集合，表示监控这个集合中所有文件描述符的读就绪事件。一旦集合中有文件描述符读就绪，select马上返回一个大于0的整数。然后调用方需要遍历这个fd_set类型的集合，对每个文件描述符使用<code>FD_ISSET</code>判断是否就绪，如果就绪了就处理这个文件描述符。需要注意的是，在每次调用select之前，需要使用<code>FD_ZERO</code>对fd_set类型的集合中每个文件描述符的就绪状态清零。</p>
+<h3 id="一些问题"><a href="#一些问题" class="headerlink" title="一些问题"></a>一些问题</h3><p>select有几个问题，首先select一次性只能监控<code>FD_SETSIZE</code>个文件描述符，在大多数Linux系统中这个数字是1024。我们可以修改这个宏来增加这个数字，不过由于select调用在内核中会遍历整个fd集合，集合越大效率越低，所以也不是将<code>FD_SETSIZE</code>设置为越大越好。第二个问题是每次调用select时，都需要把fd集合从用户态拷贝到内核态，fd集合不大时还好，一旦fd集合很大，这种拷贝的开销也会对系统产生影响。</p>
+<h2 id="2-poll"><a href="#2-poll" class="headerlink" title="2. poll"></a>2. poll</h2><p>poll的函数原型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">poll</span><span class="params">(struct pollfd* fds, <span class="keyword">nfds_t</span> nfds, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>pollfd结构：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="keyword">int</span> fd;         <span class="comment">// 文件描述符</span></span><br><span class="line">  short events;   <span class="comment">// 告诉poll监听fd上的哪些事件</span></span><br><span class="line">  short revents;  <span class="comment">// 内核负责修改，用来通知应用程序fd上发生的实际事件</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="参数解析-1"><a href="#参数解析-1" class="headerlink" title="参数解析"></a>参数解析</h3><ol>
+<li>fds：一个pollfd类型的数组。</li>
+<li>nfds：监听事件集合大小。</li>
+<li>timeout：超时时间，为-1时会一直阻塞直到有fd就绪，为0表示立即返回，为一个大于0的整数时会让poll阻塞一个指定的时间，这期间一旦有fd就绪就返回，否则当超过这个超时时间时，poll也返回。</li>
+</ol>
+<h3 id="返回值-1"><a href="#返回值-1" class="headerlink" title="返回值"></a>返回值</h3><ol>
+<li>成功时返回一个大于0的整数，表示就绪的文件描述符的个数。</li>
+<li>超时返回0。</li>
+<li>出错返回-1。</li>
+</ol>
+<h3 id="函数原理-1"><a href="#函数原理-1" class="headerlink" title="函数原理"></a>函数原理</h3><p>poll中没有select对监听的fd个数的限制，也不再需要三个fd集合来分别存放不同事件类型的fd了，我们只需要在pollfd中指定fd的事件类型即可。而且poll也不需要像在select中那样每次调用前需要清零一次fd集合。</p>
+<h3 id="一些问题-1"><a href="#一些问题-1" class="headerlink" title="一些问题"></a>一些问题</h3><p>poll和select一样，还是需要在内核中遍历fd集合，另外在调用时也需要把fd集合从用户态拷贝到内核态，这在fd集合比较大的时候效率较低。</p>
+<h2 id="3-epoll"><a href="#3-epoll" class="headerlink" title="3. epoll"></a>3. epoll</h2><p>epoll有一组函数，如下：</p>
+<h3 id="创建事件表的函数原型"><a href="#创建事件表的函数原型" class="headerlink" title="创建事件表的函数原型"></a>创建事件表的函数原型</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> size)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>参数：</p>
+<ol>
+<li>size表示要创建多大的事件表</li>
+</ol>
+<p>返回值：<br>  返回事件表的文件描述符</p>
+<h3 id="操作事件表的函数原型"><a href="#操作事件表的函数原型" class="headerlink" title="操作事件表的函数原型"></a>操作事件表的函数原型</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>参数：</p>
+<ol>
+<li>epfd：事件表文件描述符</li>
+<li>op：操作类型，有：<br>(1). EPOLL_CTL_ADD<br>(2). EPOLL_CTL_MOD<br>(3). EPOLL_CTL_DEL</li>
+<li>fd：要操作的文件描述符</li>
+<li>事件</li>
+</ol>
+<p>其中epoll_event是一个结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">   <span class="keyword">int</span> events;</span><br><span class="line">   <span class="keyword">epoll_data_t</span> data;  <span class="comment">// 一个union，里面是事件的数据</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>返回值：</p>
+<ol>
+<li>成功返回0。</li>
+<li>失败返回-1。</li>
+</ol>
+<h3 id="事件监听的函数原型"><a href="#事件监听的函数原型" class="headerlink" title="事件监听的函数原型"></a>事件监听的函数原型</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event *events, <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>参数：</p>
+<ol>
+<li>epfd：事件表文件描述符</li>
+<li>events：当有事件发生时，内核会将和事件有关的信息放入events中</li>
+<li>maxevents：一次epoll中内核返回的的最大事件数</li>
+<li>timeout：监听超时时间</li>
+</ol>
+<p>返回值：</p>
+<ol>
+<li>成功时返回大于0的整数，表示就绪的fd个数</li>
+<li>失败返回-1</li>
+<li>超时返回0</li>
+</ol>
+<h3 id="函数原理-2"><a href="#函数原理-2" class="headerlink" title="函数原理"></a>函数原理</h3><p>epoll相比于select和poll的差别比较大，epoll不需要在每次调用时都将数据从用户空间拷贝到内核空间，取而代之的是把事件表以共享内存的方式供用户空间和内核空间使用。其次，调用epoll_wait时只会把就绪的事件从事件表拷贝到events参数中（通过注册的回调函数），应用程序只要遍历这个已就绪的fd集合即可，这就避免了select和poll每次都要遍历整个fd集合的问题，提高了效率。另外epoll的时间复杂度是O(1)。</p>
+<p>epoll有两种模式，LT和ET。LT是水平触发(Level Trigger)，ET是边缘触发(Edge Trigger)。</p>
+<p>水平触发：当epoll监测到某个fd上有事件发生时，应用程序若没有立即处理，在下次epoll时，还会再次触发此fd上的事件。<br>边缘触发：当epoll监测到某个fd上有事件发生时，内核只通知应用程序一次，应用程序必须立即处理，否则这个事件相当于被忽略了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>epoll的时间复杂度虽然比select和poll低，但也未必总是效率比它们高。在一个有非常多活跃fd的集合中，epoll由于每次都要触发回调函数，效率会降低，此时遍历fd集合来处理反而效率更高。epoll适合fd集合很大但大部分fd不活跃的场景。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/系统编程/">系统编程</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/I-O多路复用/">I/O多路复用</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux/">Linux</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/13/Redis的启动过程/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Redis的启动过程
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">垃圾回收(GC)算法介绍(1)——GC标记-清除算法</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-select"><span class="nav-number">1.</span> <span class="nav-text">1. select</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参数解析"><span class="nav-number">1.1.</span> <span class="nav-text">参数解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#返回值"><span class="nav-number">1.2.</span> <span class="nav-text">返回值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#函数原理"><span class="nav-number">1.3.</span> <span class="nav-text">函数原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些问题"><span class="nav-number">1.4.</span> <span class="nav-text">一些问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-poll"><span class="nav-number">2.</span> <span class="nav-text">2. poll</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参数解析-1"><span class="nav-number">2.1.</span> <span class="nav-text">参数解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#返回值-1"><span class="nav-number">2.2.</span> <span class="nav-text">返回值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#函数原理-1"><span class="nav-number">2.3.</span> <span class="nav-text">函数原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些问题-1"><span class="nav-number">2.4.</span> <span class="nav-text">一些问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-epoll"><span class="nav-number">3.</span> <span class="nav-text">3. epoll</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建事件表的函数原型"><span class="nav-number">3.1.</span> <span class="nav-text">创建事件表的函数原型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#操作事件表的函数原型"><span class="nav-number">3.2.</span> <span class="nav-text">操作事件表的函数原型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#事件监听的函数原型"><span class="nav-number">3.3.</span> <span class="nav-text">事件监听的函数原型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#函数原理-2"><span class="nav-number">3.4.</span> <span class="nav-text">函数原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

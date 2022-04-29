@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>垃圾回收(GC)算法介绍(4)——GC标记-压缩算法 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="垃圾回收">
+  
+  
+  
+  
+  <meta name="description" content="GC标记-压缩算法是GC标记-清除算法和GC复制算法相结合的一种算法。">
+<meta name="keywords" content="垃圾回收">
+<meta property="og:type" content="article">
+<meta property="og:title" content="垃圾回收(GC)算法介绍(4)——GC标记-压缩算法">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/30/垃圾回收(GC)算法介绍(4)——GC标记-压缩算法/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="GC标记-压缩算法是GC标记-清除算法和GC复制算法相结合的一种算法。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_35.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_36.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_37.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_38.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_39.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_40.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_41.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_42.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_43.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.032Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="垃圾回收(GC)算法介绍(4)——GC标记-压缩算法">
+<meta name="twitter:description" content="GC标记-压缩算法是GC标记-清除算法和GC复制算法相结合的一种算法。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/gc_35.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-垃圾回收(GC)算法介绍(4)——GC标记-压缩算法" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      垃圾回收(GC)算法介绍(4)——GC标记-压缩算法
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/30/垃圾回收(GC)算法介绍(4)——GC标记-压缩算法/" class="article-date">
+	  <time datetime="2017-11-29T16:00:00.000Z" itemprop="datePublished">十一月 30, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>GC标记-压缩算法是GC标记-清除算法和GC复制算法相结合的一种算法。</p>
+<a id="more"></a>
+<h2 id="GC标记-压缩算法概述"><a href="#GC标记-压缩算法概述" class="headerlink" title="GC标记-压缩算法概述"></a>GC标记-压缩算法概述</h2><p>GC标记-压缩算法有两个阶段：标记阶段和压缩阶段。</p>
+<p>其中标记阶段和GC标记-清除算法的标记阶段完全相同。在压缩阶段中，将堆中的活跃对象按顺序移动到堆的一侧，消除对象之间的空闲区域，起到压缩的作用。</p>
+<p>接下来将陆续介绍几种GC标记-压缩算法。</p>
+<h2 id="Lisp2算法"><a href="#Lisp2算法" class="headerlink" title="Lisp2算法"></a>Lisp2算法</h2><p>Lisp2算法是Donald E. Knuth提出的，在该算法中，每个对象都有一个<code>forwarding</code>指针，初始值为NULL，每次GC结束后设置为空。这个指针保存在压缩阶段后每个活跃对象的新地址。下面是Lisp2算法中对象的示意图：</p>
+<p><img src="/assets/images/post_imgs/gc_35.png" alt="Lisp2算法中的对象"></p>
+<p>下面通过几张示例图来了解Lisp2算法的基本过程，执行GC前堆的情况如下：</p>
+<p><img src="/assets/images/post_imgs/gc_36.png" alt="Lisp2算法示例_执行GC前"></p>
+<p>标记阶段后：</p>
+<p><img src="/assets/images/post_imgs/gc_37.png" alt="Lisp2算法示例_标记阶段后"></p>
+<p>压缩阶段后：</p>
+<p><img src="/assets/images/post_imgs/gc_38.png" alt="Lisp2算法示例_压缩阶段后"></p>
+<p>可以看到，Lisp2算法将活跃对象移动到堆的一侧，且没有改变它们之间的相对顺序，另外对象之间的空闲空间也被压缩了，在执行GC标记-压缩算法后，对象和对象之间紧挨着的。</p>
+<p>我们来看一下压缩阶段发生了什么，伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">compaction_phase()&#123;</span><br><span class="line">    set_forwarding_ptr()</span><br><span class="line">    update_obj_ptr()</span><br><span class="line">    move_obj()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于标记阶段和GC标记-清除算法相同（遍历堆找出所有活跃对象），我们只看压缩阶段，分为三个步骤：</p>
+<ol>
+<li>更新forwarding指针</li>
+<li>更新对象指针</li>
+<li>移动对象</li>
+</ol>
+<h3 id="阶段一——更新forwarding指针"><a href="#阶段一——更新forwarding指针" class="headerlink" title="阶段一——更新forwarding指针"></a>阶段一——更新forwarding指针</h3><p>forwarding指针用来标识压缩阶段后每个活跃对象的新地址，Lisp2算法在压缩阶段的一开始就需要为每个活跃对象标识出它们的新地址。做法很简单，以下是伪代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">set_forwarding_ptr()&#123;</span><br><span class="line">    scan = new_address = $heap_start</span><br><span class="line">    <span class="keyword">while</span>(scan &lt; $heap_end)&#123;</span><br><span class="line">        <span class="keyword">if</span>(scan.mark == TRUE)&#123;</span><br><span class="line">            scan.forwarding = new_address</span><br><span class="line">            new_address += scan.size</span><br><span class="line">        &#125;</span><br><span class="line">        scan += scan.size</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行<code>set_forwarding_ptr</code>前，堆的情况如下图：</p>
+<p><img src="/assets/images/post_imgs/gc_39.png" alt="Lisp2算法示例_执行set_forwarding_ptr前"></p>
+<p>执行<code>set_forwarding_ptr</code>后，堆的情况如下图：</p>
+<p><img src="/assets/images/post_imgs/gc_40.png" alt="Lisp2算法示例_执行set_forwarding_ptr后"></p>
+<p>每个对象中的红色箭头(forwarding指针)指向的位置就是该对象在GC后在堆中的位置。</p>
+<h3 id="阶段二——更新对象指针"><a href="#阶段二——更新对象指针" class="headerlink" title="阶段二——更新对象指针"></a>阶段二——更新对象指针</h3><p>伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">update_obj_ptr()&#123;</span><br><span class="line">    <span class="keyword">for</span>(obj in $root)</span><br><span class="line">        obj = obj.forwarding</span><br><span class="line"></span><br><span class="line">    scan = $heap_start</span><br><span class="line">    <span class="keyword">while</span>(scan &lt; $heap_end)&#123;</span><br><span class="line">        <span class="keyword">if</span>(scan.mark == TRUE)&#123;</span><br><span class="line">            <span class="keyword">for</span>(child in scan.children)</span><br><span class="line">                child = child.forwarding</span><br><span class="line">        &#125;</span><br><span class="line">        scan += scan.size</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>更新对象指针的步骤也很好理解，首先将根直接引用对象的指针更新为各自的forwarding指针，然后遍历堆，将所有活跃对象的子对象引用也更新为各自的forwarding指针。这就完成了活跃对象的指针更新。更新对象指针后堆的情况如下图：；</p>
+<p><img src="/assets/images/post_imgs/gc_41.png" alt="Lisp2算法示例_更新对象指针后"></p>
+<h3 id="阶段三——移动对象"><a href="#阶段三——移动对象" class="headerlink" title="阶段三——移动对象"></a>阶段三——移动对象</h3><p>该阶段会遍历堆，将所有活动对象移动到其forwarding指针指向的地址。伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">move_obj()&#123;</span><br><span class="line">    scan = $free = $heap_start</span><br><span class="line">    <span class="keyword">while</span>(scan &lt; $heap_end)&#123;</span><br><span class="line">        <span class="keyword">if</span>(scan.mark == TRUE)&#123;</span><br><span class="line">            new_address = scan.forwarding</span><br><span class="line">            copy_data(new_address, scan, scan.size)</span><br><span class="line">            new_address.mark = FALSE</span><br><span class="line">            new_address.forwarding = NULL</span><br><span class="line">            $free += new_address.size</span><br><span class="line">        &#125;</span><br><span class="line">        scan += scan.size</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意在移动对象时，需要将新地址处对象的<code>mark</code>设为FALSE，<code>forwarding</code>设为NULL。<code>$free</code>是堆的空闲区域开始地址。</p>
+<p>移动对象阶段后，堆的情况如下图：</p>
+<p><img src="/assets/images/post_imgs/gc_42.png" alt="Lisp2算法示例_移动对象后"></p>
+<h3 id="优点和缺点"><a href="#优点和缺点" class="headerlink" title="优点和缺点"></a>优点和缺点</h3><p>Lisp2算法的优点是相比GC复制算法，堆的空间利用率提高了，因为不再需要区分<code>from</code>空间和<code>to</code>空间，压缩带来的好处是堆的已使用空间更加紧凑，内存分配效率高。</p>
+<p>Lisp2算法的缺点也很明显，需要遍历四次堆：标记阶段一次、更新forwarding指针阶段一次、更新对象指针阶段一次、移动对象阶段一次。堆越大，该算法的成本越高，吞吐率也会下降。另外在Lisp2算法中每个对象都要有一个forwarding指针，不管对象有多大这个空间消耗都是固定的。</p>
+<h2 id="Two-Finger算法"><a href="#Two-Finger算法" class="headerlink" title="Two-Finger算法"></a>Two-Finger算法</h2><p>有人提出了一种叫Two-Finger的算法，这个算法的特点是所有对象的大小必须一致，在这种算法中也有forwarding指针，但不需要为每个对象专门准备forwarding指针，因为可以使用原对象的某个域充当forwarding指针。这个算法相比Lisp2算法的优势是只需要遍历两次堆，因此吞吐率比较高。</p>
+<p>Two-Finger算法分为两个步骤：</p>
+<ol>
+<li>移动对象</li>
+<li>更新对象指针</li>
+</ol>
+<p>刚才提到在Two-Finger算法中每个对象的大小必须一致，因此可以将活跃对象移动到非活跃对象的空间中，GC之后所有活跃对象就会集中在堆的一侧，空闲空间在另一侧。</p>
+<p><img src="/assets/images/post_imgs/gc_43.png" alt="Two-Finger算法示例"></p>
+<p>如上图所示，从堆的末尾向前寻找活跃对象，将其填充到前面的非活跃对象空间内。</p>
+<h3 id="阶段一——移动对象"><a href="#阶段一——移动对象" class="headerlink" title="阶段一——移动对象"></a>阶段一——移动对象</h3><p>由于所有对象的大小都是一样的，假设这个大小为<code>OBJ_SIZE</code>，有一个<code>$free</code>指针从<code>$heap_start</code>开始，一个<code>live</code>指针从堆中最后一个对象处(<code>$heap_end</code> - OBJ_SIZE)开始。<code>$free</code>指针负责查找非活跃对象，<code>live</code>指针寻找活跃对象，并将其移动到<code>$free</code>指针指向的空间。另外需要在<code>live</code>指针指向的每个原对象处设置一个<code>forwarding</code>指针，将其指向移动后的那个对象。</p>
+<p>伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">move_obj()&#123;</span><br><span class="line">    $free = $heap_start</span><br><span class="line">    live = $heap_end - OBJ_SIZE</span><br><span class="line">    <span class="keyword">while</span>(TRUE)&#123;</span><br><span class="line">        <span class="keyword">while</span>($free.mark == TRUE)  <span class="comment">// 直到找到一个非活跃对象为止</span></span><br><span class="line">            $free += OBJ_SIZE</span><br><span class="line">        <span class="keyword">while</span>(live.mark == FALSE)  <span class="comment">// 直到找到一个活跃对象为止</span></span><br><span class="line">            live -= OBJ_SIZE</span><br><span class="line">        <span class="keyword">if</span>($free &lt; live)&#123;</span><br><span class="line">            copy_data($free, live, OBJ_SIZE)</span><br><span class="line">            live.forwarding = $free</span><br><span class="line">            live.mark = FALSE</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="阶段二——更新对象指针-1"><a href="#阶段二——更新对象指针-1" class="headerlink" title="阶段二——更新对象指针"></a>阶段二——更新对象指针</h3><p>对象移动完毕后，堆中地址位于<code>$free</code>指针之前的对象应该都是活跃对象了，<code>$free</code>指针之后的对象则有两种可能：</p>
+<ol>
+<li>非活跃对象</li>
+<li>已经被移动的对象</li>
+</ol>
+<p>非活跃对象我们已不关心，这里需要关注<code>已经被移动的对象</code>。</p>
+<p>有了上面的信息我们就有一个判断准则：如果一个活跃对象（或其子对象）的地址位于<code>$free</code>之后，它已经已经被移动到了<code>$free</code>之前的某个位置，这个位置保存在这个对象的<code>forwarding</code>指针内。此时我们必须更新这个对象和所有其子对象的指针。</p>
+<p>伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">update_obj_ptr()&#123;</span><br><span class="line">    <span class="keyword">for</span>(obj in $root)&#123;</span><br><span class="line">        <span class="keyword">if</span>(&amp;obj &gt;= $free)&#123;</span><br><span class="line">            obj = obj.forwarding</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    scan = $heap_start</span><br><span class="line">    <span class="keyword">while</span>(scan &lt; $free)&#123;</span><br><span class="line">        scan.mark = FALSE</span><br><span class="line">        <span class="keyword">for</span>(child in scan.children)&#123;</span><br><span class="line">            <span class="keyword">if</span>(&amp;child &gt;= $free)&#123;</span><br><span class="line">                child = child.forwarding</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        scan += OBJ_SIZE</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="优点和缺点-1"><a href="#优点和缺点-1" class="headerlink" title="优点和缺点"></a>优点和缺点</h3><p>Two-Finger算法的优点是只需要遍历两次堆，效率较高，吞吐率也比Lisp2算法好，且不需要专门为每个用户维护一个forwarding指针，不浪费空间。</p>
+<p>Two-Finger算法的缺点也是相当明显的，它有一个明显的限制：所有对象大小必须一致，这是非常麻烦的一个限制，有一种缓解的方式是将堆分成几个部分，每个部分中的对象大小一致，然后各个部分使用Two-Finger算法做GC。另外一个问题是，Two-Finger算法移动对象时没有将有引用关系的对象放在同一个内存页内，导致无法利用高速缓存。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/垃圾回收/">垃圾回收</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/30/MySQL中Innodb的B-Tree索引/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          MySQL中Innodb的B-Tree索引
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/28/Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#GC标记-压缩算法概述"><span class="nav-number">1.</span> <span class="nav-text">GC标记-压缩算法概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lisp2算法"><span class="nav-number">2.</span> <span class="nav-text">Lisp2算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#阶段一——更新forwarding指针"><span class="nav-number">2.1.</span> <span class="nav-text">阶段一——更新forwarding指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#阶段二——更新对象指针"><span class="nav-number">2.2.</span> <span class="nav-text">阶段二——更新对象指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#阶段三——移动对象"><span class="nav-number">2.3.</span> <span class="nav-text">阶段三——移动对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优点和缺点"><span class="nav-number">2.4.</span> <span class="nav-text">优点和缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Two-Finger算法"><span class="nav-number">3.</span> <span class="nav-text">Two-Finger算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#阶段一——移动对象"><span class="nav-number">3.1.</span> <span class="nav-text">阶段一——移动对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#阶段二——更新对象指针-1"><span class="nav-number">3.2.</span> <span class="nav-text">阶段二——更新对象指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优点和缺点-1"><span class="nav-number">3.3.</span> <span class="nav-text">优点和缺点</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

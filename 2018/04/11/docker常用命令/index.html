@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>docker常用命令 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="docker">
+  
+  
+  
+  
+  <meta name="description" content="本文主要记录docker常用命令">
+<meta name="keywords" content="docker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker常用命令">
+<meta property="og:url" content="https://nullcc.github.io/2018/04/11/docker常用命令/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文主要记录docker常用命令">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.023Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="docker常用命令">
+<meta name="twitter:description" content="本文主要记录docker常用命令">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-docker常用命令" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      docker常用命令
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/04/11/docker常用命令/" class="article-date">
+	  <time datetime="2018-04-10T16:00:00.000Z" itemprop="datePublished">四月 11, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/docker/">docker</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文主要记录docker常用命令</p>
+<a id="more"></a>
+<h2 id="查看docker基本信息"><a href="#查看docker基本信息" class="headerlink" title="查看docker基本信息"></a>查看docker基本信息</h2><p><code>docker version</code>  当前docker版本的详细信息</p>
+<p><code>docker -v</code>       当前docker版本的简略（只显示版本号和发布号）</p>
+<p><code>docker info</code>     docker当前状态</p>
+<h2 id="容器"><a href="#容器" class="headerlink" title="容器"></a>容器</h2><p><code>docker ps</code>                 查看当前正在运行容器的状态</p>
+<p><code>docker ps -a</code>              查看所有容器的状态</p>
+<p><code>docker rm [container]</code>  删除指定容器</p>
+<p><code>docker diff [container]</code> 查看容器存储层的改动</p>
+<p><code>docker logs [container]</code> 查看容器的日志</p>
+<p><code>docker logs -f [container]</code> 持续输出容器的日志</p>
+<p><code>docker volume prune</code> 清理无主的数据卷</p>
+<h2 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h2><p><code>docker search [image]</code>  搜索镜像</p>
+<p><code>docker pull [image]</code>    pull镜像到本地</p>
+<p><code>docker push [image]</code>    push镜像到hub</p>
+<p><code>docker images</code>或<code>docker image ls</code>  列出所有本地顶层镜像</p>
+<p><code>docker images -a</code>或<code>docker image ls -a</code>  列出所有本地镜像（包括顶层镜像和中间层镜像）</p>
+<p><code>docker images [image]:[image tag]</code>或<code>docker image ls [image]:[image tag]</code>  列出本地所有指定的镜像名（tag为可选）</p>
+<p><code>docker rmi [image]</code>或<code>docker image rm [image]</code>  删除指定镜像（注意：删除某个镜像前必须将依赖该镜像的所有容器先删除，否则会报错）</p>
+<p><code>docker rmi $(docker image ls -q [image])</code>  删除指定的所有镜像</p>
+<p><code>docker history [image]</code> 查看镜像的历史记录</p>
+<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><p><code>docker build -t [user]/[repo]:[version] .</code>  使用当前目录下的Dockerfile（默认，也可以用-f参数指定一个Dockerfile）构建一个名为[user]/[repo]:[version]的镜像，也可以不填用户名：<code>docker build -t [repo]:[version] .</code></p>
+<p><code>docker build -t [git repo url] [user]/[repo]:[version]</code>  从git repo url构建</p>
+<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p><code>docker start [container]</code>      启动指定容器</p>
+<p><code>docker stop [container]</code>       停止指定容器</p>
+<p><code>docker restart [container]</code>    重启指定容器</p>
+<p><code>docker pause [container]</code>      暂停容器中所有的进程</p>
+<p><code>docker unpause [container]</code>    恢复容器中所有的进程</p>
+<p><code>docker container prune</code>        清理所有处于终止状态的容器</p>
+<p><code>docker attach [container]</code>     进入某个容器（使用exit退出后容器也会跟着停止运行）</p>
+<p><code>docker exec -ti [container] /bin/bash</code>   启动一个伪终端以交互式的方式进入某个容器（使用exit退出后容器不停止运行，当需要进入容器时推荐使用exec）</p>
+<p><code>docker run -it [image] /bin/bash</code>  运行镜像并运行在交互模式（-it是两个选项，-i表示运行在交互模式，-t表示终端），在容器bash中使用exit会退出并关闭容器，如果想退出交互模式但不关闭容器，可以使用ctrl+p ctrl+q，如果想在退出容器时删除容器以节省空间的话，可以带上–rm参数</p>
+<p><code>docker commit -m &quot;[commit message]]&quot; -a &quot;[user name]&quot; [container id] [user name]/[image]:[image tag]</code>  进入一个容器后做修改，可以进行commit来构建一个新的镜像以保存这些修改，之后如果有需要可以在新镜像的基础上继续构建。-m表示本次提交的附带信息，-a表示提交的用户</p>
+<p><code>docker run -d -p [host port]:[container port] -v [host dir]:[container dir] --name [container name] [image]:[image tag]</code>  -d表示以deamon模式运行容器，-p表示将宿主机端口(host port)映射到容器端口(container port)，注意-p可以多次使用来映射多个端口，-v表示将宿主机的目录(host dir)映射到容器目录(container dir)，之所以需要映射目录是因为容器一旦退出，容器层面上的存储就会消失，容器的存储层是无状态的，它本身不能用来持久化任何数据，所以需要将需要持久化的数据映射到宿主机上，–name表示容器名称，注意后面的镜像名(image name)和镜像标签(image tag)都要有</p>
+<h2 id="docker-compose"><a href="#docker-compose" class="headerlink" title="docker-compose"></a>docker-compose</h2><p><code>docker-compose --version</code>  查看docker-compose版本<br><code>docker-compose up</code>  运行compose项目<br><code>docker-compose up --no-deps -d [service name]</code> 重新创建服务并后台停止旧服务，启动新服务，且并不会影响到其所依赖的服务</p>
+<h2 id="centos-7启动、停止和重启docker"><a href="#centos-7启动、停止和重启docker" class="headerlink" title="centos 7启动、停止和重启docker"></a>centos 7启动、停止和重启docker</h2><p><code>sudo systemctl start docker</code> 启动docker</p>
+<p><code>sudo systemctl stop docker</code> 停止docker</p>
+<p><code>sudo systemctl restart docker</code> 重启docker</p>
+<h2 id="添加源"><a href="#添加源" class="headerlink" title="添加源"></a>添加源</h2><p>修改<code>/etc/docker/daemon.json</code>：</p>
+<pre><code>{
+  &quot;registry-mirrors&quot;: [&quot;http://hub-mirror.c.163.com&quot;]
+}
+</code></pre><p>之后重启docker即可。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/docker/">docker</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/">docker</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/04/13/Linux下好用的命令收集/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Linux下好用的命令收集
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/03/15/CentOS搭建FTP Server/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">CentOS7搭建FTP Server</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#查看docker基本信息"><span class="nav-number">1.</span> <span class="nav-text">查看docker基本信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#容器"><span class="nav-number">2.</span> <span class="nav-text">容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#镜像"><span class="nav-number">3.</span> <span class="nav-text">镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构建"><span class="nav-number">4.</span> <span class="nav-text">构建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运行"><span class="nav-number">5.</span> <span class="nav-text">运行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#docker-compose"><span class="nav-number">6.</span> <span class="nav-text">docker-compose</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#centos-7启动、停止和重启docker"><span class="nav-number">7.</span> <span class="nav-text">centos 7启动、停止和重启docker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#添加源"><span class="nav-number">8.</span> <span class="nav-text">添加源</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

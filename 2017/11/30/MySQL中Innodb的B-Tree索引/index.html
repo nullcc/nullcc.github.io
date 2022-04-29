@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>MySQL中Innodb的B-Tree索引 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="数据库索引MySQL">
+  
+  
+  
+  
+  <meta name="description" content="本文将介绍MySQL中Innodb的B-Tree索引的相关知识。">
+<meta name="keywords" content="数据库索引,MySQL">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL中Innodb的B-Tree索引">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/30/MySQL中Innodb的B-Tree索引/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文将介绍MySQL中Innodb的B-Tree索引的相关知识。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/mysql_index_1.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.015Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySQL中Innodb的B-Tree索引">
+<meta name="twitter:description" content="本文将介绍MySQL中Innodb的B-Tree索引的相关知识。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/mysql_index_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-MySQL中Innodb的B-Tree索引" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      MySQL中Innodb的B-Tree索引
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/30/MySQL中Innodb的B-Tree索引/" class="article-date">
+	  <time datetime="2017-11-29T16:00:00.000Z" itemprop="datePublished">十一月 30, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文将介绍MySQL中Innodb的B-Tree索引的相关知识。</p>
+<a id="more"></a>
+<p>数据库索引是数据库开发中非常重要的一个部分，如果想写出好的查询，就必须对索引有比较深刻的理解。人们对索引的了解经常是一知半解的，这就导致很多误用的情况，不但没有提高查询性能，反而大大降低了性能。</p>
+<p>简单地说，索引是一种数据结构，我们可以利用索引来快速找到数据。一个现实生活中的例子是查字典，查字典有很多种方式，就中文字典来说，可以使用偏旁部首、拼音、笔画数等信息来查询，这实际上就是对一个字的不同属性建立了索引信息。查字典这个场景可以类比到数据库中，字典对应数据库的一张表，每个字对应表中的一行，每行中有偏旁部署、拼音、笔画数等信息的列，然后针对这些列建立索引。</p>
+<h2 id="B-Tree索引"><a href="#B-Tree索引" class="headerlink" title="B-Tree索引"></a>B-Tree索引</h2><p>大部分情况下我们谈论到索引都是B-Tree索引。在B-Tree索引中，数据是按照顺序被存储的，因此很适合查询范围数据。B-Tree索引的节点页不存放具体数据，它存放的是索引列的值和指向下一层节点页的指针，叶子页中则存放了指向具体数据的指针，且叶子页到根的距离都是相同的。下面是B-Tree索引的示意图（图片来自《高性能MySQL(第三版)》）：</p>
+<p><img src="/assets/images/post_imgs/mysql_index_1.png" alt="B-Tree索引"></p>
+<p>从图中可以发现，每个节点页中都保存了索引列的值，用来和具体的值进行比较，以找到合适的通往下层节点的指针。比如key1这个节点页，其左指针指向的是值小于key1的节点页，右指针指向的是值大于等于key1但小于key2的节点页。需要注意的是，每个叶子页中都保存了下一个叶子页的指针，方便直接查询下一个数据，这样就不用返回上一层重新查找了。</p>
+<p>在同层的节点页之间，也有如下关系（key是节点页的索引列的值）：</p>
+<p><em>key1 &lt; key2 &lt; … &lt; keyN</em></p>
+<p>在查找时，不需要进行全表扫描，而是从根节点出发，根节点保存了指向子节点的指针，存储引擎顺着这些指针向下查找，通过比较节点页的值和要查找的值就可以找到通往下层节点页的指针，直到找到匹配的一个或多个节点，如果没有找到匹配的节点，说明查询的值在表中不存在。</p>
+<p>在上图中只画出了一层节点页，实际上可能存在很多层节点页，表中的数据数量和树的深度相关。上图中叶子页中值是顺序排列的，因此范围查找的效率很高。</p>
+<p>B-Tree索引对于以下几类查询是适用的：</p>
+<ol>
+<li>全值匹配<br> 对索引中的所有列进行匹配。</li>
+<li>匹配最左前缀<br> 使用最左前缀规则匹配列。</li>
+<li>匹配列前缀<br> 匹配某一列的值的开头部分。</li>
+<li>匹配范围值<br> 匹配一个列中某个范围的值。</li>
+<li>精确匹配某一列并范围匹配另外一列<br> 这个应该很好理解。</li>
+<li>只访问索引的查询（覆盖索引）<br> 如果查询访问的所有列都在索引范围内，可以使用覆盖索引，这将大大提高查询的效率，因为不需要再去查找具体的数据行了。</li>
+</ol>
+<p>由于数据是按顺序排列的，所以对于<code>order by</code>操作，只要是符合最左前缀规则的，B-Tree索引都可以提供支持。</p>
+<p>刚才一直提到<code>最左前缀</code>，这到底是什么呢？用一个例子说明最合适不过了，假设有一个表如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="keyword">user</span>(</span><br><span class="line">    last_name <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">not</span> <span class="literal">null</span>,</span><br><span class="line">    first_name <span class="built_in">varchar</span>(<span class="number">50</span>) <span class="keyword">not</span> <span class="literal">null</span>,</span><br><span class="line">    birthday <span class="built_in">date</span> <span class="keyword">not</span> <span class="literal">null</span>,</span><br><span class="line">    <span class="keyword">key</span>(last_name, first_name, birthday)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这个表有一个索引，包含了<code>last_name</code>、<code>first_name</code>和<code>birthday</code>三列。以下是几种利用索引有限制的情况：</p>
+<ol>
+<li>查询特定<code>first_name</code>的用户将不能利用索引。</li>
+<li>查询特定<code>birthday</code>的用户将不能利用索引。</li>
+<li>查询特定<code>first_name</code>和特定<code>birthday</code>的用户将不能利用索引。</li>
+<li>查询<code>last_name</code>以’h’结尾的用户将不能利用索引。</li>
+<li>当查询特定的<code>last_name</code>和特定的<code>birthday</code>时（没有指定<code>first_name</code>），只能利用索引的第一列。</li>
+<li>如果某个条件是一个范围查询，则其后的所有列将无法利用索引，比如<code>where last_name=&#39;Smith&#39; and first_name like &#39;J%&#39; and birthday = &#39;1988-12-23&#39;</code>，这个查询只能利用索引的前两列。</li>
+</ol>
+<p>由此可以看出，在B-Tree索引中，索引列的顺序是非常重要的。并不是只要建立的相应列的索引，查询就一定能用上。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MySQL/">MySQL</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据库索引/">数据库索引</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/01/MySQL中Innodb的聚簇索引和非聚簇索引/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          MySQL中Innodb的聚簇索引和非聚簇索引
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/30/垃圾回收(GC)算法介绍(4)——GC标记-压缩算法/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">垃圾回收(GC)算法介绍(4)——GC标记-压缩算法</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#B-Tree索引"><span class="nav-number">1.</span> <span class="nav-text">B-Tree索引</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

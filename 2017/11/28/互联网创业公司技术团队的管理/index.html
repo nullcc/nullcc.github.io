@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>互联网创业公司技术团队的管理 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="技术管理">
+  
+  
+  
+  
+  <meta name="description" content="这几年基本上是在几家互联网创业公司度过，从最开始的iOS + 后端开发到最后专注于后端开发，有过一些感悟，也踩过一些坑，对此总结了一些经验和失败教训，这里简单记录一下。">
+<meta name="keywords" content="技术管理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="互联网创业公司技术团队的管理">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/28/互联网创业公司技术团队的管理/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="这几年基本上是在几家互联网创业公司度过，从最开始的iOS + 后端开发到最后专注于后端开发，有过一些感悟，也踩过一些坑，对此总结了一些经验和失败教训，这里简单记录一下。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.027Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="互联网创业公司技术团队的管理">
+<meta name="twitter:description" content="这几年基本上是在几家互联网创业公司度过，从最开始的iOS + 后端开发到最后专注于后端开发，有过一些感悟，也踩过一些坑，对此总结了一些经验和失败教训，这里简单记录一下。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-互联网创业公司技术团队的管理" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      互联网创业公司技术团队的管理
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/28/互联网创业公司技术团队的管理/" class="article-date">
+	  <time datetime="2017-11-27T16:00:00.000Z" itemprop="datePublished">十一月 28, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/技术管理/">技术管理</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这几年基本上是在几家互联网创业公司度过，从最开始的iOS + 后端开发到最后专注于后端开发，有过一些感悟，也踩过一些坑，对此总结了一些经验和失败教训，这里简单记录一下。</p>
+<a id="more"></a>
+<p>互联网创业公司的技术团队内都是比较朝气蓬勃的年轻人，初期的一般的构成是一到两个相对资深的程序员和一些资历尚浅的应届生或有1-3年工作经验的程序员。下面主要从技术选型、日常开发、代码审查、项目进度管理、部门间沟通和协作、团队建设等方面来细说。</p>
+<h2 id="技术选型"><a href="#技术选型" class="headerlink" title="技术选型"></a>技术选型</h2><p>互联网创业公司成立初期，甚至还没正式成立之前，技术人员就必须考虑技术选型的问题，因为这涉及到今后整个技术团队的发展方向。互联网创业公司大部分是以web或者app的形式面向用户，当然还有一些其他的形式，比如智能硬件或者多者结合，这里主要谈谈web和app的形式。在技术选型方面，要充分考虑该领域比较成熟的技术方案，成熟的技术都有很多现成的库可以使用，当你遇到问题时，可以快速找到答案，因为这些问题很多人已经遇到过了。另外使用成熟的技术时，招聘上也有优势，你不需要因为采用了非常小众的技术而费尽心思地去挖人和招聘，这有助于降低前期成本和HR的压力。</p>
+<p>当在团队内部推进一项技术方案前，请尽量调研市面上已经成功的案例，分析自己的业务为何需要采用新的技术方案，预估新方案的成本、开发难度、开发周期和可能对现有业务造成的副作用，不要根据个人喜好或仅仅是因为想尝鲜来推进/替换一个技术方案。</p>
+<p>当遇到一个比较难以解决的问题时，一般都有两条路：一是用一种比较暴力的方式去解决，二是充分分析这个问题，找到一个完美的解决方案。前者速度快，能够在一定程度上“解决”问题，后者消耗人力和时间都多，但效果最好。选择哪个方式需要看具体情况，要考虑这个功能是不是业务的核心功能，后期是否会有更复杂的需求和并发量，如果回答是肯定的，就需要认认真真地分析这个问题，否则可以依情况采用一些取巧的方式快速解决。</p>
+<p>技术和成本的关系也很密切，我们是使用云服务还是自己搭建服务器托管在运营商机房？需要为服务器的CPU、内存、硬盘、网络带宽等资源支多少费用？需要几台服务器？这些数据不能单靠想，最好要有测试数据支撑。建立一套性能测试标准，对你的系统进行测试，你才能知道什么时候需要扩容和缩容。</p>
+<h2 id="日常开发"><a href="#日常开发" class="headerlink" title="日常开发"></a>日常开发</h2><p>代码版本控制是必须的，重要性无须多说。且应该是你在写代码之前就已经准备好的，不管是使用代码版本控制的云服务还是自建代码版本控制仓库，总之必须要做代码版本控制。</p>
+<p>程序员们经常陷入一种自我矛盾中：到底要不要写测试代码，单元测试、集成测试、性能测试这些东西如果真的要全部实现，工作量会非常大，所有模块都配备完整的测试代码并不现实，所以我们需要甄别哪些模块今后可能迭代会非常频繁，针对这些模块最好要有相应的单元测试和集成测试，当你为这些模块的迭代忙得不可开交时你会感谢自己之前写过的测试代码。</p>
+<p>建立一套运行持续集成（CI）系统也很重要，在每次代码分支合并，都自动运行代码拉取、自动部署、自动运行测试代码，这不仅有利于解放双手减少机械劳动，还有利于快速发现问题和修复。另外在测试过程中发现的bug，如果可能的话，尽量将其测试脚本化后加入到现有的测试脚本库中，时间久了以后你就会拥有一个测试宝库。</p>
+<p>团队内需要制定代码规范，最好能写成具体的文档，每个新来的成员入职后阅读。在代码审查中，也需要互相监督代码规范的问题。代码规范的另一个很好的监督办法是使用一些LINT工具，在配置文件内设置代码规范，比如Python的PEP-8规范，使用CI实现自动化代码规范检查。</p>
+<h2 id="代码审查"><a href="#代码审查" class="headerlink" title="代码审查"></a>代码审查</h2><p>代码审查是经常被忽略的一件事，有时候为了求快，做完一个功能就立刻提交到版本控制系统中，然后就测试。这其实并不是一个好习惯，这会让一些新手程序员养成很随意的风格：只要能实现功能就提交测试，出错了再改。理论上来说，每一次提交都应该很慎重，特别是项目参与者比较多和项目复杂以后。适当地引入代码审查机制是有好处的，可以在组内互相审查，提出改进意见。越多人审阅过你的代码，上线的时候出错的概率就越小，员工今后也会慢慢变得更加谨慎和深思熟虑。</p>
+<h2 id="项目进度管理"><a href="#项目进度管理" class="headerlink" title="项目进度管理"></a>项目进度管理</h2><p>项目进度管理不能仅仅是项目经理的口头过问和项目进度邮件中的文字这种相对静态的东西，而应该是更加动态实时的。尝试使用一些项目进度管理工具，项目管理人员，包括项目经理、各个team leader需要时刻掌握这些信息，迭代项目进度预估的数据，使项目进度管理不是一纸空文。</p>
+<h2 id="部门间沟通和协作"><a href="#部门间沟通和协作" class="headerlink" title="部门间沟通和协作"></a>部门间沟通和协作</h2><p>互联网创业公司肯定不止一个技术部门，但技术部门都是非常核心的，所有需求的最终实现者。技术部门要配合的部门很多：产品、设计、运营、商务、财务，当然还有老板本人。做为最忙碌的部门之一，技术部门和其他部门的沟通和协作至关重要。</p>
+<p>一般来说，建议在部门内设置小组，比如：web前端小组、web后端小组、app开发组等，小组内还可以继续细分，如果人员本来就非常少，就不需要分得太细，也可以按照项目来分，具体方式可以自己把握。每个小组设置一个组长（可能会有一个人身兼多个小组长的可能），组长会辛苦一点，日常组间沟通、和技术部门领导沟通、任务分配和时间预估等事项需要小组长参与，其余组员不太需要参与，可以专心做业务。另外在人员数量较多的情况下，为了减轻组长的压力也可以设置两个组长互为主备，日常切换由组内自己定夺。</p>
+<h2 id="团队建设"><a href="#团队建设" class="headerlink" title="团队建设"></a>团队建设</h2><p>技术团队内可以组织一些技术分享会，可以由几个活跃分子牵头，将开发中遇到的问题总结出来，或者最近研究的技术心得，向部门的成员分享。这个活动应该是充分自由的，不应该称为团队成员的负担。</p>
+<p>定期向员工征集书单（工作相关的），公司购买后员工可借阅。</p>
+<p>制定导师计划，当新入职的成员是应届生或者毕业后工作不满2年（这个时间可以视情况而定），最好制定一个导师进行一段时间的指导。导师需要了解新人之前工作的一些情况，带他熟悉项目代码，加快新员工的熟悉进度，尽快投入到实际工作中。</p>
+<p>不建议HR部门过多干涉技术部门员工的事情，比如KPI。技术部门的业绩应该有自己独立的一套评定体系。</p>
+<p>在互联网创业公司中，技术部门的每个人都是多面手，经常要同时处理很多项目，因此对员工的自觉性、学习能力和学习态度有比较高的要求。要充分利用员工的试用期（考核期），在考核期内，导师必须观察和评定新人的能力和不足，帮助新人进步。一段时间内表现欠佳的，需要谈话，如果考核期到但表现还是没有进步的，要毫不犹豫辞退，这样也是对其他员工的公平。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/技术管理/">技术管理</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/技术管理/">技术管理</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/28/Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/27/Web后端系统架构漫谈(4)——LVS的三种工作方式/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Web后端系统架构漫谈(4)——LVS的三种工作方式</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#技术选型"><span class="nav-number">1.</span> <span class="nav-text">技术选型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日常开发"><span class="nav-number">2.</span> <span class="nav-text">日常开发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码审查"><span class="nav-number">3.</span> <span class="nav-text">代码审查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#项目进度管理"><span class="nav-number">4.</span> <span class="nav-text">项目进度管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#部门间沟通和协作"><span class="nav-number">5.</span> <span class="nav-text">部门间沟通和协作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#团队建设"><span class="nav-number">6.</span> <span class="nav-text">团队建设</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

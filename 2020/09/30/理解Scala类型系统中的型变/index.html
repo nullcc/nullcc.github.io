@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>理解Scala类型系统中的型变 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Scala类型系统设计模式">
+  
+  
+  
+  
+  <meta name="description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
+<meta name="keywords" content="Scala,类型系统,设计模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解Scala类型系统中的型变">
+<meta property="og:url" content="https://nullcc.github.io/2020/09/30/理解Scala类型系统中的型变/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.036Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解Scala类型系统中的型变">
+<meta name="twitter:description" content="本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-理解Scala类型系统中的型变" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      理解Scala类型系统中的型变
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2020/09/30/理解Scala类型系统中的型变/" class="article-date">
+	  <time datetime="2020-09-29T16:00:00.000Z" itemprop="datePublished">九月 30, 2020</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文深入解析了Scala类型系统中的三种型变：协变、逆变和不变。</p>
+<a id="more"></a>
+<p>Scala类型系统中的型变有三种形式：协变、逆变和不变。在深入理解型变之前，有必要回顾一下设计模式中的一个关键概念：里氏替换原则。</p>
+<h2 id="型变的核心：里氏替换原则"><a href="#型变的核心：里氏替换原则" class="headerlink" title="型变的核心：里氏替换原则"></a>型变的核心：里氏替换原则</h2><p>里式替换原则有两个关键点：</p>
+<ol>
+<li>任何使用父类的地方都可以用它的子类替换而不会产生任何异常，但反过来则不行。</li>
+<li>子类重载（注意不是重写）父类的方法的入参的限制要比父类的相应方法更宽松，但返回值要比父类更严格。</li>
+</ol>
+<p>第一点比较好理解，即<strong>父类知道的，子类都知道；子类知道的，父类未必知道</strong>，就不赘述了。</p>
+<p>关于第二点，先来看一个例子：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[+<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(in: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(in)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码无法通过编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">covariant type T occurs in contravariant position in type T of value in</span><br><span class="line">  def process(in: T): Unit = &#123;</span><br><span class="line">              ^</span><br></pre></td></tr></table></figure>
+<p>编译器给出的异常信息表明，SignalProcessor类的process方法的入参in是泛型类型T的逆变点，但我们给了一个协变的定义。初看这种报错基本上是一头雾水，要搞清楚根本原因我们需要具体分析一下这个SignalProcessor类。</p>
+<p>有如下代码：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> anySignalProcessor = <span class="keyword">new</span> <span class="type">SignalProcessor</span>[<span class="type">AnyRef</span>]</span><br><span class="line"><span class="keyword">val</span> stringSignalProcessor = <span class="keyword">new</span> <span class="type">SignalProcessor</span>[<span class="type">String</span>]</span><br></pre></td></tr></table></figure>
+<p>考察SignalProcessor[AnyRef]和ignalProcessor[String]的类型关系，无非两种情况：</p>
+<ol>
+<li>SignalProcessor[String]是SignalProcessor[AnyRef]的子类型。</li>
+<li>SignalProcessor[AnyRef]是SignalProcessor[String]的子类型。</li>
+</ol>
+<p>第一种假设，根据里式替换原则，出现SignalProcessor[AnyRef]的地方都要可以用SignalProcessor[String]来替换：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> foo: <span class="type">Integer</span> = <span class="number">1</span></span><br><span class="line">anySignalProcessor.process(foo) <span class="comment">// OK</span></span><br><span class="line">stringSignalProcessor.process(foo) <span class="comment">// Oops! Type mismatch, expected: String, actual: Integer</span></span><br></pre></td></tr></table></figure>
+<p>由于SignalProcessor[String]不能处理非String的入参，也就不能替换SignalProcessor[AnyRef]，假设一不成立。</p>
+<p>第二种假设，根据里式替换原则，出现SignalProcessor[String]的地方都要可以用SignalProcessor[AnyRef]来替换：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> bar: <span class="type">String</span> = <span class="string">"abc"</span></span><br><span class="line">stringSignalProcessor.process(bar) <span class="comment">// OK</span></span><br><span class="line">anySignalProcessor.process(bar) <span class="comment">// OK</span></span><br></pre></td></tr></table></figure>
+<p>因此假设二是成立的。</p>
+<p>所以，<strong>SignalProcessor[AnyRef]是SignalProcessor[String]的子类型</strong>，process方法在子类的入参<code>AnyRef</code>也确实比父类的入参<code>String</code>更宽松。此时刚才提到的式替换原则的第二个关键点的上半句：“子类重载（注意不是重写）父类的方法的入参的限制要比父类的相应方法更宽松”就很好理解了。</p>
+<p>回到刚才那段编译报错的代码，应该改为：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(in: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(in)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由上可见，泛型类的<strong>方法参数</strong>导致了泛型类型在子类和父类关系上发生了逆转。因此，<strong>方法参数的位置被称为逆变点(contravariant position)</strong>。也可以说<strong>泛型类在方法参数上是逆变的</strong>。</p>
+<p>再来看下半句“子类方法的返回值要比父类更严格”，如果process方法返回一个值，这个值一般会被process方法的调用方消费，比如作为另一个方法的参数：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(): <span class="type">T</span> = &#123;</span><br><span class="line">    <span class="literal">null</span>.asInstanceOf[<span class="type">T</span>]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码也会报错，但报错信息和之前稍有不同：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">error: contravariant type T occurs in covariant position in type (): T of method process</span><br><span class="line">  def process(): T = &#123;</span><br><span class="line">      ^</span><br></pre></td></tr></table></figure>
+<p>意思是SignalProcessor类的process方法的出参是泛型类型T的协变点，但我们给了一个逆变的定义。</p>
+<p>在这个例子中，对于泛型类在方法的泛型出参上的父子类型关系也无非两种情况：</p>
+<ol>
+<li>SignalProcessor[AnyRef]的process方法的返回值类型是SignalProcessor[String]的process方法的返回值类型的子类型。</li>
+<li>SignalProcessor[String]的process方法的返回值类型是SignalProcessor[AnyRef]的process方法的返回值类型的子类型。</li>
+</ol>
+<p>为了使得之后使用process方法的返回值的调用符合里式替换原则，很显然SignalProcessor[String]的process方法的返回值必须得是SignalProcessor[AnyRef]的process方法的返回值的子类型。</p>
+<p>SignalProcessor[String]的process的返回值在类型上确实需要比SignalProcessor[AnyRef]更严格。</p>
+<p>由上可见，泛型类的<strong>方法返回值</strong>需要符合泛型类型的子类和父类的关系。因此，<strong>方法返回值的位置被称为协变点(covariant position)</strong>。也可以说，<strong>泛型类在方法返回值上是协变的</strong>。</p>
+<p>因此上面这段代码应该改成：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SignalProcessor</span>[+<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">process</span></span>(): <span class="type">T</span> = &#123;</span><br><span class="line">    <span class="literal">null</span>.asInstanceOf[<span class="type">T</span>]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>论证完里式替换原则的两个关键点，Scala的型变就非常好理解了。</p>
+<h2 id="协变"><a href="#协变" class="headerlink" title="协变"></a>协变</h2><p>假设A是B的子类型，另有泛型类Foo[+T]，则Foo[A]是Foo[B]的子类型，这被称为协变。例子：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Material</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Liquid</span> <span class="keyword">extends</span> <span class="title">Material</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Container</span>[+<span class="type">T</span>] (<span class="params">private val item: <span class="type">T</span></span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">get</span></span>(): <span class="type">T</span> = item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> liquidContainer = <span class="keyword">new</span> <span class="type">Container</span>[<span class="type">Liquid</span>](<span class="keyword">new</span> <span class="type">Liquid</span>)</span><br><span class="line"><span class="keyword">val</span> materialContainer: <span class="type">Container</span>[<span class="type">Material</span>] = liquidContainer <span class="comment">// OK</span></span><br><span class="line">println(materialContainer.get()) <span class="comment">// Main$$anon$1$Liquid@6035b93b</span></span><br></pre></td></tr></table></figure>
+<p>在需要<code>Container[Material]</code>的地方可以用<code>Container[Liquid]</code>替换，反之则不行：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Material</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Liquid</span> <span class="keyword">extends</span> <span class="title">Material</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Container</span>[+<span class="type">T</span>] (<span class="params">private val item: <span class="type">T</span></span>) </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">get</span></span>(): <span class="type">T</span> = item</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> materialContainer = <span class="keyword">new</span> <span class="type">Container</span>[<span class="type">Material</span>](<span class="keyword">new</span> <span class="type">Material</span>)</span><br><span class="line"><span class="keyword">val</span> liquidContainer: <span class="type">Container</span>[<span class="type">Liquid</span>] = materialContainer <span class="comment">// Oops!</span></span><br></pre></td></tr></table></figure>
+<p>这段代码会报错：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">error: type mismatch;</span><br><span class="line">found   : this.Container[this.Material]</span><br><span class="line">required: this.Container[this.Liquid]</span><br><span class="line">val liquidContainer: Container[Liquid] = materialContainer</span><br></pre></td></tr></table></figure>
+<p>协变很好理解，液体(Liquid)是一种物质(Material)，因此液体容器(Container[Liquid])是一种物质容器(Container[Material])。根据里式替换原则，这里我可以把使用Container[Material]类型对象的地方替换成使用Container[Liquid]类型的对象，获取到的是Liquid，这是可以的，因为Liquid是一种Material。</p>
+<h2 id="逆变"><a href="#逆变" class="headerlink" title="逆变"></a>逆变</h2><p>假设A是B的子类型，另有泛型类Foo[-T]，则Foo[B]是Foo[A]的子类型。例子：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Bear</span> <span class="keyword">extends</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Hunter</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">hunt</span></span>(t: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(<span class="string">"Caught "</span> + t)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> animalHunter = <span class="keyword">new</span> <span class="type">Hunter</span>[<span class="type">Animal</span>]</span><br><span class="line"><span class="keyword">val</span> bearHunter: <span class="type">Hunter</span>[<span class="type">Bear</span>] = animalHunter</span><br><span class="line">bearHunter.hunt(<span class="keyword">new</span> <span class="type">Bear</span>) <span class="comment">// Caught Main$$anon$1$Bear@aa549e5</span></span><br></pre></td></tr></table></figure>
+<p>在需要<code>Hunter[Bear]</code>的地方可以用<code>Hunter[Animal]</code>替换，反之则不行：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Bear</span> <span class="keyword">extends</span> <span class="title">Animal</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Hunter</span>[-<span class="type">T</span>] </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">hunt</span></span>(t: <span class="type">T</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    println(<span class="string">"Caught "</span> + t)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> bearHunter = <span class="keyword">new</span> <span class="type">Hunter</span>[<span class="type">Bear</span>]</span><br><span class="line"><span class="keyword">val</span> animalHunter: <span class="type">Hunter</span>[<span class="type">Animal</span>] = bearHunter <span class="comment">// Oops!</span></span><br></pre></td></tr></table></figure>
+<p>这段代码会报错：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">error: type mismatch;</span><br><span class="line"> found   : this.Hunter[this.Bear]</span><br><span class="line"> required: this.Hunter[this.Animal]</span><br><span class="line">val animalHunter: Hunter[Animal] = bearHunter</span><br></pre></td></tr></table></figure>
+<p>逆变理解起来不如协变直观。根据逆变的逻辑，在这段代码中，熊(Bear)是一种动物(Animal)，那么动物猎人(Hunter[Animal])是一种猎熊者(Hunter[Bear])。这个逻辑好像有点违反常识，不是应该说猎熊者(Hunter[Bear])是一种动物猎人(Hunter[Animal])吗？但是如果套用里氏替换原则中的概念：在需要基类的地方，都可以用子类替换，但反过来则不行。</p>
+<p>逆变的道理也是一样的，在需要Hunter[Bear]的地方，我们用一个Hunter[Animal]去替代是可以的，因为动物猎人掌握狩猎一切动物的技能，这当然也包括猎熊。但是反过来，在需要Hunter[Animal]的地方，我们无法用Hunter[Bear]去替代，因为动物猎人是全能的，猎熊者只知道如何狩猎熊，如果换成麋鹿，Hunter[Bear]就不灵了。</p>
+<p>根据这个逻辑，不难得出Hunter[Animal]应该是Hunter[Bear]的子类型。</p>
+<h2 id="不变"><a href="#不变" class="headerlink" title="不变"></a>不变</h2><p>如果一个泛型类在类型参数上不加任何修饰，那这个泛型类在这个类型参数上就是不变的，比如Foo[T]。不变也是很有用的，这里引用Scala官方文档中的一个例子：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Animal</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">name</span></span>: <span class="type">String</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">case</span> <span class="class"><span class="keyword">class</span> <span class="title">Cat</span>(<span class="params">name: <span class="type">String</span></span>) <span class="keyword">extends</span> <span class="title">Animal</span></span></span><br><span class="line"><span class="class"><span class="title">case</span> <span class="title">class</span> <span class="title">Dog</span>(<span class="params">name: <span class="type">String</span></span>) <span class="keyword">extends</span> <span class="title">Animal</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class"><span class="title">class</span> <span class="title">Container</span>[<span class="type">A</span>](<span class="params">value: <span class="type">A</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">var</span> _value: <span class="type">A</span> = value</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">getValue</span></span>: <span class="type">A</span> = _value</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">setValue</span></span>(value: <span class="type">A</span>): <span class="type">Unit</span> = &#123;</span><br><span class="line">    _value = value</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> catContainer: <span class="type">Container</span>[<span class="type">Cat</span>] = <span class="keyword">new</span> <span class="type">Container</span>(<span class="type">Cat</span>(<span class="string">"Felix"</span>))</span><br><span class="line"><span class="keyword">val</span> animalContainer: <span class="type">Container</span>[<span class="type">Animal</span>] = catContainer</span><br><span class="line">animalContainer.setValue(<span class="type">Dog</span>(<span class="string">"Spot"</span>))</span><br><span class="line"><span class="keyword">val</span> cat: <span class="type">Cat</span> = catContainer.getValue <span class="comment">// 糟糕，这里会将一只狗赋值给一只猫！</span></span><br></pre></td></tr></table></figure>
+<p>还好这段代码无法通过编译，因为编译器会阻止我们这么做。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Scala/">Scala</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/类型系统/">类型系统</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/设计模式/">设计模式</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2021/04/02/transformer+source map实现TypeScript函数+行列级别错误定位/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          transformer+source map实现TypeScript函数+行列级别错误定位
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/04/19/LL(1)语法解析器的一次简单实践/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">LL(1)语法解析器的一次简单实践</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#型变的核心：里氏替换原则"><span class="nav-number">1.</span> <span class="nav-text">型变的核心：里氏替换原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#协变"><span class="nav-number">2.</span> <span class="nav-text">协变</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#逆变"><span class="nav-number">3.</span> <span class="nav-text">逆变</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不变"><span class="nav-number">4.</span> <span class="nav-text">不变</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

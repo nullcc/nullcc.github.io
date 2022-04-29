@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>使用ElasticSearch搭建高性能可扩展的全文搜索引擎 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="ElasticSearch">
+  
+  
+  
+  
+  <meta name="description" content="准备环境 下载 ElasticSearch  最新版本下载:  https://www.elastic.co/downloads/elasticsearch指定版本下载:  https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-[版本号].zip">
+<meta name="keywords" content="ElasticSearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用ElasticSearch搭建高性能可扩展的全文搜索引擎">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/18/使用ElasticSearch搭建高性能可扩展的全文搜索引擎/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="准备环境 下载 ElasticSearch  最新版本下载:  https://www.elastic.co/downloads/elasticsearch指定版本下载:  https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-[版本号].zip">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_usage_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_usage_2.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.028Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用ElasticSearch搭建高性能可扩展的全文搜索引擎">
+<meta name="twitter:description" content="准备环境 下载 ElasticSearch  最新版本下载:  https://www.elastic.co/downloads/elasticsearch指定版本下载:  https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-[版本号].zip">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_usage_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-使用ElasticSearch搭建高性能可扩展的全文搜索引擎" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      使用ElasticSearch搭建高性能可扩展的全文搜索引擎
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/18/使用ElasticSearch搭建高性能可扩展的全文搜索引擎/" class="article-date">
+	  <time datetime="2017-05-17T16:00:00.000Z" itemprop="datePublished">五月 18, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="准备环境"><a href="#准备环境" class="headerlink" title="准备环境"></a>准备环境</h2><ol>
+<li>下载 ElasticSearch</li>
+</ol>
+<p>最新版本下载:  <a href="https://www.elastic.co/downloads/elasticsearch" target="_blank" rel="noopener">https://www.elastic.co/downloads/elasticsearch</a><br>指定版本下载:  <a href="https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-[版本号].zip" target="_blank" rel="noopener">https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-[版本号].zip</a></p>
+<a id="more"></a>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="1-安装ElasticSearch"><a href="#1-安装ElasticSearch" class="headerlink" title="1. 安装ElasticSearch"></a>1. 安装ElasticSearch</h3><ol>
+<li>首先下载ElasticSearch(请先确认你已经安装了JDK)</li>
+<li>cd到所在文件夹后运行以下命令</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">unzip elasticsearch-1.2.2.zip</span><br><span class="line">mv elasticsearch-1.2.2 /usr/local/</span><br><span class="line">ln -s /usr/local/elasticsearch-1.2.2 /usr/local/elasticsearch</span><br></pre></td></tr></table></figure>
+<h3 id="安装到自启动项"><a href="#安装到自启动项" class="headerlink" title="安装到自启动项"></a>安装到自启动项</h3><p>我们还需要设置ElasticSearch自启动，成为daemon常驻后台，这里需要用到<a href="https://github.com/elastic/elasticsearch-servicewrapper" target="_blank" rel="noopener">elasticsearch-servicewrapper</a>，unzip后把service文件夹copy到 /usr/local/elasticsearch/bin下，运行以下命令可以安装ElasticSearch：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/local/elasticsearch/bin/service/elasticsearch install</span><br></pre></td></tr></table></figure>
+<p>启动：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/local/elasticsearch/bin/service/elasticsearch start</span><br></pre></td></tr></table></figure>
+<p>如果启动失败，可能是内存设置有问题，打开bin/service/elasticsearch.conf文件，设置Elasticsearch能够分配的JVM内存大小。一般情况下，设置成总内存的50%比较好：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set.default.ES_HEAP_SIZE=512</span><br></pre></td></tr></table></figure>
+<p>如果要限制ES_MIN_MEM和ES_MAX_MEM，建议设置成一样大，避免出现频繁的内存分配。</p>
+<h3 id="修改节点名称"><a href="#修改节点名称" class="headerlink" title="修改节点名称"></a>修改节点名称</h3><p>有时候需要指定一个明确的节点名称，如果不指定，ElasticSearch会随机为我们生成一个节点名，每次启动都不同。要手动指定节点名，需要打开/usr/local/elasticsearch/config/elasticsearch.yml文件，修改(比如要指定该节点名称为meiqu)：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node.name: "meiqu"</span><br></pre></td></tr></table></figure>
+<p>保存后，重启Elasticsearch就行了。</p>
+<h3 id="2-安装插件"><a href="#2-安装插件" class="headerlink" title="2. 安装插件"></a>2. 安装插件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">head:           /usr/local/elasticsearch/bin/plugin -install mobz/elasticsearch-head</span><br><span class="line">marvel:         /usr/local/elasticsearch/bin/plugin -i elasticsearch/marvel/latest</span><br><span class="line">mongodb插件:     /usr/local/elasticsearch/bin/plugin --install com.github.richardwilly98.elasticsearch/elasticsearch-river-mongodb/2.0.1</span><br></pre></td></tr></table></figure>
+<h3 id="3-配置分词插件"><a href="#3-配置分词插件" class="headerlink" title="3. 配置分词插件"></a>3. 配置分词插件</h3><p>ElasticSearch默认采用standard分词，默认的分词对中文来说效果不好，只是简单粗暴地把所有中文字拆分出来，并没有根据词的语意来分词(没有使用中文词库)，因此在真正查询的时候，准确率不高，我们可以使用ik分词插件或者其他插件，这里以ik分词来做示例。</p>
+<p>1.从 <a href="https://github.com/medcl/elasticsearch-rtf/tree/master/plugins/analysis-ik" target="_blank" rel="noopener">https://github.com/medcl/elasticsearch-rtf/tree/master/plugins/analysis-ik</a> 下载 elasticsearch-analysis-ik-1.2.6.jar，放到/usr/local/elasticsearch/plugins/analysis-ik文件下(没有就新建一个)。</p>
+<p>2.从 <a href="https://github.com/medcl/elasticsearch-analysis-ik" target="_blank" rel="noopener">https://github.com/medcl/elasticsearch-analysis-ik</a> 下载ik分词插件，unzip后把config目录下的ik目录放到/usr/local/elasticsearch/config文件夹下。</p>
+<p>3.打开/usr/local/elasticsearch/config/elasticsearch.yml，在最后加上：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">index:</span></span><br><span class="line">  <span class="attr">analysis:</span></span><br><span class="line">      <span class="attr">tokenizer:</span></span><br><span class="line">        <span class="attr">my_tokenizer:</span></span><br><span class="line">            <span class="attr">type:</span> <span class="string">ik</span></span><br><span class="line">            <span class="attr">use_smart:</span> <span class="literal">false</span>                </span><br><span class="line">      <span class="attr">analyzer:</span>      </span><br><span class="line">          <span class="attr">ik:</span></span><br><span class="line">              <span class="attr">alias:</span> <span class="string">[ik_analyzer]</span></span><br><span class="line">              <span class="attr">type:</span> <span class="string">org.elasticsearch.index.analysis.IkAnalyzerProvider</span></span><br><span class="line">          <span class="attr">ik_max_word:</span></span><br><span class="line">              <span class="attr">type:</span> <span class="string">ik</span></span><br><span class="line">              <span class="attr">use_smart:</span> <span class="literal">false</span></span><br><span class="line">          <span class="attr">ik_smart:</span></span><br><span class="line">              <span class="attr">type:</span> <span class="string">ik</span></span><br><span class="line">              <span class="attr">use_smart:</span> <span class="literal">true</span></span><br><span class="line">          <span class="attr">my_analyzer:</span></span><br><span class="line">            <span class="attr">type:</span> <span class="string">custom</span></span><br><span class="line">            <span class="attr">tokenizer:</span> <span class="string">my_tokenizer</span></span><br><span class="line">              <span class="attr">filter:</span> <span class="string">[lowercase,</span> <span class="string">stemmer]</span></span><br></pre></td></tr></table></figure>
+<p>配置完需要重启ElasticSearch。</p>
+<h3 id="4-运行"><a href="#4-运行" class="headerlink" title="4.运行"></a>4.运行</h3><p>在console里运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/local/elasticsearch/bin/elasticsearch start</span><br></pre></td></tr></table></figure>
+<p>在后台运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo /usr/local/elasticsearch/bin/service/elasticsearch start</span><br></pre></td></tr></table></figure>
+<h3 id="5-控制台"><a href="#5-控制台" class="headerlink" title="5.控制台"></a>5.控制台</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">marvel:         http://localhost:9200/_plugin/marvel</span><br><span class="line">sense:          http://localhost:9200/_plugin/marvel/sense/index.html</span><br><span class="line">head:           http://localhost:9200/_plugin/head/</span><br><span class="line">river-mongodb   http://localhost:9200/_plugin/river-mongodb/</span><br></pre></td></tr></table></figure>
+<p>PS: 以下的示例全部使用marvel的sense来运行。</p>
+<p>经过以上的配置，我们的ElasticSearch的默认分词算法已经变成ik了。</p>
+<p>我们可以先来测试一下我们配置的ik分词效果如何，作为对比，会先运行默认分词的例子。</p>
+<p>首先新建一个索引：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT http://localhost:9200/index</span><br></pre></td></tr></table></figure>
+<p>standard分词：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/_analyze?analyzer=standard&amp;pretty=true</span><br><span class="line">&#123;</span><br><span class="line">    "text":"PHP是全世界最好的编程语言"</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果有点蛋疼，默认分词是直接切分了每个汉字，结果如下：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_usage_1.png" alt="standard"></p>
+<p>ik分词：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/_analyze?analyzer=ik&amp;pretty=true</span><br><span class="line">&#123;</span><br><span class="line">    "text":"PHP是全世界最好的编程语言"</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ik分词比较合理地做到了根据词语的意思来分词，效果还不错（在分词中，一些助动词经常被省略，比如’是’）：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_usage_2.png" alt="standard"></p>
+<p>利用成熟的分词插件，可以让我们的全文索引功能事倍功半。</p>
+<h4 id="自定义分词词典"><a href="#自定义分词词典" class="headerlink" title="自定义分词词典"></a>自定义分词词典</h4><p>先制作自己的词典，然后修改文件 /usr/local/elasticsearch/config/ik/IKAnalyzer.cfg.xml 中的词典配置项就行。</p>
+<h2 id="6-同步mongodb到ElasticSearch"><a href="#6-同步mongodb到ElasticSearch" class="headerlink" title="6.同步mongodb到ElasticSearch"></a>6.同步mongodb到ElasticSearch</h2><ul>
+<li>注意: 请先确保拥有至少一个mongoDB的副本集合，以下是MongoDB River Plugin、ElasticSearch和MongoDB的版本搭配列表</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>MongoDB River Plugin</th>
+<th>ElasticSearch</th>
+<th>MongoDB</th>
+<th>TokuMX</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>master</td>
+<td>1.4.2</td>
+<td>3.0.0</td>
+<td>1.5.1</td>
+</tr>
+<tr>
+<td>2.0.9</td>
+<td>1.4.2</td>
+<td>3.0.0</td>
+<td>1.5.1</td>
+</tr>
+<tr>
+<td>2.0.5</td>
+<td>1.4.2</td>
+<td>2.6.6</td>
+<td>1.5.1</td>
+</tr>
+<tr>
+<td>2.0.2</td>
+<td>1.3.5</td>
+<td>2.6.5</td>
+<td>1.5.1</td>
+</tr>
+<tr>
+<td>2.0.1</td>
+<td>1.2.2</td>
+<td>2.4.9 -&gt; 2.6.3</td>
+<td>1.5.0</td>
+</tr>
+<tr>
+<td>2.0.0</td>
+<td>1.0.0 -&gt; 1.1.1</td>
+<td>2.4.9</td>
+<td></td>
+</tr>
+<tr>
+<td>1.7.4</td>
+<td>0.90.10</td>
+<td>2.4.8</td>
+<td></td>
+</tr>
+<tr>
+<td>1.7.3</td>
+<td>0.90.7</td>
+<td>2.4.8</td>
+<td></td>
+</tr>
+<tr>
+<td>1.7.2</td>
+<td>0.90.5</td>
+<td>2.4.8</td>
+<td></td>
+</tr>
+<tr>
+<td>1.7.1</td>
+<td>0.90.5</td>
+<td>2.4.6</td>
+<td></td>
+</tr>
+<tr>
+<td>1.7.0</td>
+<td>0.90.3</td>
+<td>2.4.5</td>
+<td></td>
+</tr>
+<tr>
+<td>1.6.11</td>
+<td>0.90.2</td>
+<td>2.4.5</td>
+<td></td>
+</tr>
+<tr>
+<td>1.6.9</td>
+<td>0.90.1</td>
+<td>2.4.4</td>
+<td></td>
+</tr>
+<tr>
+<td>1.6.8</td>
+<td>0.90.0</td>
+<td>2.4.3</td>
+<td></td>
+</tr>
+<tr>
+<td>1.6.7</td>
+<td>0.90.0</td>
+<td>2.4.3</td>
+<td></td>
+</tr>
+<tr>
+<td>1.6.6</td>
+<td>0.90.0</td>
+<td>2.4.3</td>
+</tr>
+</tbody>
+</table>
+<p>为ElasticSearch创建和mongoDB对应的index和type:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">PUT /_river/mongodb/_meta</span><br><span class="line">  &#123;</span><br><span class="line">    "type": "mongodb",</span><br><span class="line">    "mongodb": &#123;</span><br><span class="line">        "db": "DATABASE_NAME",</span><br><span class="line">        "collection": "COLLECTION",</span><br><span class="line">        "gridfs": true</span><br><span class="line">      &#125;,</span><br><span class="line">    "index": &#123;</span><br><span class="line">        "name": "ES_INDEX_NAME",</span><br><span class="line">        "type": "ES_TYPE_NAME"</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="同步食物表、运动表、贴士表和用户表"><a href="#同步食物表、运动表、贴士表和用户表" class="headerlink" title="同步食物表、运动表、贴士表和用户表"></a>同步食物表、运动表、贴士表和用户表</h4><p>在真正开始同步之前我们先来做一些准备工作，这些工作很重要，直接影响到我们搜索匹配的精确度和排序，就是指定mapping：</p>
+<h4 id="为索引创建别名"><a href="#为索引创建别名" class="headerlink" title="为索引创建别名"></a>为索引创建别名</h4><p>有时我们需要更改索引中的映射，这就需要重建索引，为了做到无缝切换索引和零停机时间，可以使用别名机制。<br>先为上述的索引创建别名，这个别名就叫做meiqu，真正的索引名可以为meiqu_v1、meiqu_v2之类的，然后在查询时，只需要使用别名meiqu就行了，这样客户端代码不需要修改。</p>
+<p>我们创建了一个索引meiqu_v1，并创建了一个别名指向它：</p>
+<ol>
+<li>创建一个索引和别名：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1</span><br></pre></td></tr></table></figure>
+<p>只所以在索引名后加一个版本号是由于以后可能会重建索引，为了保证生产环境在重建索引时的平滑过渡，需要有一个别名机制。这里先新建一个索引，创建别名需要在重建索引完毕后再进行。</p>
+<ol start="2">
+<li>为foods表指定mapping：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1/foods/_mapping</span><br><span class="line">&#123;</span><br><span class="line">  "foods": &#123;</span><br><span class="line">      "properties": &#123;</span><br><span class="line">          "name": &#123;</span><br><span class="line">            "type" : "string",</span><br><span class="line">            "analyzer" : "my_analyzer"</span><br><span class="line">          &#125;,</span><br><span class="line">          "nutrientInfoArr": &#123;</span><br><span class="line">                "properties": &#123;</span><br><span class="line">                   "content": &#123;</span><br><span class="line">                      "type": "string"</span><br><span class="line">                   &#125;</span><br><span class="line">                &#125;</span><br><span class="line">             &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>为activities表指定mapping：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1/activities/_mapping</span><br><span class="line">&#123;</span><br><span class="line">  "activities": &#123;</span><br><span class="line">      "properties": &#123;</span><br><span class="line">          "name": &#123;</span><br><span class="line">            "type" : "string",</span><br><span class="line">            "analyzer" : "my_analyzer"</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>为tips表指定mapping：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1/tips/_mapping</span><br><span class="line">&#123;</span><br><span class="line">  "tips": &#123;</span><br><span class="line">      "properties": &#123;</span><br><span class="line">          "title": &#123;</span><br><span class="line">            "type" : "string",</span><br><span class="line">            "analyzer" : "my_analyzer"</span><br><span class="line">          &#125;,</span><br><span class="line">          "summary":&#123;</span><br><span class="line">            "type" : "string",</span><br><span class="line">            "analyzer" : "my_analyzer"</span><br><span class="line">        &#125;,</span><br><span class="line">          "content":&#123;</span><br><span class="line">            "type" : "string",</span><br><span class="line">            "analyzer" : "my_analyzer"</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>为user表指定mapping：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1/users/_mapping</span><br><span class="line">&#123;</span><br><span class="line">  "users": &#123;</span><br><span class="line">    "properties": &#123;</span><br><span class="line">        "profile": &#123;</span><br><span class="line">            "properties": &#123;</span><br><span class="line">                "nickname": &#123;</span><br><span class="line">                  "type" : "string",</span><br><span class="line">                  "analyzer" : "my_analyzer"</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>指定mapping可以选择我们需要的字段来做分词和建立倒排索引，因为分词和建立倒排索引是需要消耗很多性能的，例如_id、url之类的字段我们没必要为他们做这些，所以我们需要指定哪些重要的字段需要分词。</p>
+<p>食物表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">PUT /_river/mongodb_foods/_meta</span><br><span class="line">&#123;</span><br><span class="line">  "type": "mongodb",</span><br><span class="line">  "mongodb": &#123;</span><br><span class="line">      "host": "192.168.1.119",</span><br><span class="line">      "port": "27017",</span><br><span class="line">      "db": "meiqu618_20150211",</span><br><span class="line">      "collection": "foods"</span><br><span class="line">  &#125;,</span><br><span class="line">  "index": &#123;</span><br><span class="line">      "name": "meiqu_v1",</span><br><span class="line">      "type": "foods"</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>运动表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">PUT /_river/mongodb_activities/_meta</span><br><span class="line">&#123;</span><br><span class="line">  "type": "mongodb",</span><br><span class="line">  "mongodb": &#123;</span><br><span class="line">      "host": "192.168.1.119",</span><br><span class="line">      "port": "27017",</span><br><span class="line">      "db": "meiqu618_20150211",</span><br><span class="line">      "collection": "activities"</span><br><span class="line">  &#125;,</span><br><span class="line">  "index": &#123;</span><br><span class="line">      "name": "meiqu_v1",</span><br><span class="line">      "type": "activities"</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>贴士表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">PUT /_river/mongodb_tips/_meta</span><br><span class="line">&#123;</span><br><span class="line">"type": "mongodb",</span><br><span class="line">"mongodb": &#123;</span><br><span class="line">    "host": "192.168.1.119",</span><br><span class="line">    "port": "27017",</span><br><span class="line">    "db": "meiqu618_20150211",</span><br><span class="line">    "collection": "tips"</span><br><span class="line">&#125;,</span><br><span class="line">"index": &#123;</span><br><span class="line">    "name": "meiqu_v1",</span><br><span class="line">    "type": "tips"</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用户表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">PUT /_river/mongodb_users/_meta</span><br><span class="line">&#123;</span><br><span class="line">  "type": "mongodb",</span><br><span class="line">  "mongodb": &#123;</span><br><span class="line">      "host": "192.168.1.119",</span><br><span class="line">      "port": "27017",</span><br><span class="line">      "db": "meiqu618_20150211",</span><br><span class="line">      "collection": "users"</span><br><span class="line">  &#125;,</span><br><span class="line">  "index": &#123;</span><br><span class="line">      "name": "meiqu_v1",</span><br><span class="line">      "type": "users"</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="6">
+<li>数据同步完毕后，创建索引别名：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PUT /meiqu_v1/_alias/meiqu</span><br></pre></td></tr></table></figure>
+<p>这个别名很重要，我们需要使用这个别名来指向当前的索引，代码中也是使用这个别名来进行查询。</p>
+<ol start="7">
+<li>简单查询</li>
+</ol>
+<ul>
+<li>使用以下查询，能够查询出食物名称中包含”番茄”的所有食物:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/foods/_search</span><br><span class="line">&#123;</span><br><span class="line">  "query": &#123;</span><br><span class="line">      "match": &#123;</span><br><span class="line">          "name": "番茄"</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  "_source": ["_id", "name", "calory", "description", "units", "userName"]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用以下查询，能够查询出运动名称中包含”跑”的所有运动:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/activities/_search</span><br><span class="line">&#123;</span><br><span class="line">  "query": &#123;</span><br><span class="line">      "match": &#123;</span><br><span class="line">          "name": "跑"</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  "_source": ["_id", "name", "mets", "description"]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用以下查询，能够查询出贴士名称中包含”白领”的所有贴士:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/tips/_search</span><br><span class="line">&#123;</span><br><span class="line">  "query": &#123;</span><br><span class="line">    "bool": &#123;</span><br><span class="line">      "must": [</span><br><span class="line">        &#123;</span><br><span class="line">            "term": &#123;</span><br><span class="line">              "status": 1</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            "range": &#123;</span><br><span class="line">              "effDate": &#123;</span><br><span class="line">                  "lt": new Date().getTime()</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            "dis_max": &#123;</span><br><span class="line">              "queries": [</span><br><span class="line">                  &#123; "match": &#123; "title":"白领" &#125;&#125;,</span><br><span class="line">                  &#123; "match": &#123; "tags":"白领" &#125;&#125;</span><br><span class="line">              ],</span><br><span class="line">              "tie_breaker": 0.3</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  "_source": ["_id", "title", "cover", "summary", "tags", "effDate"]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用以下查询，能够查询出用户昵称中包含”test”的所有用户:</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">GET /meiqu/users/_search</span><br><span class="line">&#123;</span><br><span class="line">  "query": &#123;</span><br><span class="line">    "filtered": &#123;</span><br><span class="line">            "query":  &#123;</span><br><span class="line">                "match": &#123;</span><br><span class="line">                  "profile.nickname": "test"</span><br><span class="line">                &#125;</span><br><span class="line">              &#125;,</span><br><span class="line">              "filter": &#123;</span><br><span class="line">                "term": &#123; "status": 1 &#125;</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      "_source": ["_id", "diaries", "fans", "idols", "profile.nickname", "profile.icon"]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="8">
+<li>在开发环境中使用ElasticSearch</li>
+</ol>
+<p>直接cd到项目根目录执行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install elasticsearch</span><br></pre></td></tr></table></figure>
+<p>搞定。</p>
+<p>nodejs下一个搜索用户的例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//搜索用户</span></span><br><span class="line"><span class="keyword">var</span> searchUser = <span class="function"><span class="keyword">function</span> (<span class="params">req, res, next</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> skip = <span class="built_in">parseInt</span>(req.query.offset);</span><br><span class="line">    skip = <span class="built_in">isNaN</span>(skip) ? <span class="number">0</span> : skip;</span><br><span class="line">    <span class="keyword">var</span> limit = <span class="built_in">parseInt</span>(req.query.size);</span><br><span class="line">  limit = <span class="built_in">isNaN</span>(limit) ? <span class="number">10</span> : limit;</span><br><span class="line">    <span class="keyword">var</span> nickname = req.query.nickname;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> query = &#123;</span><br><span class="line">        <span class="string">"index"</span>: <span class="string">"meiqu"</span>,</span><br><span class="line">        <span class="string">"type"</span>: <span class="string">"users"</span>,</span><br><span class="line">        <span class="string">"from"</span>: skip,</span><br><span class="line">        <span class="string">"size"</span>: limit,</span><br><span class="line">        <span class="string">"body"</span>: &#123;</span><br><span class="line">            <span class="string">"query"</span>: &#123;</span><br><span class="line">                <span class="string">"filtered"</span>: &#123;</span><br><span class="line">                    <span class="string">"query"</span>:  &#123;</span><br><span class="line">                        <span class="string">"match"</span>: &#123; <span class="string">"profile.nickname"</span>: nickname &#125;&#125;,</span><br><span class="line">                    <span class="string">"filter"</span>: &#123;</span><br><span class="line">                        <span class="string">"term"</span>: &#123; <span class="string">"status"</span>: <span class="number">1</span> &#125;&#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">"_source"</span>: [<span class="string">'_id'</span>, <span class="string">'diaries'</span>, <span class="string">'fans'</span>, <span class="string">'idols'</span>, <span class="string">'profile.nickname'</span>, <span class="string">'profile.icon'</span>]</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">    client.search(query, <span class="function"><span class="keyword">function</span> (<span class="params">error, response</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (error)&#123;</span><br><span class="line">            <span class="keyword">return</span> next(error);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">var</span> users = [];</span><br><span class="line">        response.hits.hits.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">            users.push(data._source);</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        req.users = users;</span><br><span class="line">        <span class="keyword">return</span> next();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ElasticSearch/">ElasticSearch</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/18/elasticsearch基本原理/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          ElasticSearch基本原理
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/18/倒排索引基础知识/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">倒排索引基础知识</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备环境"><span class="nav-number">1.</span> <span class="nav-text">准备环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装"><span class="nav-number">2.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-安装ElasticSearch"><span class="nav-number">2.1.</span> <span class="nav-text">1. 安装ElasticSearch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装到自启动项"><span class="nav-number">2.2.</span> <span class="nav-text">安装到自启动项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改节点名称"><span class="nav-number">2.3.</span> <span class="nav-text">修改节点名称</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-安装插件"><span class="nav-number">2.4.</span> <span class="nav-text">2. 安装插件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-配置分词插件"><span class="nav-number">2.5.</span> <span class="nav-text">3. 配置分词插件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-运行"><span class="nav-number">2.6.</span> <span class="nav-text">4.运行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-控制台"><span class="nav-number">2.7.</span> <span class="nav-text">5.控制台</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#自定义分词词典"><span class="nav-number">2.7.1.</span> <span class="nav-text">自定义分词词典</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-同步mongodb到ElasticSearch"><span class="nav-number">3.</span> <span class="nav-text">6.同步mongodb到ElasticSearch</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#同步食物表、运动表、贴士表和用户表"><span class="nav-number">3.0.1.</span> <span class="nav-text">同步食物表、运动表、贴士表和用户表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为索引创建别名"><span class="nav-number">3.0.2.</span> <span class="nav-text">为索引创建别名</span></a></li></ol></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

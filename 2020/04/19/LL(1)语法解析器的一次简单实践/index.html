@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>LL(1)语法解析器的一次简单实践 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="语法解析器">
+  
+  
+  
+  
+  <meta name="description" content="本文记录LL(1)语法解析器的一次简单实践。">
+<meta name="keywords" content="语法解析器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LL(1)语法解析器的一次简单实践">
+<meta property="og:url" content="https://nullcc.github.io/2020/04/19/LL(1)语法解析器的一次简单实践/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文记录LL(1)语法解析器的一次简单实践。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.014Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LL(1)语法解析器的一次简单实践">
+<meta name="twitter:description" content="本文记录LL(1)语法解析器的一次简单实践。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-LL(1)语法解析器的一次简单实践" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      LL(1)语法解析器的一次简单实践
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2020/04/19/LL(1)语法解析器的一次简单实践/" class="article-date">
+	  <time datetime="2020-04-18T16:00:00.000Z" itemprop="datePublished">四月 19, 2020</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/语言应用/">语言应用</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文记录LL(1)语法解析器的一次简单实践。</p>
+<a id="more"></a>
+<h2 id="需求概述"><a href="#需求概述" class="headerlink" title="需求概述"></a>需求概述</h2><p>前段时间和Team内部的同学进行了一次Coding Dojo，遇到一道题目，我个人觉得有点意思，就记录了一下自己的解题方式和心得。题目是<a href="http://codingdojo.org/kata/StringCalculator/" target="_blank" rel="noopener">StringCalculator</a>。</p>
+<p>这道题目一共有7个小需求，题目需求这里就不详细说明了，可以参考上面的链接。本文主要给出实现。</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>这个题目实际上可以用LL(1)语法解析器来处理。这里先给出完整的语法解析器实现：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lexer.ts</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">interface</span> LexerOptions &#123;</span><br><span class="line">  collectAllErrors?: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> Lexer &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> EOF = <span class="string">'&lt;EOF&gt;'</span>;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> TYPE_EOF = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> TYPE_NUMBER: <span class="built_in">number</span> = <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> TYPE_DELIMITER: <span class="built_in">number</span> = <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> TYPE_NEW_LINE: <span class="built_in">number</span> = <span class="number">3</span>;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> tokenNames: <span class="built_in">string</span>[] = [ <span class="string">'&lt;EOF&gt;'</span>, <span class="string">'NUMBER'</span>, <span class="string">'TYPE_DELIMITER'</span>, <span class="string">'NEW_LINE'</span>];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> options: LexerOptions;</span><br><span class="line">  <span class="keyword">private</span> input: <span class="built_in">string</span>;</span><br><span class="line">  <span class="keyword">private</span> c: <span class="built_in">string</span>;</span><br><span class="line">  <span class="keyword">private</span> i: <span class="built_in">number</span>;</span><br><span class="line">  <span class="keyword">private</span> delimiter = <span class="string">','</span>;</span><br><span class="line">  <span class="keyword">private</span> _errors: <span class="built_in">string</span>[] = [];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">constructor</span>(<span class="params">input: <span class="built_in">string</span>, options?: LexerOptions</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.options = options || &#123;&#125;;</span><br><span class="line">    <span class="keyword">this</span>.input = input;</span><br><span class="line">    <span class="keyword">this</span>.i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">this</span>.checkDelimiter();</span><br><span class="line">    <span class="keyword">this</span>.c = <span class="keyword">this</span>.input[<span class="number">0</span>];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> nextToken(): Token &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">this</span>.c != Lexer.EOF) &#123;</span><br><span class="line">      <span class="keyword">switch</span> (<span class="keyword">this</span>.c) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="keyword">this</span>.delimiter[<span class="number">0</span>]: &#123;</span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.delimiter.length; i += <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.expect(<span class="keyword">this</span>.delimiter[i]);</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">this</span>.consume();</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">this</span>.expectNumber()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> Token(Lexer.TYPE_DELIMITER, <span class="keyword">this</span>.delimiter);</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">this</span>.collectError(<span class="string">`Number expected but '<span class="subst">$&#123;<span class="keyword">this</span>.getC()&#125;</span>' found at position <span class="subst">$&#123;<span class="keyword">this</span>.i&#125;</span>.`</span>);</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">'\n'</span>: &#123;</span><br><span class="line">          <span class="keyword">this</span>.consume();</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">this</span>.expectNumber()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> Token(Lexer.TYPE_DELIMITER, <span class="string">'\n'</span>);</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">this</span>.collectError(<span class="string">`Number expected but '<span class="subst">$&#123;<span class="keyword">this</span>.getC()&#125;</span>' found at position <span class="subst">$&#123;<span class="keyword">this</span>.i&#125;</span>.`</span>);</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">this</span>.isNumber()) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>.readNumber();</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">this</span>.i &lt; <span class="keyword">this</span>.input.length - <span class="number">1</span> &amp;&amp; <span class="keyword">this</span>.c !== <span class="keyword">this</span>.delimiter[<span class="number">0</span>]) &#123;</span><br><span class="line">            <span class="keyword">this</span>.collectError(<span class="string">`'<span class="subst">$&#123;<span class="keyword">this</span>.delimiter[<span class="number">0</span>]&#125;</span>' expected but '<span class="subst">$&#123;<span class="keyword">this</span>.input[<span class="keyword">this</span>.i]&#125;</span>' found at position <span class="subst">$&#123;<span class="keyword">this</span>.i&#125;</span>.`</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">this</span>.consume();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Token(Lexer.TYPE_EOF, Lexer.EOF);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">get</span> errors(): <span class="built_in">string</span>[] &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>._errors;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> checkDelimiter(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> regex = <span class="regexp">/\/\/(.+?)\n(.+)?/</span>;</span><br><span class="line">    <span class="keyword">const</span> res = regex.exec(<span class="keyword">this</span>.input);</span><br><span class="line">    <span class="keyword">if</span> (res) &#123;</span><br><span class="line">      <span class="keyword">this</span>.delimiter = res[<span class="number">1</span>];</span><br><span class="line">      <span class="keyword">this</span>.input = res[<span class="number">2</span>];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> isNumber(): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.c === <span class="string">'-'</span> || <span class="keyword">this</span>.c === <span class="string">'.'</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> !<span class="built_in">isNaN</span>(<span class="built_in">parseFloat</span>(<span class="keyword">this</span>.c));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> consume(): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.i += <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.i &gt; <span class="keyword">this</span>.input.length) &#123;</span><br><span class="line">      <span class="keyword">this</span>.c = Lexer.EOF;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">this</span>.c = <span class="keyword">this</span>.input[<span class="keyword">this</span>.i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> readNumber() &#123;</span><br><span class="line">    <span class="keyword">let</span> numberStr = <span class="string">''</span>;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      numberStr += <span class="keyword">this</span>.c;</span><br><span class="line">      <span class="keyword">this</span>.consume();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="keyword">this</span>.isNumber());</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Token(Lexer.TYPE_NUMBER, <span class="built_in">parseFloat</span>(numberStr));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> expectNumber(): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="regexp">/\d/</span>.test(<span class="keyword">this</span>.c) || <span class="keyword">this</span>.c === <span class="string">'-'</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> expect(c: <span class="built_in">string</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.consume();</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.c !== c) &#123;</span><br><span class="line">      <span class="keyword">this</span>.collectError(<span class="string">`<span class="subst">$&#123;c&#125;</span> expected but '<span class="subst">$&#123;<span class="keyword">this</span>.getC()&#125;</span>' found at position <span class="subst">$&#123;<span class="keyword">this</span>.i&#125;</span>.`</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> getC(): <span class="built_in">string</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.i &lt; <span class="keyword">this</span>.input.length) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">this</span>.c;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'&lt;EOF&gt;'</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> collectError(errMsg: <span class="built_in">string</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.options.collectAllErrors) &#123;</span><br><span class="line">      <span class="keyword">this</span>._errors.push(errMsg);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(errMsg);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> Token &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">type</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="keyword">public</span> value: <span class="built_in">string</span> | <span class="built_in">number</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">constructor</span>(<span class="params"><span class="keyword">type</span>: <span class="built_in">number</span>, value: <span class="built_in">string</span> | <span class="built_in">number</span></span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.type = <span class="keyword">type</span>;</span><br><span class="line">    <span class="keyword">this</span>.value = value;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> getTokenName(x: <span class="built_in">number</span>): <span class="built_in">string</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> Lexer.tokenNames[x];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有了语法解析器以后，剩下的事情就很简单了。这里也不需要parser，只需要实现一个StringCalculator类即可：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; Lexer, LexerOptions &#125; <span class="keyword">from</span> <span class="string">'./lexer'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> StringCalculator &#123;</span><br><span class="line">  <span class="keyword">private</span> options: LexerOptions;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">constructor</span> (<span class="params">options?: LexerOptions</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.options = options || &#123;&#125;;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> add(input: <span class="built_in">string</span>): <span class="built_in">number</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> tokens = [];</span><br><span class="line">    <span class="keyword">const</span> lexer = <span class="keyword">new</span> Lexer(input, <span class="keyword">this</span>.options);</span><br><span class="line">    <span class="keyword">let</span> token = lexer.nextToken();</span><br><span class="line">    <span class="keyword">while</span> (token.type !== Lexer.TYPE_EOF) &#123;</span><br><span class="line">      tokens.push(token);</span><br><span class="line">      token = lexer.nextToken();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> res = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">let</span> errors: <span class="built_in">string</span>[] = [];</span><br><span class="line">    errors = errors.concat(lexer.errors);</span><br><span class="line">    <span class="keyword">const</span> negativeNumberTokens = tokens.filter(<span class="function"><span class="params">token</span> =&gt;</span> token.value &lt; <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (negativeNumberTokens.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> negativeNumbers = negativeNumberTokens.map(<span class="function"><span class="params">token</span> =&gt;</span> token.value);</span><br><span class="line">      errors = errors.concat(<span class="string">`Negative not allowed: <span class="subst">$&#123;negativeNumbers.join(<span class="string">', '</span>)&#125;</span>`</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (errors.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(errors.join(<span class="string">'\n'</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> token of tokens) &#123;</span><br><span class="line">      <span class="keyword">if</span> (token.type === Lexer.TYPE_NUMBER) &#123;</span><br><span class="line">        res += &lt;<span class="built_in">number</span>&gt; token.value;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// string-calculator.test.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; StringCalculator &#125; <span class="keyword">from</span> <span class="string">'../src/calculator'</span>;</span><br><span class="line"></span><br><span class="line">describe(<span class="string">'Test string calculator.'</span>, <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  test(<span class="string">'Test case 0.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">''</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">0</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 1.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'0'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">0</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 2.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'1,2,3,10'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">16</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 3.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'1,2.5,3'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">6.5</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 4.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'1\n2,3,10'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">16</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 5.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'1\n2,3,10'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">16</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 6.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'1\n,2,3,10'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">      expect(<span class="literal">true</span>).toBe(<span class="literal">false</span>);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"Number expected but ',' found at position 2."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 7.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'1,2,3,10,'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">      expect(<span class="literal">true</span>).toBe(<span class="literal">false</span>);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"Number expected but '&lt;EOF&gt;' found at position 9."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 8.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'//;\n1;2'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">3</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 9.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'//|\n1|2|3'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">6</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 10.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> input = <span class="string">'//sep\n2sep3'</span>;</span><br><span class="line">    <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">    <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    expect(res).toEqual(<span class="number">5</span>);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 11.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'//|\n1|2,3'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"'|' expected but ',' found at position 3."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 12.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'-1,2'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"Negative not allowed: -1"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 13.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'2,-4,-5'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator();</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"Negative not allowed: -4, -5"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">'Test case 14.'</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> input = <span class="string">'-1,,2'</span>;</span><br><span class="line">      <span class="keyword">const</span> stringCalculator = <span class="keyword">new</span> StringCalculator(&#123; collectAllErrors: <span class="literal">true</span> &#125;);</span><br><span class="line">      <span class="keyword">const</span> res = stringCalculator.add(input);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">      expect(e.message).toBe(<span class="string">"Number expected but ',' found at position 3.\nNegative not allowed: -1"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>Coding Dojo过程中我发现这题的很多的实现都是先用<code>split</code>之类的方法去解开整个输入字符串，然后收集到一个数字数组后再去求和。这样做不能说不行，但是随着本题的需求越来越多，这种实现方式的弊端会慢慢显现出来，代码越来越复杂，而且很难修改。如果利用LL(1)语法解析器，其解析精度会比较高，而且一系列需求做下来实际上是对它的渐进式增强。在实际解题的过程中我发现对于每个新需求，使用LL(1)语法解析器的方案需要做的修改和重构量都很小，而且比较不容易出错。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/语言应用/">语言应用</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/语法解析器/">语法解析器</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2020/09/30/理解Scala类型系统中的型变/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          理解Scala类型系统中的型变
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/02/28/利用OpenResty做代理实现到STF的请求转发和自定义权限校验/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">利用OpenResty做代理实现到STF的请求转发和自定义权限校验</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#需求概述"><span class="nav-number">1.</span> <span class="nav-text">需求概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试"><span class="nav-number">3.</span> <span class="nav-text">测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他"><span class="nav-number">4.</span> <span class="nav-text">其他</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2022 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>
