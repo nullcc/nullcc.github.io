@@ -19,16 +19,17 @@
 <meta property="og:site_name" content="张先森的代码小屋">
 <meta property="og:description" content="本文讨论了构建可观察和可动态修改的命令行程序的一些实践。">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-1.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-2.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-3.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-4.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-5.png">
-<meta property="og:updated_time" content="2022-04-29T10:44:56.571Z">
+<meta property="og:updated_time" content="2022-05-09T08:17:33.288Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="构建可观察和可动态修改的命令行程序">
 <meta name="twitter:description" content="本文讨论了构建可观察和可动态修改的命令行程序的一些实践。">
-<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-1.png">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png">
   
     <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
   
@@ -181,6 +182,8 @@
 <p>入口文件有几个值得一提的地方，首先是使用了 <a href="https://github.com/Pop-Code/nestjs-console" target="_blank" rel="noopener">nestjs-console</a> 这个 npm package，由于 nest.js 默认不提供命令行的使用方式，因此我们需要这个库来提供命令行的支持。我们实现了一个 <code>CustomBootstrapConsole</code> 类，该类在 <code>create</code> 方法里创建了一个 nest.js HTTP server，并内部配置了一个 swagger module，最后监听在<code>0</code>端口。这里有个小技巧，如果监听0端口，则操作系统会随机分配一个可用的端口号。这么做的好处是我们不需要显式指定监听的端口号，可以在机器上同时运行多个该程序而不用担心端口号冲突。</p>
 <p><code>withServer</code> 方法用来判断是否需要启动一个 HTTP server：当命令行参数中存在 <code>--with-server</code> 选项时启动一个 HTTP server。</p>
 <p><code>getBootstrap</code> 方法作为 <code>main.ts</code> 的入口方法，负责判断命令行程序的启动方式：带 HTTP Server 或者不带。注意看 <code>getBootstrap</code> 的实现，当 <code>withServer()</code> 为 true 时，我们创建了一个 <code>CustomBootstrapConsole</code> 实例，参数 <code>withContainer: true</code> 非常重要，它允许我们从 CLI 中访问 app container，在这里就是 <code>module: AppModule</code>。这个特性非常重要，它允许 CLI 和 我们的应用程序通信。这里我们倒不需要去追究它的实现方式。接着就是初始化了，这部分 nest.js 框架的方法会帮我们处理。</p>
+<p>有一副图帮助理解这个项目的基本结构：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png" alt="any-factory的基本结构"></p>
 <p>接着看 <code>app.module.ts</code> 里的 <code>AppModule</code>：</p>
 <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/app.module.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Module &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; MonitorModule &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/monitor.module'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProductionModule &#125; <span class="keyword">from</span> <span class="string">'@modules/production/production.module'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Module</span>(&#123;</span><br><span class="line">  imports: [MonitorModule, ProductionModule],</span><br><span class="line">  controllers: [],</span><br><span class="line">  providers: [],</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> AppModule &#123;&#125;</span><br></pre></td></tr></table></figure>
 <p>抛开 nest.js 具体的使用细节不谈（尽管这也很重要，但目前它们对我们来说是手段而不是目的，故先避开），在 <code>AppModule</code> 中我们导入了两个 module: <code>ProductionModule</code> 和 <code>MonitorModule</code>。<code>ProductionModule</code> 是这个项目的核心上下文，负责生产产品。<code>MonitorModule</code> 负责提供可观察、动态修改命令行程序的入口。为了保持示例的简单，只设计了这两个模块，但已足够说明问题了。</p>
