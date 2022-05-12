@@ -26,7 +26,7 @@
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-4.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-5.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-6.png">
-<meta property="og:updated_time" content="2022-05-12T03:06:34.593Z">
+<meta property="og:updated_time" content="2022-05-12T03:11:51.979Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="构建可观察的动态命令行程序">
 <meta name="twitter:description" content="本文讨论了构建可观察的动态命令行程序的一些实践。">
@@ -246,7 +246,7 @@
 <p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-6.png" alt="可观察的动态命令行程序"></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在上面的实现中，我们在本地运行命令行程序时同时启动了一个 HTTP Server，对用户开放了一些 API，同时传统的日志记录形式还是可以继续使用（在文中和示例项目中没有展示出来）。在实现过程中，我们还通过模块化将不同上下文隔离开，它们之间可能会产生耦合，但都在我们的控制之中。例如虽然 MonitorModule 依赖于 ProductionModule，但后者的逻辑不会泄露到前者中。</p>
 <p>上面除了讨论了如何构建可观察和可动态修改的命令行程序以外，还应用了领域驱动设计的方法指导实现。当然，由于领域驱动设计是个相当大的主题，本文中无法详细描述。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://martinfowler.com/bliki/CQRS.html" target="_blank" rel="noopener">CQRS(命令查询职责分离)</a><br><a href="https://martinfowler.com/tags/domain%20driven%20design.html" target="_blank" rel="noopener">Domain Driven Design(领域驱动设计)</a></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://martinfowler.com/bliki/CQRS.html" target="_blank" rel="noopener">CQRS(命令查询职责分离)</a><br><a href="https://martinfowler.com/tags/domain%20driven%20design.html" target="_blank" rel="noopener">Domain Driven Design(领域驱动设计)</a><br><a href="https://github.com/nullcc/domain-driven-hexagon/blob/master/README-zh_CN.md" target="_blank" rel="noopener">DDD六边形架构(翻译)</a></p>
 
         <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
         <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
