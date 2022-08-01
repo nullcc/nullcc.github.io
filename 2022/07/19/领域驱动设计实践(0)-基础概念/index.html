@@ -22,7 +22,7 @@
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/ddd-in-action-0-1.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/the-clean-architecture.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/domain_driven_hexagon.png">
-<meta property="og:updated_time" content="2022-07-29T06:26:20.599Z">
+<meta property="og:updated_time" content="2022-08-01T09:15:47.098Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="领域驱动设计实践(0)-基础概念">
 <meta name="twitter:description" content="本文解释了领域驱动设计的一些基础概念。">
@@ -198,10 +198,33 @@
 <li>Domain Services (领域服务)</li>
 <li>Entities (实体)</li>
 </ul>
-<h4 id="Application-Services-应用服务"><a href="#Application-Services-应用服务" class="headerlink" title="Application Services (应用服务)"></a>Application Services (应用服务)</h4><p>Application Services 是基于用例的，实际上就是一个个 Use Cases，它负责编排用例执行流程。Application Services 不包含任何特定领域的业务逻辑，它应该是相对较薄的一层。Application Services 通过使用 Ports 声明其为了执行领域逻辑需要的基础设施层的依赖。当需要与外部世界通信（比如发送 email）时，也使用 Ports。Ports 还相当一个防腐层(Anti-corruption layer, ACL)，由于我们核心层的抽象程度较高，让它们直接依赖于具体实现细节（比如一个 SDK 或对外部服务的调用就是一种具体实现细节）显然不合适。好的实践是，当核心层需要某种能力时，我们声明这种能力作为 Ports，外部的基础设施层的某个 Adapter 实现这个 Ports 的能力，然后在需要时我们将这个 Adapter 注入到 核心层中。当我们想要替换具体实现时，只要换一个 Adapter 注入进去即可。</p>
+<h4 id="Application-Services-应用服务"><a href="#Application-Services-应用服务" class="headerlink" title="Application Services (应用服务)"></a>Application Services (应用服务)</h4><p>Application Services 是基于用例的，实际上就是一个个 Use Case，它负责编排用例执行流程。Application Services 不包含任何特定领域的业务逻辑，它应该是相对较薄的一层。Application Services 通过使用 Ports 声明其为了执行领域逻辑需要的基础设施层的依赖。当需要与外部世界通信（比如发送 email）时，也使用 Ports。Ports 还相当一个防腐层(Anti-corruption layer, ACL)，由于我们核心层的抽象程度较高，让它们直接依赖于具体实现细节（比如一个 SDK 或对外部服务的调用就是一种具体实现细节）显然不合适。好的实践是，当核心层需要某种能力时，我们声明这种能力作为 Ports，外部的基础设施层的某个 Adapter 实现这个 Ports 的能力，然后在需要时我们将这个 Adapter 注入到 核心层中。当我们想要替换具体实现时，只要换一个 Adapter 注入进去即可。</p>
 <h4 id="Domain-Services-领域服务"><a href="#Domain-Services-领域服务" class="headerlink" title="Domain Services (领域服务)"></a>Domain Services (领域服务)</h4><p>Domain Services 被用于处理那些“领域中不属于实体或值对象的天然职责的那些重要的过程或转换”。Domain Services 是一种特定类型的领域层类，用于执行依赖于两个或更多实体的领域逻辑。如果有一些逻辑，将它们放在某个 Entities 中时会破坏它们的封装性，那就提取出来放到 Domain Services 中。</p>
 <h4 id="Entities-实体"><a href="#Entities-实体" class="headerlink" title="Entities (实体)"></a>Entities (实体)</h4><p>Entities 是领域的核心，它们封装了业务规则。Entities 代表业务模型，表达特定模型具有的属性。</p>
 <h2 id="在各个层中穿越"><a href="#在各个层中穿越" class="headerlink" title="在各个层中穿越"></a>在各个层中穿越</h2><p>要让整个系统运行起来，除了分层我们还需要让数据真正流动起来，这就涉及在不同层之间的数据流传。数据会在各层间穿越，这里的问题是数据以什么样的形式穿过各层。一般来说，我们需要在各层的边界上创建 DTO 来包装其他层穿越过来数据，只包装需要的数据字段。</p>
+<h2 id="一个简单的例子"><a href="#一个简单的例子" class="headerlink" title="一个简单的例子"></a>一个简单的例子</h2><p>考虑一个用户登录的场景，用户使用账号密码登录。先对这个场景进行规划：</p>
+<ul>
+<li>Epic: Authentication</li>
+<li>Use Case: User login by username and password</li>
+</ul>
+<p>Authentication 可以作为一个 Module 存在，模块将同一个业务领域的 Use Case 组织起来，里面可以有不同的 Use Cases (Application Services)。在当前场景中，用户使用账号密码登录是一个 Use Case，用户通过第三方平台 OAuth 登录是一个 Use Case，用户使用人脸识别登录也是一个 Use Case。</p>
+<p>对应到 DDD 中就是：</p>
+<p>模块 Module (Epic): Authentication Module<br>应用服务 Application Service (Use Case): User login by username and password</p>
+<p>再往里就来到领域层，这时可以有一个 User 业务对象，这个对象包含具体的业务逻辑，用户登录需要验证用户名和密码，可能还有额外的逻辑比如需要这个用户的状态是 active 的才能登录。总之这里都是一些业务规则。</p>
+<p>我们从用户请求开始来看这个 Use Case，当用户登录的时候，客户端发送请求数据到服务端，请求数据会先到 router，会由某个 controller 来处理这个请求，controller 把数据取出来，包装成 Command 对象，传给 Module 中的 Application Service，这里可能会有一个叫作 UserLoginService 的应用服务在应用层面处理这个请求。应用层面的意思是它只负责编排整个 Use Case Flow 的过程，并不涉及具体的业务逻辑。</p>
+<p>来看看 UserLoginService 在这里会有什么操作（为方便描述，这里省略错误处理部分）：</p>
+<ol>
+<li>基于 username 入参从数据库查询得到某个用户的信息</li>
+<li>创建一个 User 业务对象，将从数据库查出的用户信息（用户名，密码hash，状态等）作为构造参数传入，初始化这个 User 对象。</li>
+<li>调用 User 对象的 isValid 方法（传入用户的密码作为参数），验证用户有效性。</li>
+<li>返回验证结果给 controller</li>
+</ol>
+<p>之后 controller 会包装数据并返回给客户端。</p>
+<p>这里有一个问题，在从数据库中取出用户信息时，我们该怎么做？</p>
+<p>用户登录这个 Use Case 是抽象的（因为 Use Case 只描述了一个用例，没有提到任何技术细节），它在软件中层次较高，而数据库操作是技术细节，抽象层次较低。如果我们在这个 UserLoginService 里直接初始化并使用一个 DAO 对象来从数据库查询数据会怎么样？这确实可以工作，但是当具体实现有变化时，比如我们换了一个 DAO 实现，我们就需要修改 UserLoginService。这对我们来说有点难受了，我们只是想换一个 DAO 实现就要动到 UserLoginService 吗？实际上 UserLoginService 根本不关心具体用的是哪个 DAO，只要有某个对象可以帮我查询到用户就好了。</p>
+<p>比较好的做法是在应用服务级别声明一个 Repository Port。在基础设施层，我们编写一个 Repository Adapter 来实现这个接口，这里面就是具体技术细节了。在运行时，通过依赖注入的方式，注入一个实现到应用层以实现真正从数据库获取数据。</p>
+<p>当外部数据库发生变化时，比如从 MySQL 换到 SQL Server，或者在真正查询数据库前先检查缓存，我们只要修改相应 Adapter 这个负责具体实现的组件，应用层以内几乎不用变。</p>
+<p>让抽象程度高的组件直接依赖抽象程度低的组件的做法除了在开发上会引入强耦合外，还会导致测试变得困难。假设 UserLoginService 直接依赖一个基于 MySQL 的 DAO，当我们编写 UserLoginService 的单元测试时，还需要处理 MySQL 这个外部依赖。事实上，如果在这里将依赖倒置，我们可以传入一个 MockDAO，MockDAO 实现了普通 DAO 对象的全部方法，唯一不同是它直接返回 mock data 而不查询数据库，这可以帮助我们隔离掉 MySQL。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html" target="_blank" rel="noopener">The Clean Architecture</a><br><a href="https://enterprisecraftsmanship.com/posts/domain-vs-application-services/" target="_blank" rel="noopener">domain-vs-application-services</a><br><a href="https://github.com/nullcc/domain-driven-hexagon/blob/master/README-zh_CN.md" target="_blank" rel="noopener">领域驱动的六边形架构</a></p>
 
         <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
@@ -262,7 +285,7 @@
     <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
     
-      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#传统三层架构的开发困境"><span class="nav-number">1.</span> <span class="nav-text">传统三层架构的开发困境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Clean-Architecture-与领域驱动设计"><span class="nav-number">2.</span> <span class="nav-text">Clean Architecture 与领域驱动设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#接口与基础设施层"><span class="nav-number">2.1.</span> <span class="nav-text">接口与基础设施层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接口与基础设施层与核心层的边界"><span class="nav-number">2.2.</span> <span class="nav-text">接口与基础设施层与核心层的边界</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#核心层"><span class="nav-number">2.3.</span> <span class="nav-text">核心层</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Application-Services-应用服务"><span class="nav-number">2.3.1.</span> <span class="nav-text">Application Services (应用服务)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Domain-Services-领域服务"><span class="nav-number">2.3.2.</span> <span class="nav-text">Domain Services (领域服务)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Entities-实体"><span class="nav-number">2.3.3.</span> <span class="nav-text">Entities (实体)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在各个层中穿越"><span class="nav-number">3.</span> <span class="nav-text">在各个层中穿越</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol>
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#传统三层架构的开发困境"><span class="nav-number">1.</span> <span class="nav-text">传统三层架构的开发困境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Clean-Architecture-与领域驱动设计"><span class="nav-number">2.</span> <span class="nav-text">Clean Architecture 与领域驱动设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#接口与基础设施层"><span class="nav-number">2.1.</span> <span class="nav-text">接口与基础设施层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#接口与基础设施层与核心层的边界"><span class="nav-number">2.2.</span> <span class="nav-text">接口与基础设施层与核心层的边界</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#核心层"><span class="nav-number">2.3.</span> <span class="nav-text">核心层</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Application-Services-应用服务"><span class="nav-number">2.3.1.</span> <span class="nav-text">Application Services (应用服务)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Domain-Services-领域服务"><span class="nav-number">2.3.2.</span> <span class="nav-text">Domain Services (领域服务)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Entities-实体"><span class="nav-number">2.3.3.</span> <span class="nav-text">Entities (实体)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在各个层中穿越"><span class="nav-number">3.</span> <span class="nav-text">在各个层中穿越</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一个简单的例子"><span class="nav-number">4.</span> <span class="nav-text">一个简单的例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol>
     
     </div>
   </aside>

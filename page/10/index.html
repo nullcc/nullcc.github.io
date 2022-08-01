@@ -232,66 +232,6 @@ epoll
 <!-- Table of Contents -->
 
   
-    <article id="post-垃圾回收(GC)算法介绍(1)——GC标记-清除算法"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/">垃圾回收(GC)算法介绍(1)——GC标记-清除算法</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/" class="article-date">
-	  <time datetime="2017-11-10T16:00:00.000Z" itemprop="datePublished">十一月 11, 2017</time>
-	</a>
-
-      
-	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
- 
-      
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        
-
-          
-          <div class="entry-summary">
-          在编程领域，垃圾回收(Garbage Collection)，简称GC(简便起见，以下都把垃圾回收用GC代替)。GC负责把堆上不用的内存进行回收，以便之后可以再次进行分配。回忆一下C中对内存申请，一般来说malloc和free需要成对地出现，malloc为对象申请内存空间，free负责释放申请的内存空间。但如果只有malloc但却不free，就会造成堆上的内存无法回收，造成内存泄漏。
-
-        
-          <p class="article-more-link">
-            <a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/#more">阅读全文</a>
-          </p>
-        </div>
-      
-    </div>
-    <footer class="entry-meta entry-footer">
-      
-	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
-
-      
-  <span class="ico-tags"></span>
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/垃圾回收/">垃圾回收</a></li></ul>
-
-      
-    </footer>
-    <hr class="entry-footer-hr">
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-  
     <article id="post-垃圾回收(GC)算法介绍(2)——GC引用计数算法"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
     
@@ -352,7 +292,7 @@ epoll
 <!-- Table of Contents -->
 
   
-    <article id="post-Redis中的底层数据结构(1)——双端链表"  class="article article-type-post" itemscope itemprop="blogPost" >
+    <article id="post-垃圾回收(GC)算法介绍(1)——GC标记-清除算法"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
     
     
@@ -360,7 +300,7 @@ epoll
         
   
     <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/">Redis中的底层数据结构(1)——双端链表</a>
+      <a class="article-title" href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/">垃圾回收(GC)算法介绍(1)——GC标记-清除算法</a>
     </h1>
   
 
@@ -368,13 +308,13 @@ epoll
     
     <div class="article-meta">
       
-	<a href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/" class="article-date">
-	  <time datetime="2017-11-09T16:00:00.000Z" itemprop="datePublished">十一月 10, 2017</time>
+	<a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/" class="article-date">
+	  <time datetime="2017-11-10T16:00:00.000Z" itemprop="datePublished">十一月 11, 2017</time>
 	</a>
 
       
 	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
  
       
     </div>
@@ -384,12 +324,11 @@ epoll
 
           
           <div class="entry-summary">
-          本文将详细说明Redis中双端链表的实现。
-在Redis源码（这里使用3.2.11版本）中，双端链表的实现在adlist.h和adlist.c中。
+          在编程领域，垃圾回收(Garbage Collection)，简称GC(简便起见，以下都把垃圾回收用GC代替)。GC负责把堆上不用的内存进行回收，以便之后可以再次进行分配。回忆一下C中对内存申请，一般来说malloc和free需要成对地出现，malloc为对象申请内存空间，free负责释放申请的内存空间。但如果只有malloc但却不free，就会造成堆上的内存无法回收，造成内存泄漏。
 
         
           <p class="article-more-link">
-            <a href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/#more">阅读全文</a>
+            <a href="/2017/11/11/垃圾回收(GC)算法介绍(1)——GC标记-清除算法/#more">阅读全文</a>
           </p>
         </div>
       
@@ -397,11 +336,11 @@ epoll
     <footer class="entry-meta entry-footer">
       
 	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
 
       
   <span class="ico-tags"></span>
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构/">数据结构</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/垃圾回收/">垃圾回收</a></li></ul>
 
       
     </footer>
@@ -451,6 +390,67 @@ epoll
         
           <p class="article-more-link">
             <a href="/2017/11/10/Redis中的底层数据结构(2)——简单动态字符串(sds)/#more">阅读全文</a>
+          </p>
+        </div>
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构/">数据结构</a></li></ul>
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+  
+    <article id="post-Redis中的底层数据结构(1)——双端链表"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/">Redis中的底层数据结构(1)——双端链表</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/" class="article-date">
+	  <time datetime="2017-11-09T16:00:00.000Z" itemprop="datePublished">十一月 10, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+
+          
+          <div class="entry-summary">
+          本文将详细说明Redis中双端链表的实现。
+在Redis源码（这里使用3.2.11版本）中，双端链表的实现在adlist.h和adlist.c中。
+
+        
+          <p class="article-more-link">
+            <a href="/2017/11/10/Redis中的底层数据结构(1)——双端链表/#more">阅读全文</a>
           </p>
         </div>
       
