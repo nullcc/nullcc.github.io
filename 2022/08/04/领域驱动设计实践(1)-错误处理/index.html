@@ -3,34 +3,29 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="utf-8">
   
-  <title>倒排索引基础知识 | 张先森的代码小屋</title>
+  <title>领域驱动设计实践(1)-错误处理 | 张先森的代码小屋</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="keywords" content="ElasticSearch">
+  <meta name="keywords" content="领域驱动设计">
   
   
   
   
-  <meta name="description" content="ElasticSearch的全文搜索是基于Apache Lucene的，Apache Lucene是一个全文搜索库，其核心处理步骤一般是：">
-<meta name="keywords" content="ElasticSearch">
+  <meta name="description" content="本文讨论了领域驱动设计实践下的错误处理。">
+<meta name="keywords" content="领域驱动设计">
 <meta property="og:type" content="article">
-<meta property="og:title" content="倒排索引基础知识">
-<meta property="og:url" content="https://nullcc.github.io/2017/05/18/倒排索引基础知识/index.html">
+<meta property="og:title" content="领域驱动设计实践(1)-错误处理">
+<meta property="og:url" content="https://nullcc.github.io/2022/08/04/领域驱动设计实践(1)-错误处理/index.html">
 <meta property="og:site_name" content="张先森的代码小屋">
-<meta property="og:description" content="ElasticSearch的全文搜索是基于Apache Lucene的，Apache Lucene是一个全文搜索库，其核心处理步骤一般是：">
+<meta property="og:description" content="本文讨论了领域驱动设计实践下的错误处理。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_1.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_2.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_3.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_4.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_5.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_6.png">
-<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_7.png">
-<meta property="og:updated_time" content="2022-04-15T03:41:13.029Z">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/domain_driven_hexagon.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/clean-architecture-errors.png">
+<meta property="og:updated_time" content="2022-08-11T09:52:03.145Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="倒排索引基础知识">
-<meta name="twitter:description" content="ElasticSearch的全文搜索是基于Apache Lucene的，Apache Lucene是一个全文搜索库，其核心处理步骤一般是：">
-<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/reverse_index_1.png">
+<meta name="twitter:title" content="领域驱动设计实践(1)-错误处理">
+<meta name="twitter:description" content="本文讨论了领域驱动设计实践下的错误处理。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/domain_driven_hexagon.png">
   
     <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
   
@@ -117,7 +112,7 @@
             
       <div id="content" class="outer">
         
-          <section id="main" style="float:none;"><article id="post-倒排索引基础知识" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+          <section id="main" style="float:none;"><article id="post-领域驱动设计实践(1)-错误处理" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
     
     
@@ -125,7 +120,7 @@
         
   
     <h1 class="thumb" class="article-title" itemprop="name">
-      倒排索引基础知识
+      领域驱动设计实践(1)-错误处理
     </h1>
   
 
@@ -133,70 +128,63 @@
     
     <div class="article-meta">
       
-	<a href="/2017/05/18/倒排索引基础知识/" class="article-date">
-	  <time datetime="2017-05-17T16:00:00.000Z" itemprop="datePublished">五月 18, 2017</time>
+	<a href="/2022/08/04/领域驱动设计实践(1)-错误处理/" class="article-date">
+	  <time datetime="2022-08-03T16:00:00.000Z" itemprop="datePublished">八月 4, 2022</time>
 	</a>
 
       
 	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+    <a class="article-category-link" href="/categories/领域驱动设计/">领域驱动设计</a>
  
       
     </div>
     <div class="article-entry" itemprop="articleBody">
       
-        <p>ElasticSearch的全文搜索是基于Apache Lucene的，Apache Lucene是一个全文搜索库，其核心处理步骤一般是：</p>
+        <p>本文讨论了领域驱动设计实践下的错误处理。</p>
 <a id="more"></a>
+<p>在软件开发过程中，错误处理一直是个比较麻烦的事情。对于错误处理，我们经常需要考虑的问题是：</p>
+<ul>
+<li>在哪些地方可能出现错误</li>
+<li>如何处理错误</li>
+<li>失败、错误、异常有什么区别</li>
+</ul>
+<p>上一篇文章中以六边形架构为例介绍了领域驱动设计的一些基本概念，这里会沿用六边形架构的理念，所以还是再贴出来一次：</p>
+<p><img src="/assets/images/post_imgs/domain_driven_hexagon.png" alt="领域驱动设计的六边形架构"></p>
+<p>我们先看第一个问题：在哪些地方可能出现错误</p>
+<h2 id="在哪些地方可能出现错误"><a href="#在哪些地方可能出现错误" class="headerlink" title="在哪些地方可能出现错误"></a>在哪些地方可能出现错误</h2><p>理论上每个地方都可能出错，不过我们最好不要把所有地方的错误都当成同一种错误处理。原因是错误层级不同。</p>
+<p>我认为至少有三种错误层级，从里到外分别是：</p>
+<ul>
+<li>Domain Errors (领域错误)</li>
+<li>Application Errors (应用错误)</li>
+<li>Interface Errors (接口错误)</li>
+</ul>
+<p><img src="/assets/images/post_imgs/clean-architecture-errors.png" alt="三种错误级别"></p>
+<p>对应到六边形架构的各个组件中就是：</p>
+<ul>
+<li>Domain Errors =&gt; Entity &amp; Value Object &amp; Domain Service</li>
+<li>Application Errors =&gt; Application Service (&amp; Infrastructure?)</li>
+<li>Interface Errors =&gt; Interface (Controller)</li>
+</ul>
+<p>Infrastructure 部分的错误比较特殊，由于 Infrastructure 中的 Adapters 实现了 Application Service 中声明的 Ports，它的错误经常以某种形式被包装（比如一个 Result，这里有一个 npm package <a href="https://github.com/badrap/result" target="_blank" rel="noopener">@badrap/result</a> 提供了这种能力 ），并由 Application Service 处理。因此 Infrastructure 中的错误一般都可以被转化为某种 Application Error。</p>
+<p>Value Object 也需要特别说明一下，由于 Value Object 一般自带数据验证逻辑，在使用不符合要求的数据初始化 Value Object 时会直接导致参数错误，这种错误一般会被直接抛出，这符合 <a href="https://en.wikipedia.org/wiki/Fail-fast" target="_blank" rel="noopener">Fail-fast</a> 原则。</p>
+<h2 id="如何处理错误"><a href="#如何处理错误" class="headerlink" title="如何处理错误"></a>如何处理错误</h2><p>在错误处理上，大致可以分为两种方式：</p>
 <ol>
-<li>获得一个文档，对需要进行全文搜索的字段进行处理(分词、标记过滤、字符映射)。</li>
-<li>对最终获得的标记进行词频分析和建立倒排索引，并入库。</li>
-<li>当有全文索引请求到来时，查询倒排索引，获得相关文档并评分返回。</li>
+<li>try/catch</li>
+<li>错误码</li>
 </ol>
-<p>本篇重点介绍倒排索引的概念。</p>
-<h2 id="1-单词-文档矩阵"><a href="#1-单词-文档矩阵" class="headerlink" title="1.单词-文档矩阵"></a>1.单词-文档矩阵</h2><p>单词-文档矩阵是一种表达两者之间包含关系的模型，这种模型非常适合于全文索引的场景。下图中行表示词，列表示文档，<br>打钩表示某文档包含某词：</p>
-<p><img src="/assets/images/post_imgs/reverse_index_1.png" alt="单词-文档矩阵"></p>
-<p>一般来讲，我们可以从两个角度来看这个矩阵：</p>
+<p>不同语言对这两种错误处理方式有不同的方式和偏好，比如 C 语言就没有 try/catch，只能使用错误码。Rust 则彻底抛弃 try/catch 语法，使用 <code>Option&lt;T&gt;</code> 和 <code>Result&lt;T, E&gt;</code>。这两种方式各有利弊，这里并不会深入讨论。下面只说我个人比较推荐的做法。</p>
+<p>我们刚才一直在说错误，其实广义上的错误有两种：</p>
 <ol>
-<li>横向角度：表示有哪些文档包含了某词。</li>
-<li>纵向角度：表示某个文档包含了哪些词。</li>
+<li>错误</li>
+<li>异常</li>
 </ol>
-<p>搜索引擎中建立的索引可说就是单词-文档矩阵的某种模型，现在应用得比较多的就是倒排索引了。</p>
-<h2 id="2-倒排索引的基本概念"><a href="#2-倒排索引的基本概念" class="headerlink" title="2.倒排索引的基本概念"></a>2.倒排索引的基本概念</h2><ol>
-<li>文档(Document)：这里文档的概念比较宽泛，所有能被存储的文本信息都可被称为文档。例如网页、XML、Word文件、一封Email、一条微博等等。</li>
-<li>文档集合(Document Collection)：由若干文档构成的集合就叫文档集合。</li>
-<li>文档编号(Document ID)：搜索引擎会为文档集合中的每个文档赋予一个唯一的内部编号(在它所处的文档集合中是唯一的)，以方便处理。</li>
-<li><em>倒排索引</em>(Inverted Index)：是一种实现单词-文档矩阵的具体方式，通过倒排索引可以通过单词信息快速获取到包含这个单词的所有文档列表。倒排索引主要由两个部分组成：“单词词典”和“倒排文件”。</li>
-<li><em>单词词典</em>(Lexicon)：搜索引擎索引单位一般是单词(或多个单词组合)，单词词典是由文档集合中出现过的所有单词构成的一个字符串集合，单词词典内每条索引项记载着单词本身的信息以及指向倒排列表的指针。</li>
-<li><em>倒排列表</em>(Posting List)：倒排列表记录了出现过某个单词的所有文档的文档列表和改单词在这些文档中出现的位置信息，每条记录称为一个“倒排项”，根据倒排列表，就可以获知有哪些文档包含了某个单词。</li>
-<li><em>倒排文件</em>(Inverted File)：所有单词的倒排列表一般顺序存储在磁盘的某个文件中，这就是倒排文件，倒排文件是存储倒排索引的物理文件。</li>
-</ol>
-<p>示例如下图：</p>
-<p><img src="/assets/images/post_imgs/reverse_index_2.png" alt="倒排索引"></p>
-<h2 id="3-倒排索引实例"><a href="#3-倒排索引实例" class="headerlink" title="3.倒排索引实例"></a>3.倒排索引实例</h2><p>从理论上来解释倒排索引还是比较清晰的，不过还是再来看一个真是的示例。</p>
-<p><img src="/assets/images/post_imgs/reverse_index_3.png" alt="原始文档集合"></p>
-<p>上图包含5个文档，我们要对这5个文档建立倒排索引。</p>
-<p>首先使用分词器、标记过滤器、字符映射器处理文本，得到一个个单词，然后建立如下倒排索引：</p>
-<p><img src="/assets/images/post_imgs/reverse_index_4.png" alt="最简单的倒排索引"></p>
-<p>更近一步，我们还可以记录每个单词在包含它的文档中出现的次数(词频)，词频对于在搜索排序中计算和查询文档相似度是一个重要的因子，事先将其放在倒排索引中可以方便后续的相关计算。</p>
-<p><img src="/assets/images/post_imgs/reverse_index_5.png" alt="带有词频的倒排索引"></p>
-<p>再进一步，还可以记录文档频率信息(文档集合中有多少个文档包含某个单词)和目标单词在文档中出现的位置信息等。</p>
-<p>基本上大部分搜索引擎的倒排索引就是这个结构，只是实现方式有所不同罢了。</p>
-<p>一个基本的流程如下：</p>
-<ol>
-<li>用户输入某个单词进行搜索。</li>
-<li>搜索引擎查询事先准备好的倒排索引，找到对应的倒排文件，获得所有包含查询单词的文档列表。</li>
-<li>获得文档列表后，根据单词频率信息、文档频率信息计算相似性并对这些文档排序。</li>
-<li>输出给用户。</li>
-</ol>
-<h2 id="4-单词词典的实现"><a href="#4-单词词典的实现" class="headerlink" title="4.单词词典的实现"></a>4.单词词典的实现</h2><p>比较常见的实现有：</p>
-<ol>
-<li>哈希链表</li>
-<li>B树/B+树</li>
-</ol>
-<p>哈希链表：</p>
-<p><img src="/assets/images/post_imgs/reverse_index_6.png" alt="哈希链表"></p>
-<p>B+树</p>
-<p><img src="/assets/images/post_imgs/reverse_index_7.png" alt="B+树"></p>
+<p>错误一般指的是开发者可以预料到的非正常情况，比如支付时当前账号余额不足，当前账号被锁定无法支付等。应用程序可以从这种情况中恢复。错误比较多指的是业务相关的非正常情况。</p>
+<p>异常则是那些无法预料但又确实有可能发生的情况，比如内存不足、磁盘空间不足、网络断开、数组索引超出合法范围、调用外部 API 时对方返回 500等。这类情况是应用无法处理和恢复的。</p>
+<p>Domain Errors 都是第一种错误，开发者有能力处理好它们。比如支付时当前账号余额不足时，返回 Insufficient balance error 给 Application Service，由后者决定如何进一步处理这个错误。Application Service 可能会将这个 Domain Error 分类到一个更大的 Application Error 类别中并将其返回给 Interface (Controller)。Controller 会判断这个 Application Error 对应到哪个 HTTP Error Code (这里假设是一个 Web Server)。</p>
+<p>Value Object 属于领域层，但 Value Object 中的参数验证中发生的错误一般不会以错误码的形式返回给上一层，而是直接抛出错误，由顶层组件去捕获(Web Server 一般都有一个顶层方法用于捕获从下层抛出且在中途未被捕获的异常)，此时可以对错误进行分类并对应到不同的 HTTP Error Code。</p>
+<p>Application Errors 除了编排业务流还会和 Infrastructure 中的 Adapters 打交道，前者产生的错误是可预料的，后者则不一定，可以是可预料的也可以是不可预料的。比如有一个外部的 Account Service，我们在 Application Service 中需要向 Account Service 查询账号信息，然后才能继续执行。这个 Account Service 可能会返回 Account 相关的业务错误（比如未找到账号），也可能由于未知原因返回一个 500。对于开发者来说前一个错误是可以预料的，可以对应到一个 Domain Error。后一个错误则是不可预料的，但此时 Application Service 也要能够处理，比如可以返回一个 Unknown External Error 给 Controller，后者返回 500 给用户。</p>
+<p>Interface Errors 可以是根据从 Application Service 返回的错误映射到的相应的 HTTP Error Code，也可以是因为用户传入的 DTO 中的数据类型不正确直接返回 400 错误。如果是命令行程序，Interface Errors 还返回自定义的错误码。</p>
+<p>这样从同心圆的内部到外部根据不同错误层级进行处理，我们就完成了错误处理的流程。</p>
 
         <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
         <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
@@ -205,11 +193,11 @@
     <footer class="entry-meta entry-footer">
       
 	<span class="ico-folder"></span>
-    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+    <a class="article-category-link" href="/categories/领域驱动设计/">领域驱动设计</a>
 
       
   <span class="ico-tags"></span>
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ElasticSearch/">ElasticSearch</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/领域驱动设计/">领域驱动设计</a></li></ul>
 
       
         
@@ -239,19 +227,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2017/05/18/使用ElasticSearch搭建高性能可扩展的全文搜索引擎/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">上一篇</strong>
-      <div class="article-nav-title">
-        
-          使用ElasticSearch搭建高性能可扩展的全文搜索引擎
-        
-      </div>
-    </a>
   
-  
-    <a href="/2017/05/10/(译)npm-scripts详解/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2022/07/19/领域驱动设计实践(0)-基础概念/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">下一篇</strong>
-      <div class="article-nav-title">(译)npm-scripts详解</div>
+      <div class="article-nav-title">领域驱动设计实践(0)-基础概念</div>
     </a>
   
 </nav>
@@ -265,7 +244,7 @@
     <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
     
-      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-单词-文档矩阵"><span class="nav-number">1.</span> <span class="nav-text">1.单词-文档矩阵</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-倒排索引的基本概念"><span class="nav-number">2.</span> <span class="nav-text">2.倒排索引的基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-倒排索引实例"><span class="nav-number">3.</span> <span class="nav-text">3.倒排索引实例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-单词词典的实现"><span class="nav-number">4.</span> <span class="nav-text">4.单词词典的实现</span></a></li></ol>
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#在哪些地方可能出现错误"><span class="nav-number">1.</span> <span class="nav-text">在哪些地方可能出现错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何处理错误"><span class="nav-number">2.</span> <span class="nav-text">如何处理错误</span></a></li></ol>
     
     </div>
   </aside>
