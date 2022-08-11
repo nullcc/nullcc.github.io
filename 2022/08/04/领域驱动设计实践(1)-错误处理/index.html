@@ -21,7 +21,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/domain_driven_hexagon.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/clean-architecture-errors.png">
-<meta property="og:updated_time" content="2022-08-11T10:03:30.119Z">
+<meta property="og:updated_time" content="2022-08-11T10:05:56.217Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="领域驱动设计实践(1)-错误处理">
 <meta name="twitter:description" content="本文讨论了领域驱动设计实践下的错误处理。">
@@ -182,7 +182,7 @@
 <p>Domain Errors 都是第一种错误，开发者有能力处理好它们。比如支付时当前账号余额不足时，返回 Insufficient balance error 给 Application Service，由后者决定如何进一步处理这个错误。Application Service 可能会将这个 Domain Error 分类到一个更大的 Application Error 类别中并将其返回给 Interface (Controller)。Controller 会判断这个 Application Error 对应到哪个 HTTP Error Code (这里假设是一个 Web Server)。</p>
 <p>Value Object 属于领域层，但 Value Object 中的参数验证中发生的错误一般不会以错误码的形式返回给上一层，而是直接抛出错误，由顶层组件去捕获(Web Server 一般都有一个顶层方法用于捕获从下层抛出且在中途未被捕获的异常)，此时可以对错误进行分类并对应到不同的 HTTP Error Code。</p>
 <p>Application Errors 除了编排业务流还会和 Infrastructure 中的 Adapters 打交道，前者产生的错误是可预料的，后者则不一定，可以是可预料的也可以是不可预料的。比如有一个外部的 Account Service，我们在 Application Service 中需要向 Account Service 查询账号信息，然后才能继续执行。这个 Account Service 可能会返回 Account 相关的业务错误（比如未找到账号），也可能由于未知原因返回一个 500。对于开发者来说前一个错误是可以预料的，可以对应到一个 Domain Error。后一个错误则是不可预料的，但此时 Application Service 也要能够处理，比如可以返回一个 Unknown External Error 给 Controller，后者返回 500 给用户。Infrastructure 中的 Adapters 在内部可以使用 try/catch 处理具体实现，然后在 catch 块中对具体的出错信息进行判断，包装成某种业务错误。</p>
-<p>Interface Errors 可以是根据从 Application Service 返回的错误映射到的相应的 HTTP Error Code，也可以是因为用户传入的 DTO 中的数据类型不正确直接返回 400 错误。如果是命令行程序，Interface Errors 还返回自定义的错误码。</p>
+<p>由于 Interface (Controller) 起到一个接受外部请求和返回响应结果的中间角色。因此 Interface Errors 可以是根据从 Application Service 返回的错误映射到的相应的 HTTP Error Code，也可以是因为用户传入的 DTO 中的数据类型不正确直接返回 400 错误。如果是命令行程序，Interface Errors 还可以返回自定义的错误码。</p>
 <p>这样从同心圆的内部到外部根据不同错误层级进行处理，我们就完成了错误处理的流程。</p>
 
         <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
