@@ -21,7 +21,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/domain_driven_hexagon.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/clean-architecture-errors.png">
-<meta property="og:updated_time" content="2022-08-11T15:19:39.267Z">
+<meta property="og:updated_time" content="2022-08-12T09:13:29.955Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="领域驱动设计实践(1)-错误处理">
 <meta name="twitter:description" content="本文讨论了领域驱动设计实践下的错误处理。">
@@ -184,6 +184,8 @@
 <p>Application Errors 除了编排业务流还会和 Infrastructure 中的 Adapters 打交道，前者产生的错误是可预料的，后者则不一定，可以是可预料的也可以是不可预料的。比如有一个外部的 Account Service，我们在 Application Service 中需要向 Account Service 查询账号信息，然后才能继续执行。这个 Account Service 可能会返回 Account 相关的业务错误（比如未找到账号），也可能由于未知原因返回一个 500。对于开发者来说前一个错误是可以预料的，可以对应到一个 Domain Error。后一个错误则是不可预料的，但此时 Application Service 也要能够处理，比如可以返回一个 Unknown External Error 给 Controller，后者返回 500 给用户。Infrastructure 中的 Adapters 在内部可以使用 try/catch 处理具体实现，然后在 catch 块中对具体的出错信息进行判断，如果此错误会导致某个业务操作出错，就将它转化成某种业务错误并返回，否则可以返回一个 Unknown External Error。</p>
 <p>由于 Interface (Controller) 起到一个接受外部请求和返回响应结果的中间角色，因此 Interface Errors 可以是根据从 Application Service 返回的错误映射到的相应的 HTTP Error Code，也可以是因为用户传入的 DTO 中的数据类型不正确直接返回 400 错误。如果是命令行程序，Interface Errors 还可以返回自定义的错误码。</p>
 <p>这样从同心圆的内部到外部根据不同错误层级进行处理，我们就完成了错误处理的流程。</p>
+<h2 id="是否需要自定义状态码"><a href="#是否需要自定义状态码" class="headerlink" title="是否需要自定义状态码"></a>是否需要自定义状态码</h2><p><a href="https://http.cat/" target="_blank" rel="noopener">HTTP Status Code</a> 提供了应用层协议级别的状态码，常见的 200、302、400、404、500 都能告诉客户端本次请求的一些基本情况。但业务是复杂的，简单的 HTTP Status Code 往往不能反映业务在服务端处理的真实情况，这时候可能有必要引入业务状态代码来更进一步说明业务的处理状态。在将 API 提供给外部开发者使用时，一般都需要提供文档，业务状态码可以告诉开发者更具体的情况，也有助于客户端处理错误。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇讨论了在领域驱动设计实践下一种可能的错误处理方式，将错误分为了 Domain Errors、Application Errors 和 Interface Errors 三种，每种错误都有自己合适的处理方式。</p>
 
         <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
         <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
@@ -243,7 +245,7 @@
     <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
     
-      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#在哪些地方可能出现错误"><span class="nav-number">1.</span> <span class="nav-text">在哪些地方可能出现错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何处理错误"><span class="nav-number">2.</span> <span class="nav-text">如何处理错误</span></a></li></ol>
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#在哪些地方可能出现错误"><span class="nav-number">1.</span> <span class="nav-text">在哪些地方可能出现错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何处理错误"><span class="nav-number">2.</span> <span class="nav-text">如何处理错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#是否需要自定义状态码"><span class="nav-number">3.</span> <span class="nav-text">是否需要自定义状态码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
     
     </div>
   </aside>
