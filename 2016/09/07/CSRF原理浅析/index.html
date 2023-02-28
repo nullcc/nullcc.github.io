@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>CSRF原理浅析 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="CSRFweb前端攻防">
+  
+  
+  
+  
+  <meta name="description" content="简单介绍了CSRF的原理和防御方式。">
+<meta name="keywords" content="CSRF,web前端攻防">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSRF原理浅析">
+<meta property="og:url" content="https://nullcc.github.io/2016/09/07/CSRF原理浅析/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="简单介绍了CSRF的原理和防御方式。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_5.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_6.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_7.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_8.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_9.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_10.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_11.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_12.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_13.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_14.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_15.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_16.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_17.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_18.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_19.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_20.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_21.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_22.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_23.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_24.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_25.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_26.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.013Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CSRF原理浅析">
+<meta name="twitter:description" content="简单介绍了CSRF的原理和防御方式。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/csrf_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-CSRF原理浅析" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      CSRF原理浅析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2016/09/07/CSRF原理浅析/" class="article-date">
+	  <time datetime="2016-09-06T16:00:00.000Z" itemprop="datePublished">九月 7, 2016</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web前端/">web前端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>简单介绍了CSRF的原理和防御方式。</p>
+<a id="more"></a>
+<h2 id="CSRF简介"><a href="#CSRF简介" class="headerlink" title="CSRF简介"></a>CSRF简介</h2><h3 id="CSRF是什么"><a href="#CSRF是什么" class="headerlink" title="CSRF是什么"></a>CSRF是什么</h3><p>CSRF(Cross Site Request Forgery跨站点请求伪造)，又叫one click attack/session riding，一般缩写为CSRF。</p>
+<h3 id="CSRF的危害"><a href="#CSRF的危害" class="headerlink" title="CSRF的危害"></a>CSRF的危害</h3><p>CSRF是一种常见的web攻击方式，但是很多程序员甚至是安全工程师都不太理解它的利用条件和危害，因此CSRF也是web安全中最容易被忽略的一种攻击方式。但是在某些条件下，CSRF能够产生很强的破坏性。</p>
+<p>CSRF实际上是盗用了被害者的身份，以被害者的身份发送恶意请求给服务器。常见的CSRF攻击能够造成攻击者以被害者的名义发送消息、邮件、转账、购买物品等等。尽管CSRF的热门程度可能不如XSS高，但是在现在的互联网环境中，CSRF的危害不亚于XSS。</p>
+<h3 id="CSRF的基本原理"><a href="#CSRF的基本原理" class="headerlink" title="CSRF的基本原理"></a>CSRF的基本原理</h3><p>虽然从表面上看它和之前讲到的XSS很相似(因为都有一个Cross Site的缘故)，但是实际上它和XSS的攻击方式不同。XSS是利用网站受信任的用户来对目标用户进行攻击，而CSRF则是伪装成网站受信任用户的请求来利用网站。如图：</p>
+<p><img src="/assets/images/post_imgs/csrf_1.png" alt="csrf_1"></p>
+<p>从图中我们可以看出，CSRF攻击需要有以下两个步骤：</p>
+<ol>
+<li>受害者先登陆受信网站A，网站A在本地生成cookie。</li>
+<li>在不登出A(或者A的cookie有效)的情况下，访问恶意网站B。</li>
+</ol>
+<p>这个时候一种直观的预防措施可能是，只要不满足上述两点其中一点，就可以防止CSRF攻击了，实际上这种观点存在很多误区，原因有以下几个：</p>
+<ol>
+<li>用户无法确保在打开站点A后不再开启新标签浏览站点B；</li>
+<li>用户无法确保在不登出站点A的情况下不浏览站点B。</li>
+<li>用户不能确保当关闭浏览器后，站点A的cookie立即过期。实际上，很多站点都有这样的特点，当你关闭浏览器时，它的cookie并不立即失效，经常可以看到有的站点在你登陆后关闭浏览器，下次再访问时仍然是已登陆状态(比如微博)。这个是大多数人存在的误区，以为关闭浏览器以后所有cookie立即过期(这个要看网站的设定)。</li>
+<li>那些存在“恶意行为”的网站有可能是一个可信任的网站，只是因为可能是存在LD并被利用了。</li>
+</ol>
+<p>综合以上几点可以看到，CSRF攻击可以说是防不胜防。</p>
+<h2 id="CSRF案例"><a href="#CSRF案例" class="headerlink" title="CSRF案例"></a>CSRF案例</h2><p>用一个真实例子感受一下CSRF，这里已经搭建好了一个站点，这个网站的后台存在CSRF LD。在这个网站的后台，可以构造一个表单来提交，添加一个管理员账号。我们在一个网站<a href="http://www.b.com根目录下放一个xiao5u.html文件，内容为" target="_blank" rel="noopener">www.b.com根目录下放一个xiao5u.html文件，内容为</a>:</p>
+<p><img src="/assets/images/post_imgs/csrf_2.png" alt="csrf_2"></p>
+<p>引用的 <a href="http://www.b.com/test.html" target="_blank" rel="noopener">http://www.b.com/test.html</a> 内容为：</p>
+<p><img src="/assets/images/post_imgs/csrf_3.png" alt="csrf_3"></p>
+<p>目的是添加一个账号为test，密码为123456的管理员账号。现在先登陆后台，目前只有一个管理员账号：</p>
+<p><img src="/assets/images/post_imgs/csrf_4.png" alt="csrf_4"></p>
+<p>新开一个标签页，访问 <a href="http://www.b.com/xiao5u.html" target="_blank" rel="noopener">http://www.b.com/xiao5u.html</a> ，抓包：</p>
+<p><img src="/assets/images/post_imgs/csrf_5.png" alt="csrf_5"></p>
+<p>再回来看后台：</p>
+<p><img src="/assets/images/post_imgs/csrf_6.png" alt="csrf_6"></p>
+<p>CSRF攻击成功，添加了一个test账户的管理员。</p>
+<h2 id="CSRF进阶"><a href="#CSRF进阶" class="headerlink" title="CSRF进阶"></a>CSRF进阶</h2><h3 id="浏览器中的cookie策略"><a href="#浏览器中的cookie策略" class="headerlink" title="浏览器中的cookie策略"></a>浏览器中的cookie策略</h3><p>在刚才的例子里，CSRF攻击之所以能成功是因为用户的浏览器成功发送了cookie。</p>
+<p>浏览器中的cookie分为两种，一种是Session Cookie，又称“临时    cookie”,另一种是“Third-party Cookie”，又称“本地 cookie”。两者的    区别在于，Third-party Cookie是客户端和服务器在交互时，服务器在    Set-Cookie时指定了Expire时间，因此只有过了Expire时间，Third-party     Cookie才会失效，所以这种Cookie保存在本地。Session Cookie是没有指    定Expire时间的，所以在浏览器关闭后，Session Cookie就失效了。</p>
+<p>在用户浏览网站的过程中，如果一个网站设置了Session Cookie，那么在浏览器进程的生命周期内，即使打开了新的标签页，Session Cookie也是有效的。Session Cookie保存在浏览器进程的内存空间中，Third-party Cookie保存在本地。<br>如果浏览器从一个域的页面中，要加载另一个域的资源，出于安全方面的考虑，有些浏览器会阻止Third-party Cookie的发送。目前默认阻止Third-party Cookie的浏览器有IE 6、IE7、IE8、safari，默认不阻止的有Firefox、Opera、Chrome等。</p>
+<p>下面来看一个简单的例子体会一下这种策略：</p>
+<p>首先建立一个网站<a href="http://www.a.com，在本地或者互联网上都可以。然后在根目录下建立一个a.php，这个脚本会给浏览器写入两个cookie，一个是Session" target="_blank" rel="noopener">www.a.com，在本地或者互联网上都可以。然后在根目录下建立一个a.php，这个脚本会给浏览器写入两个cookie，一个是Session</a> Cookie，一个是Third-party Cookie：</p>
+<p><img src="/assets/images/post_imgs/csrf_7.png" alt="csrf_7"></p>
+<p>先用IE 8访问 <a href="http://www.a.com/a.php" target="_blank" rel="noopener">http://www.a.com/a.php</a> ，通过抓包可以看到：</p>
+<p><img src="/assets/images/post_imgs/csrf_8.png" alt="csrf_8"></p>
+<p>浏览器接收了这两个cookie。这是不要关闭这个页面，再打开一个新的标签页，访问此域下的其他页面，比如     <a href="http://www.a.com" target="_blank" rel="noopener">http://www.a.com</a> ，由于这个新标签页和原来的标签页同属于一个浏览器进程，因此Session Cookie会被发送(当然由于是同域，Third-party Cookie也会被发送)：</p>
+<p><img src="/assets/images/post_imgs/csrf_9.png" alt="csrf_9"></p>
+<p>建立另一个网站<a href="http://www.b.com，在根目录下创建一个csrf.html，在里面构造一个" target="_blank" rel="noopener">www.b.com，在根目录下创建一个csrf.html，在里面构造一个</a><img>标签：</p>
+<p><img src="/assets/images/post_imgs/csrf_10.png" alt="csrf_10"></p>
+<p>再开一个新标签页，访问 <a href="http://www.b.com/csrf.html" target="_blank" rel="noopener">http://www.b.com/csrf.html</a> ，抓包：</p>
+<p><img src="/assets/images/post_imgs/csrf_11.png" alt="csrf_11"></p>
+<p>发现只有Session Cookie被发送了，因为IE浏览器默认会阻止跨域请求时发送Third-party Cookie。实际上，IE出于安全考虑，默认阻止了<code>&lt;img&gt;</code>、<code>&lt;iframe&gt;</code>、<code>&lt;script&gt;</code>、<code>&lt;link&gt;</code>等html标签发送跨域请求时携带Third-party Cookie。</p>
+<p>再来看看Firefox，默认允许在发送跨域请求时携带Third-party Cookie：</p>
+<p><img src="/assets/images/post_imgs/csrf_12.png" alt="csrf_12"></p>
+<p>由此可见，在Firefox中，由于默认不阻止Third-party Cookie的跨域发送，浏览器可以成功发送用于验证的Third-party Cookie，导致CSRF比较容易成功。而对于IE浏览器，攻击者则必须诱使受害者先访问目标站点，使得Session Cookie有效，再进行CSRF攻击。</p>
+<h3 id="P3P头"><a href="#P3P头" class="headerlink" title="P3P头"></a>P3P头</h3><p>某些浏览器默认不发送Third-party Cookie确实能在一定程度上防止CSRF的发生，但是W3C有一项关于隐私的标准，全称为The Platform for Privacy Preferences，简称P3P。</p>
+<p>如果网站返回给浏览器的HTTP中包含P3P头，将允许浏览器跨域发送Third-party Cookie。在一些网站中，P3P主要用于类似广告等需要跨域访问的页面，但是一旦设置了P3P头，此影响将扩大到该域的所有页面中，因为cookie是以域和path为单位的，从某种程度上来说，P3P头将增加CSRF攻击成功的概率。</p>
+<p>示例：<br>现在有<a href="http://www.a.com和www.b.com两个域，在www.b.com上，有一个页面包含一个指向www.a.com的`" target="_blank" rel="noopener">www.a.com和www.b.com两个域，在www.b.com上，有一个页面包含一个指向www.a.com的`</a><img>`标签。<a href="http://www.b.com/p3p.html" target="_blank" rel="noopener">http://www.b.com/p3p.html</a> 的代码为：</p>
+<p><img src="/assets/images/post_imgs/csrf_13.png" alt="csrf_13"></p>
+<p><a href="http://www.a.com/p3p_cookie.php" target="_blank" rel="noopener">http://www.a.com/p3p_cookie.php</a> 会对a.com这个域设置cookie，代码如下：</p>
+<p><img src="/assets/images/post_imgs/csrf_14.png" alt="csrf_14"></p>
+<p>当请求 <a href="http://www.b.com/p3p.html" target="_blank" rel="noopener">http://www.b.com/p3p.html</a> 时，<code>&lt;img</code>&gt;标签会跨域去请求 <a href="http://www.a.com/p3p_cookie.php" target="_blank" rel="noopener">http://www.a.com/p3p_cookie.php</a> ，这个脚本会尝试Set-Cookie，这时浏览器会收到一个cookie：</p>
+<p><img src="/assets/images/post_imgs/csrf_15.png" alt="csrf_15"></p>
+<p>如果Set-Cookie成功，当下次再访问 <a href="http://www.b.com/p3p.html" target="_blank" rel="noopener">http://www.b.com/p3p.html</a> 时，浏览器会发送这个cookie。但是由于这里存在跨域限制，因此这种情况下Set-Cookie是不会成功的，浏览器也不会发送cookie，不管是Session Cookie还是Third-party Cookie都一样不会被发送：</p>
+<p><img src="/assets/images/post_imgs/csrf_16.png" alt="csrf_16"></p>
+<p>现在加上P3P头，修改 <a href="http://www.a.com/p3p_cookie.php" target="_blank" rel="noopener">http://www.a.com/p3p_cookie.php</a> 的内容为：</p>
+<p><img src="/assets/images/post_imgs/csrf_17.png" alt="csrf_17"></p>
+<p>重复刚才的步骤，先访问 <a href="http://www.b.com/p3p.html" target="_blank" rel="noopener">http://www.b.com/p3p.html</a> ，浏览器收到cookie：</p>
+<p><img src="/assets/images/post_imgs/csrf_18.png" alt="csrf_18"></p>
+<p>再访问 <a href="http://www.a.com：" target="_blank" rel="noopener">http://www.a.com：</a></p>
+<p><img src="/assets/images/post_imgs/csrf_19.png" alt="csrf_19"></p>
+<p>发现IE访问 <a href="http://www.a.com/p3p_cookie.php" target="_blank" rel="noopener">http://www.a.com/p3p_cookie.php</a> 时发送了Third-party Cookie。</p>
+<p>P3P头的加入改变了a.com的隐私策略，从而使得IE不再阻止Third-party Cookie的跨域发送。由于P3P头的应用很广泛，因此不能认为靠浏览器的拦截机制就可以阻止Third-party Cookie的发送。</p>
+<h3 id="POST与GET"><a href="#POST与GET" class="headerlink" title="POST与GET"></a>POST与GET</h3><p>在防御CSRF的时候有时候存在一个误解，有的开发人员认为CSRF攻击只能由GET请求发起，只要把一些重要的操作改为POST提交方式就可以防御CSRF攻击。</p>
+<p>会存在这种误解的原因在于，很多时候CSRF是利用<code>&lt;img</code>&gt;、<code>&lt;iframe</code>&gt;的src属性来发起GET请求，这种属性不能发起POST请求。不过有一些网站的某些操作并未区分GET和POST，攻击者可以用GET方式对表单的提交地址进行请求。比如在PHP中，如果在服务端使用<code>$_REQUEST</code>而不是<code>$_POST</code>来获取数据就会出现这个问题。假设有一个表单：</p>
+<p><img src="/assets/images/post_imgs/csrf_20.png" alt="csrf_20"></p>
+<p>攻击者可以尝试用GET方式提交 <a href="http://www.xxx.com/delete.php?id=123456" target="_blank" rel="noopener">http://www.xxx.com/delete.php?id=123456</a></p>
+<p>如果服务端的代码没有使用<code>$_POST</code>而是使用<code>$_REQUEST</code>来获得提交的数据，就会使这个请求成功。</p>
+<p>但是如果服务器区分了<code>$_POST</code>和<code>$_REQUEST</code>，攻击者还可以构造出POST请求来提交：</p>
+<p><img src="/assets/images/post_imgs/csrf_21.png" alt="csrf_21"></p>
+<p>这个页面会自动用POST方法提交表单，而且如果放在一个width和height都为0的不可见iframe中，用户很难察觉到。</p>
+<h3 id="Flash-CSRF"><a href="#Flash-CSRF" class="headerlink" title="Flash CSRF"></a>Flash CSRF</h3><p>Flash也可以发起网络请求，GET或POST。</p>
+<p>比如：</p>
+<p><img src="/assets/images/post_imgs/csrf_22.png" alt="csrf_22"></p>
+<p>除了URLRequest外，Flash还可以用getURL、loadVars等方式发起请求，如：</p>
+<p><img src="/assets/images/post_imgs/csrf_23.png" alt="csrf_23"></p>
+<p>在IE6、IE7中，Flash发起网络请求均可以带上本地cookie，但从IE8开始，Flash发起网络请求不会发送本地cookie。</p>
+<h2 id="CSRF的防御"><a href="#CSRF的防御" class="headerlink" title="CSRF的防御"></a>CSRF的防御</h2><h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码被认为是对抗CSRF最简单有效的方法。</p>
+<p>在CSRF攻击过程中，用户在不知情的情况下发起了请求。如果使用验证码，可以强制用户与网站进行交互才能进行正确的请求。所以利用验证码这种方式可以很容易的防止CSRF的发生。</p>
+<p>但是，一般出于交互体验的考虑，不可能在所以请求中都加入验证码的限制。因此验证码只能是作为一种防止CSRF的辅助手段，不能作为主要的解决方案。</p>
+<h3 id="Referer-Check-来源检查"><a href="#Referer-Check-来源检查" class="headerlink" title="Referer Check(来源检查)"></a>Referer Check(来源检查)</h3><p>Referer Check可以用来检查请求是否来自于合法的源。</p>
+<p>常见的互联网应用中，页面与页面之间都具有一定的逻辑关系，这就使得每个正常请求的referer具有一定的规律。<br>比如在一个论坛中发帖，用户一般需要登陆后访问具有发帖功能的页面，这就使得这些这些发帖的请求的referer为发帖表单所在的页面，这都是有规律可循的。所以如果发现referer不是这些页面，甚至不是发帖网站的域，则很有可能是CSRF在作怪。</p>
+<p>不过即使我们能够通过检查referer是否合法来判断用户是否被CSRF攻击，但这还不够。因为服务器并非在任何时候都能接收到referer，很多情况下出于对隐私的保护，限制了referer的发送。在某些情况下，浏览器甚至不发送referer，比如从https跳转到http。</p>
+<p>而且在flash的某一些版本中，曾经可以自定义referer发送，不过后来的新版本取消了这种行为，但我们很难保证所有用户都更新到了新版本。</p>
+<p>综上几点，利用referer来防御CSRF完全是不够的，不过可以利用referer来有效地监控CSRF的发生，第一时间发现LD并修复它。</p>
+<h3 id="Token"><a href="#Token" class="headerlink" title="Token"></a>Token</h3><p>刚才讨论的几种防止CSRF攻击的解决方案都有这样那样的不足，在实际中很少被采用，目前业界比较通用的做法是使用Token。在详细说明Token之前先来看一下为什么CSRF攻击会成功。</p>
+<p>在一次成功的CSRF攻击中，攻击者要正确构造出URL和参数值，否则攻击无法成功。那么如果参数是加密的或者随机的，攻击者无法猜测到，就可以有效防止CSRF攻击了，这就是“不可预测性原则”的一种应用。</p>
+<p>例如一个没有做任何处理的URL：<br><a href="http://www.xxx.com/delete.php?user=test&amp;id=123456" target="_blank" rel="noopener">http://www.xxx.com/delete.php?user=test&amp;id=123456</a><br>现在把参数改成：<br><a href="http://www.xxx.com/delete.php?user=md5(salt+test)&amp;id=123456" target="_blank" rel="noopener">http://www.xxx.com/delete.php?user=md5(salt+test)&amp;id=123456</a></p>
+<p>在攻击者不知道salt和加密方式的情况下，无法构造出这个URL，CSRF攻击不会成功。在服务器端，可以从Session或者cookie中获得user=test，再加上salt后进行md5散列，确认请求的合法性。</p>
+<p>加入随机值或加密值的思想是正确的，但是上面这种实现方法有一个缺点，URL很复杂很不友好，而且如果用户想收藏网址也会变得无效，其次这对数据采集和分析工作会造成障碍，因为数据采集和分析都需要明文的数据。</p>
+<p>业界比较好的方法是采用我们上面说到的Token：<br><a href="http://www.xxx.com/delete.php?user=test&amp;id=123456&amp;token=[randomValue]" target="_blank" rel="noopener">http://www.xxx.com/delete.php?user=test&amp;id=123456&amp;token=[randomValue]</a><br>Token的值需要足够随机，这个随机算法需要经过一番推敲和验证。Token的值只有用户和服务器两者你知我知，第三方是不能知道的。Token可以放在Session Cookie或者本地cookie中。正是由于Token的存在，攻击者无法构造出正确的URL。</p>
+<p>Token需要同时放在表单和Session(Session Cookie或服务器Session)或本地Cookie中，提交表单时，服务器需要验证表单中的Token和Session Cookie或服务器Session(或本地Cookie)中的Token是否一致，如果一致则认为是合法请求，如果不一致或有任何一个为空，就判断为不合法，此时有可能是CSRF攻击。</p>
+<p>比如这样：</p>
+<p><img src="/assets/images/post_imgs/csrf_24.png" alt="csrf_24"></p>
+<p>表单中有一个hidden隐藏字段，value是Token的值。下面是淘宝的一个表单的内容，在表单中有一个hidden隐藏域，正是Token。</p>
+<p><img src="/assets/images/post_imgs/csrf_25.png" alt="csrf_25"></p>
+<p>在Session Cookie也可以看到<code>_tb_token_</code>：</p>
+<p><img src="/assets/images/post_imgs/csrf_26.png" alt="csrf_26"></p>
+<h3 id="Token的使用原则"><a href="#Token的使用原则" class="headerlink" title="Token的使用原则"></a>Token的使用原则</h3><ol>
+<li>Token一定要足够随机。</li>
+<li>可以允许在一个用户的有效生命周期内，在Token消耗掉之前都使用同一个Token，但如果用户提交了则这个Token已消耗，应该重新生成一个Token。</li>
+<li>如果Token保存在Cookie而非服务器Session中，会有一个问题。如果用户同时打开几个标签页，当某个页面消耗掉Token后，其他页面的Token还是原来的，如果这时候提交会造成Token无效。这时可以考虑每个页面生成一个不同的Token。</li>
+<li>注意Token的保密性，不要把Token放在URL中，不然会有通过referer泄露的危险。最好尽量把Token放在表单中，提交方式为POST。但是如果页面存在XSS LD，Token还是有可能泄露。如果存在XSS，攻击几乎可以模拟用户做任何操作。加入Token只能防止CSRF，对XSS无效。</li>
+</ol>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web前端/">web前端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CSRF/">CSRF</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/web前端攻防/">web前端攻防</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/08/谈谈golang中goroutine的调度/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          谈谈Golang中goroutine的调度问题
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CSRF简介"><span class="nav-number">1.</span> <span class="nav-text">CSRF简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CSRF是什么"><span class="nav-number">1.1.</span> <span class="nav-text">CSRF是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSRF的危害"><span class="nav-number">1.2.</span> <span class="nav-text">CSRF的危害</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSRF的基本原理"><span class="nav-number">1.3.</span> <span class="nav-text">CSRF的基本原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSRF案例"><span class="nav-number">2.</span> <span class="nav-text">CSRF案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSRF进阶"><span class="nav-number">3.</span> <span class="nav-text">CSRF进阶</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#浏览器中的cookie策略"><span class="nav-number">3.1.</span> <span class="nav-text">浏览器中的cookie策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#P3P头"><span class="nav-number">3.2.</span> <span class="nav-text">P3P头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POST与GET"><span class="nav-number">3.3.</span> <span class="nav-text">POST与GET</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Flash-CSRF"><span class="nav-number">3.4.</span> <span class="nav-text">Flash CSRF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSRF的防御"><span class="nav-number">4.</span> <span class="nav-text">CSRF的防御</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#验证码"><span class="nav-number">4.1.</span> <span class="nav-text">验证码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Referer-Check-来源检查"><span class="nav-number">4.2.</span> <span class="nav-text">Referer Check(来源检查)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Token"><span class="nav-number">4.3.</span> <span class="nav-text">Token</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Token的使用原则"><span class="nav-number">4.4.</span> <span class="nav-text">Token的使用原则</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

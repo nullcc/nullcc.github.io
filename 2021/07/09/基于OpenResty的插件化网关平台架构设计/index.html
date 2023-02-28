@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>基于 OpenResty 的插件化网关平台架构设计 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="OpenResty插件">
+  
+  
+  
+  
+  <meta name="description" content="本文详述了如何基于 OpenResty 设计一个插件化的架构。">
+<meta name="keywords" content="OpenResty,插件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于 OpenResty 的插件化网关平台架构设计">
+<meta property="og:url" content="https://nullcc.github.io/2021/07/09/基于OpenResty的插件化网关平台架构设计/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文详述了如何基于 OpenResty 设计一个插件化的架构。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/luna-ngx-lua-module.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.033Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于 OpenResty 的插件化网关平台架构设计">
+<meta name="twitter:description" content="本文详述了如何基于 OpenResty 设计一个插件化的架构。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/luna-ngx-lua-module.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-基于OpenResty的插件化网关平台架构设计" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      基于 OpenResty 的插件化网关平台架构设计
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2021/07/09/基于OpenResty的插件化网关平台架构设计/" class="article-date">
+	  <time datetime="2021-07-08T16:00:00.000Z" itemprop="datePublished">七月 9, 2021</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Web后端/">Web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文详述了如何基于 OpenResty 设计一个插件化的架构。</p>
+<a id="more"></a>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>OpenResty是一个基于 Nginx 与 Lua 的高性能 Web 平台，它在请求和响应的生命周期设计方面给我们提供了一种基于现有开源方案开发自己的插件化可扩展网关平台的可能性。</p>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><p>我们不仅需要请求被正确地路由到相应的 upstream （这也是nginx作为反向代理最常用的一种方式），有时还关心请求和响应的一些细节。例如拒绝处理来自IP黑名单的请求、请求限流、鉴权、安全、动态加载SSL证书、日志收集、给请求的 header 打上 request id 以便追踪、请求/响应变换、mock、动态代理等等。甚至在一些测试场景中还会产生定制性很高的需求。</p>
+<p>这些需求五花八门，如果能找到一种相对统一且优雅的处理方案，将提高开发和测试的效率。</p>
+<h2 id="ngx-lua-module-中的请求生命周期"><a href="#ngx-lua-module-中的请求生命周期" class="headerlink" title="ngx-lua-module 中的请求生命周期"></a>ngx-lua-module 中的请求生命周期</h2><p>在真正描述我们的设计之前，需要了解 OpenResty 对请求生命周期的基本设计。ngx-lua-module 是 OpenResty 的一个核心 module 。它对一个 HTTP 请求的生命周期做了划分：</p>
+<p><img src="/assets/images/post_imgs/luna-ngx-lua-module.png" alt="ngx-lua-module中的请求生命周期"></p>
+<p>图中的星星和右边的一些图示是我自己加的，它们涉及到插件化的设计，之后会详细介绍。在划分出请求的生命周期后，我们获得了面向切编程(AOP)的能力，这是插件化的基础。</p>
+<p>我们来具体看看图中请求生命周期的各个阶段（指令）。</p>
+<h3 id="init-by-lua"><a href="#init-by-lua" class="headerlink" title="init_by_lua*"></a>init_by_lua*</h3><p>当 Nginx master 进程（如果有）加载 Nginx 配置文件时，在全局的 Lua 虚拟机上执行我们指定的代码。一般可以在这个阶段做一些全局性的工作。在我们等一下要讨论的插件化架构设计中，会在这个阶段读取应用程序配置文件以及注册插件。</p>
+<h3 id="init-worker-by-lua"><a href="#init-worker-by-lua" class="headerlink" title="init_worker_by_lua*"></a>init_worker_by_lua*</h3><p>当 Nginx 开启 master 进程模式时， Nginx worker 进程启动时会执行指定的代码。如果关闭 master 模式，将在 init_by_lua_* 后直接运行。在这个阶段中可以创建一些定时器任务。</p>
+<h3 id="ssl-certificate-by-lua"><a href="#ssl-certificate-by-lua" class="headerlink" title="ssl_certificate_by_lua*"></a>ssl_certificate_by_lua*</h3><p>这个阶段用来动态地加载SSL证书。这允许我们可以在建立连接前才设置证书和私钥，因此我们可以结合 SNI，针对不同的请求域名动态设置不同的证书和私钥。</p>
+<h3 id="set-by-lua"><a href="#set-by-lua" class="headerlink" title="set_by_lua*"></a>set_by_lua*</h3><p>这个阶段允许我们使用 Lua 定义一些变量供后面的阶段使用。</p>
+<h3 id="rewrite-by-lua"><a href="#rewrite-by-lua" class="headerlink" title="rewrite_by_lua*"></a>rewrite_by_lua*</h3><p>在重写阶段，我们可以修改对请求数据，比如修改URI、请求体和请求头等等。</p>
+<h3 id="access-by-lua"><a href="#access-by-lua" class="headerlink" title="access_by_lua*"></a>access_by_lua*</h3><p>这个阶段一般用来检查请求的准入性，比如通过查询一些黑白名单来对请求进行拒绝和放行。</p>
+<h3 id="content-by-lua"><a href="#content-by-lua" class="headerlink" title="content_by_lua*"></a>content_by_lua*</h3><p>这个阶段负责响应内容的生成，这个阶段可以说是灵活性最大的阶段。</p>
+<h3 id="balancer-by-lua"><a href="#balancer-by-lua" class="headerlink" title="balancer_by_lua*"></a>balancer_by_lua*</h3><p>这个阶段负责处理负载均衡相关事宜。</p>
+<h3 id="header-filter-by-lua"><a href="#header-filter-by-lua" class="headerlink" title="header_filter_by_lua*"></a>header_filter_by_lua*</h3><p>我们可以在这个阶段过滤响应头，比如动态地加入 Request ID。</p>
+<h3 id="body-filter-by-lua"><a href="#body-filter-by-lua" class="headerlink" title="body_filter_by_lua*"></a>body_filter_by_lua*</h3><p>我们可以在这个阶段过滤响应体。需要注意的是，在进入这个阶段时，响应头已经全部发送给客户端，因此无法在该阶段修改响应头。</p>
+<h3 id="log-by-lua"><a href="#log-by-lua" class="headerlink" title="log_by_lua*"></a>log_by_lua*</h3><p>日志阶段，可用供我们记录一些必要的信息。</p>
+<p>关于这些指令的详细描述可以参考<a href="https://github.com/openresty/lua-nginx-module" target="_blank" rel="noopener">lua-nginx-module</a>，此处不再赘述。</p>
+<h2 id="基本设计"><a href="#基本设计" class="headerlink" title="基本设计"></a>基本设计</h2><p>从一个比较高的视角来看，有了请求生命周期的阶段划分，我们可以将刚才描述的每个需求对应到一个或多个处理阶段中去。在实现时，针对每种需求（通用需求或特定需求都可以）设计一个插件，该插件只关心它需要关心的阶段。在网关收到针对某个 hostname 的请求时，框架应该先检查是否有针对该 host 的插件被注册，接着在请求的每个阶段一一调用这些插件中对应的指令方法（如果有的话）。</p>
+<p>现在思路就比较明确了，我们来按顺序理一下整个过程：</p>
+<ol>
+<li>[<strong>init_by_lua*</strong>] Nginx master 进程加载 <code>nginx.conf</code> 启动并初始化，在 <code>init</code> 阶段读取插件配置，注册插件。</li>
+<li>[<strong>init_worker_by_lua*</strong>] Nginx worker 进程启动并初始化，有些插件会在这个阶段注册定时器，定期执行某些操作。</li>
+<li>[<strong>ssl_certificate_by_lua*</strong>] 如果是 HTTPS 请求，框架会调用与当前 hostname 关联的插件的 <code>ssl_certificate</code> 方法动态设置证书。</li>
+<li>[<strong>set_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>set</code> 方法设置一些变量。</li>
+<li>[<strong>rewrite_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>rewrite</code> 方法重写请求的数据。</li>
+<li>[<strong>access_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>access</code> 方法判断请求准入性。</li>
+<li>[<strong>content_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>content</code> 方法生成响应内容。</li>
+<li>[<strong>balancer_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>balancer</code> 方法将请求转发到 upstream 。</li>
+<li>[<strong>header_filter_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>header_filter</code> 方法过滤 response headers 。</li>
+<li>[<strong>body_filter_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>body_filter</code> 方法过滤 response body 。至此，响应已经完全发送给客户端。</li>
+<li>[<strong>log_by_lua*</strong>] 框架会调用与当前 hostname 关联的插件的 <code>log</code> 方法做一些日志相关的操作。</li>
+</ol>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="指令"><a href="#指令" class="headerlink" title="指令"></a>指令</h3><p>需要让这套逻辑生效，首先需要处理的是 <code>nginx.conf</code> 文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"># user  openresty;</span><br><span class="line">worker_processes  auto;</span><br><span class="line">worker_cpu_affinity auto;</span><br><span class="line"></span><br><span class="line">error_log  logs/error.log;</span><br><span class="line">pid        logs/nginx.pid;</span><br><span class="line"></span><br><span class="line">worker_rlimit_nofile 65535;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">  use epoll;</span><br><span class="line">  worker_connections  65535;</span><br><span class="line">  multi_accept on;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># environment variables</span><br><span class="line">env MYSQL_HOST;</span><br><span class="line">env MYSQL_PORT;</span><br><span class="line">env MYSQL_DB;</span><br><span class="line">env MYSQL_USER;</span><br><span class="line">env MYSQL_PASSWORD;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line">  include    mime.types;</span><br><span class="line">  include    proxy.conf;</span><br><span class="line">  include    ../sites-enabled/*.conf;</span><br><span class="line">  include    ../sites-enabled/*/*.conf;</span><br><span class="line">  include    ../sites-enabled/*/*/*.conf;</span><br><span class="line"></span><br><span class="line">  resolver 8.8.8.8;</span><br><span class="line"></span><br><span class="line">  log_format   main &apos;$remote_addr - $remote_user [$time_local] $status &apos;</span><br><span class="line">  &apos;&quot;$request&quot; $body_bytes_sent &quot;$http_referer&quot; &apos;</span><br><span class="line">  &apos;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&apos;;</span><br><span class="line">  access_log   logs/access.log  main;</span><br><span class="line"></span><br><span class="line">  sendfile     on;</span><br><span class="line">  tcp_nopush   on;</span><br><span class="line">  tcp_nodelay on;</span><br><span class="line"></span><br><span class="line">  keepalive_timeout  65;</span><br><span class="line">  keepalive_disable none;</span><br><span class="line"></span><br><span class="line">  gzip on;</span><br><span class="line">  gzip_min_length 1k;</span><br><span class="line">  gzip_buffers 4 16k;</span><br><span class="line">  gzip_http_version 1.0;</span><br><span class="line">  gzip_comp_level 4;</span><br><span class="line">  gzip_types text/plain application/x-javascript text/css application/xml application/json;</span><br><span class="line">  gzip_vary on;</span><br><span class="line"></span><br><span class="line">  lua_socket_log_errors off;</span><br><span class="line"></span><br><span class="line">  # lua packages</span><br><span class="line">  lua_package_path   &quot;lualib/?.lua;/usr/local/openresty/nginx/lua/?.lua;/usr/local/openresty/nginx/plugins/?.lua;/usr/local/openresty/nginx/lualib/?.lua;;&quot;;</span><br><span class="line">  lua_package_cpath  &quot;lualib/?.so;/usr/local/openresty/nginx/lualib/?.so;;&quot;;</span><br><span class="line">  </span><br><span class="line">  lua_shared_dict ngx_cache 128m;</span><br><span class="line">  lua_shared_dict plugin_registry 4m;</span><br><span class="line"></span><br><span class="line">  lua_ssl_trusted_certificate &quot;/etc/ssl/certs/ca-bundle.crt&quot;;</span><br><span class="line"></span><br><span class="line">  init_by_lua_file         &quot;lua/directives/init.lua&quot;;</span><br><span class="line">  init_worker_by_lua_file  &quot;lua/directives/init_worker.lua&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里只解释几个关键的地方：</p>
+<ol>
+<li>几个 MySQL 相关的环境变量用来连接数据库加载插件配置。</li>
+<li>几个 <code>include ../sites-enabled/*.conf</code> 声明了 Nginx 启动时需要加载的具体站点的 conf 文件。</li>
+<li><code>lua_package_path</code> 声明了搜索 lua 包的路径。</li>
+<li><code>lua_package_cpath</code> 声明了搜索 so 库的路径。</li>
+<li><code>lua_shared_dict plugin_registry 4m;</code> 声明了一个4M大小的共享内存，用来存放插件数据。</li>
+<li><code>init_by_lua_file</code> 指定了在 <code>init</code> 阶段要调用的 Lua 脚本。</li>
+<li><code>init_worker_by_lua_file</code> 指定了在 <code>init_worker</code> 阶段要调用的 Lua 脚本。</li>
+</ol>
+<p><code>lua/directives/init.lua</code> 负责加载插件配置，这里是从 MySQL 读取。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/init.lua</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"><span class="keyword">local</span> constants = <span class="built_in">require</span> <span class="string">"core.constants"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> app_plugins = runtime.load_app_plugin_conf_from_db()</span><br><span class="line">runtime.register_plugins(constants.PLUGIN_DIR, app_plugins)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/init_worker.lua</code> 中 <code>plugin_dispatch</code> 方法的第一个参数为 <code>nil</code>，意思是调用所有插件的 <code>init_worker</code> 方法。这里需要说明一下，除了 init 做初始化不涉及插件调用以及 init_worker 调用所有插件的 init_worker 方法以外，其他所有阶段都会调用 <code>runtime.plugin_dispatch</code> 方法来调用插件的相关方法，第一个参数为当前请求的 server name，第二个参数为当前的请求阶段。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/init_worker.lua</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"><span class="keyword">local</span> uuid = <span class="built_in">require</span> <span class="string">"resty.jit-uuid"</span></span><br><span class="line"></span><br><span class="line">uuid.seed()</span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(<span class="literal">nil</span>, phases.INIT_WORKER)</span><br></pre></td></tr></table></figure>
+<p>共用的 nginx.conf 文件只需要描述这么多，在继续往下之前，我们先来看一个具体站点的 conf 文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">  listen       80;</span><br><span class="line">  listen       443 ssl;</span><br><span class="line">  server_name  api.foo.com;</span><br><span class="line">        </span><br><span class="line">  ssl_certificate      certs/test.crt;</span><br><span class="line">  ssl_certificate_key  certs/test.key;</span><br><span class="line"></span><br><span class="line">  ssl_certificate_by_lua_file &quot;lua/directives/ssl_certificate.lua&quot;;</span><br><span class="line"></span><br><span class="line">  location / &#123;</span><br><span class="line">    lua_code_cache on;</span><br><span class="line">    resolver 127.0.0.11;</span><br><span class="line"></span><br><span class="line">    rewrite_by_lua_file &quot;lua/directives/rewrite.lua&quot;;</span><br><span class="line">    access_by_lua_file &quot;lua/directives/access.lua&quot;;</span><br><span class="line">    content_by_lua_file &quot;lua/directives/content.lua&quot;;</span><br><span class="line">    header_filter_by_lua_file &quot;lua/directives/header_filter.lua&quot;;</span><br><span class="line">    body_filter_by_lua_file &quot;lua/directives/body_filter.lua&quot;;</span><br><span class="line">    log_by_lua_file &quot;lua/directives/log.lua&quot;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个 server block 声明了一些信息：</p>
+<ol>
+<li>因为我们用到了 <code>ssl_certificate_by_lua_file</code> 来动态加载SSL证书，所以<code>ssl_certificate</code> 和 <code>ssl_certificate_key</code> 被设置成了一个基本的 crt 和 key 文件，如果不设置会报错。</li>
+<li>在 <code>location /</code> block 中声明了各种 <code>*_by_lua_file</code> 对应的脚本。</li>
+</ol>
+<p>现在可以继续看其他指令的脚本文件了。</p>
+<p><code>lua/directives/ssl_certificate.lua</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> ssl = <span class="built_in">require</span> <span class="string">"ngx.ssl"</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> server_name, err = ssl.server_name()</span><br><span class="line">runtime.plugin_dispatch(server_name, phases.SSL_CERTIFICATE)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/rewrite.lua</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/rewrite.lua</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.REWRITE)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/set.lua</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/set.lua</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> runtime.plugin_dispatch(ngx.var.server_name, phases.SET)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/access.lua</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/access.lua</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.ACCESS)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/content.lua</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/content.lua</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.CONTENT)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/balancer</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/balancer</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.BALANCER)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/header_filter</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/header_filter</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.HEADER_FILTER)</span><br></pre></td></tr></table></figure>
+<p><code>lua/directives/body_filter</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/body_filter</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Should concat response body chunk if it's not the end of response stream</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> chunk = ngx.<span class="built_in">arg</span>[<span class="number">1</span>]</span><br><span class="line"><span class="keyword">local</span> end_of_resp_stream = ngx.<span class="built_in">arg</span>[<span class="number">2</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> end_of_resp_stream == <span class="literal">false</span> <span class="keyword">then</span></span><br><span class="line">  <span class="keyword">if</span> ngx.ctx.response_body == <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    ngx.ctx.response_body = chunk</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    ngx.ctx.response_body = ngx.ctx.response_body .. chunk</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">  ngx.ctx.end_of_resp_stream = <span class="literal">true</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.BODY_FILTER)</span><br></pre></td></tr></table></figure>
+<p>关于 body_filter 阶段需要特别说明一下，由于 Nginx 从 updtream 获取 response body 并不是一次获取所有，而是分块 (chunked) 获取。并且每取得一个分块，Nginx 都会触发一次 body_filter 。为了灵活性最大化，这里设置了一个 <code>ngx.ctx.end_of_resp_stream</code> 上下文变量来让插件判断当前的响应数据传输是否已经结束。这样不管是想处理每个分块还是按照整体来处理整个响应的插件都可以工作。</p>
+<p><code>lua/directives/log</code>:</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/directives/log</span></span><br><span class="line"><span class="keyword">local</span> phases = <span class="built_in">require</span> <span class="string">"core.phases"</span></span><br><span class="line"><span class="keyword">local</span> runtime = <span class="built_in">require</span> <span class="string">"core.runtime"</span></span><br><span class="line"></span><br><span class="line">runtime.plugin_dispatch(ngx.var.server_name, phases.LOG)</span><br></pre></td></tr></table></figure>
+<h3 id="运行时"><a href="#运行时" class="headerlink" title="运行时"></a>运行时</h3><p>之前提到 init 指令会调用 <code>runtime.register_plugins</code> 注册插件，其他指令会调用 <code>runtime.plugin_dispatch</code> 触发插件相应阶段的指令方法。</p>
+<p>先来看注册、加载和卸载插件的代码：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/core/runtime.lua</span></span><br><span class="line"><span class="keyword">local</span> _M = &#123;</span><br><span class="line">  <span class="built_in">_VERSION</span> = <span class="string">'0.0.1'</span>,</span><br><span class="line">  _plugins = &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.register_plugins</span><span class="params">(plugin_dir, app_plugins)</span></span></span><br><span class="line">  <span class="keyword">for</span> _, app_plugin <span class="keyword">in</span> <span class="built_in">ipairs</span>(app_plugins) <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">local</span> ok, err = _M.load_plugin(plugin_dir, app_plugin.server_name, app_plugin.plugin_name, app_plugin.args <span class="keyword">or</span> &#123;&#125;)</span><br><span class="line">      <span class="keyword">if</span> <span class="keyword">not</span> ok <span class="keyword">then</span></span><br><span class="line">        ngx.<span class="built_in">log</span>(ngx.ERR, <span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"[rumtime] failed to load plugin: %s, err: %s"</span>, app_plugin.plugin_name, err))</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.load_plugin</span><span class="params">(plugin_dir, server_name, plugin_name, args)</span></span></span><br><span class="line">  <span class="keyword">local</span> plugin_path = <span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"%s/%s.lua"</span>, plugin_dir, plugin_name)</span><br><span class="line">  <span class="keyword">local</span> plugin_module, err = <span class="built_in">loadfile</span>(plugin_path)</span><br><span class="line">  <span class="keyword">if</span> plugin_module == <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>, <span class="built_in">error</span>(<span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"[runtime] plugin not found, plugin: %s, error: %s"</span>, plugin_name, err))</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">local</span> plugin = plugin_module()</span><br><span class="line">  plugin.init_plugin(args)</span><br><span class="line">  <span class="keyword">local</span> key = <span class="built_in">string</span>.<span class="built_in">lower</span>(server_name)</span><br><span class="line">  <span class="keyword">if</span> _M._plugins[key] == <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    _M._plugins[key] = &#123;&#125;</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  <span class="built_in">table</span>.<span class="built_in">insert</span>(_M._plugins[key], plugin)</span><br><span class="line">  ngx.<span class="built_in">log</span>(ngx.ERR, <span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"[runtime] plugin \"%s\" for server name \"%s\", args: %s loaded"</span>, plugin_name, key, cjson.encode(args)))</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.unload_plugin</span><span class="params">(server_name, plugin_name)</span></span></span><br><span class="line">  <span class="keyword">local</span> plugins = _M._plugins[server_name]</span><br><span class="line">  <span class="keyword">if</span> plugins ~= <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">for</span> i, v <span class="keyword">in</span> <span class="built_in">ipairs</span>(plugins) <span class="keyword">do</span></span><br><span class="line">      <span class="keyword">if</span> plugin_name == v._NAME <span class="keyword">then</span></span><br><span class="line">        <span class="built_in">table</span>.<span class="built_in">remove</span>(plugins, i)</span><br><span class="line">        ngx.<span class="built_in">log</span>(ngx.ERR, <span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"[runtime] plugin \"%s\" for server name \"%s\" unloaded"</span>, plugin_name, server_name))</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p><code>register_plugins</code> 注册插件，它在内部调用 <code>load_plugin</code> 执行具体的注册操作。<code>load_plugin</code> 调用 <code>loadfile</code> 从指定的目录加载并用参数初始化插件，然后插入到 <code>_plugins</code> 这个 table 中，注意这里把 <code>_plugins</code> 当成一个字典来用，键是 server name，值是插件数组。<code>unload_plugin</code> 用来卸载指定 hostname 下的指定插件。<code>load_plugin</code> 和 <code>unload_plugin</code> 可以结合一套插件管理 API 来动态加载/卸载 API 。</p>
+<p>接下来是指令调用插件的代码：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/core/runtime.lua</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.plugin_dispatch</span><span class="params">(server_name, phase)</span></span></span><br><span class="line">  ngx.<span class="built_in">log</span>(ngx.ERR, server_name, <span class="string">", "</span>, phase)</span><br><span class="line">  <span class="keyword">local</span> plugins = _M.get_plugins(server_name)</span><br><span class="line">  <span class="keyword">if</span> plugins ~= <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">for</span> _, plugin <span class="keyword">in</span> <span class="built_in">ipairs</span>(plugins) <span class="keyword">do</span></span><br><span class="line">      <span class="keyword">if</span> plugin[phase] ~= <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">local</span> ok, ret = <span class="built_in">pcall</span>(plugin[phase])</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> ok <span class="keyword">then</span></span><br><span class="line">          ngx.<span class="built_in">log</span>(ngx.ERR, <span class="built_in">string</span>.<span class="built_in">format</span>(<span class="string">"[rumtime] dispatch error, plugin name: %s, phase: %s, err: %s"</span>, plugin._NAME, phase, ret))</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.get_plugins</span><span class="params">(server_name)</span></span></span><br><span class="line">  <span class="keyword">if</span> server_name == <span class="literal">nil</span> <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">local</span> plugins = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> _, server_plugins <span class="keyword">in</span> <span class="built_in">pairs</span>(_M._plugins) <span class="keyword">do</span></span><br><span class="line">      <span class="keyword">for</span> _, plugin <span class="keyword">in</span> <span class="built_in">ipairs</span>(server_plugins) <span class="keyword">do</span></span><br><span class="line">        <span class="built_in">table</span>.<span class="built_in">insert</span>(plugins, plugin)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">return</span> plugins</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">local</span> key = <span class="built_in">string</span>.<span class="built_in">lower</span>(server_name)</span><br><span class="line">  <span class="keyword">return</span> _M._plugins[key]</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p><code>plugin_dispatch</code> 首先使用 server name 调用 <code>get_plugins</code> 来获取和 server name 相关联的所有插件。这里如果 server name 为 <code>nil</code> 则会将返回所有插件，之前在 init_worker 指令中见到了这种用法。在获得插件列表后，<code>plugin_dispatch</code> 会遍历插件列表，使用 <code>pcall</code> 调用 <code>plugin[phase]</code>。<code>pcall</code> 的意思是 <code>protected call</code>，也就是一种保护模式调用，这个调用中如果出现错误，会以返回码的方式告诉调用方而不会导致请求处理直接挂掉。</p>
+<h3 id="插件"><a href="#插件" class="headerlink" title="插件"></a>插件</h3><p>刚才我们一直围绕插件展开讨论，但插件究竟是个什么东西我们一直没提。插件其实就是一个 Lua table，里面有一些数据和指令相关的方法。下面是插件的基本定义：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- lua/core/plugin.lua</span></span><br><span class="line"><span class="keyword">local</span> _M = &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.init_plugin</span><span class="params">(...)</span></span></span><br><span class="line">  <span class="keyword">local</span> plugin, args = ...</span><br><span class="line">  <span class="keyword">for</span> key, value <span class="keyword">in</span> <span class="built_in">pairs</span>(args) <span class="keyword">do</span></span><br><span class="line">    plugin[key] = value</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">  <span class="keyword">if</span> <span class="built_in">type</span>(plugin._init_plugin) == <span class="string">"function"</span> <span class="keyword">then</span></span><br><span class="line">    plugin._init_plugin()</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> &#123;</span><br><span class="line">  <span class="built_in">__index</span> = <span class="function"><span class="keyword">function</span><span class="params">(table, key)</span></span></span><br><span class="line">    <span class="keyword">local</span> value = _M[key]</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">type</span>(value) == <span class="string">"function"</span> <span class="keyword">then</span></span><br><span class="line">      <span class="keyword">return</span> <span class="function"><span class="keyword">function</span><span class="params">(...)</span></span></span><br><span class="line">        <span class="keyword">return</span> value(<span class="built_in">table</span>, ...)</span><br><span class="line">      <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">return</span> value</span><br><span class="line">  <span class="keyword">end</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们已经知道 runtime 在调用插件方法时的调用链是这样的：</p>
+<ol>
+<li><code>runtime.plugin_dispatch(server_name, phase)</code></li>
+<li><code>runtime.get_plugins(server_name)</code></li>
+<li><code>pcall(plugin[phase])</code></li>
+</ol>
+<p>在第三步 <code>pcall(plugin[phase])</code> 中，runtime 会先获取 <code>plugin[phase]</code>。这里要注意，pcall 的参数是一个函数（或者说闭包），但我们之前说过，每个插件只会实现它关心的指令，因此这里 <code>plugin[phase]</code> 有可能是 <code>nil</code>，即没有实现。所以我们在 <code>pcall(plugin[phase])</code> 之前需要先判断 <code>plugin[phase]</code> 是否存在。</p>
+<p><code>plugin.lua</code> 中还用到了 <code>metatable.__index</code>，这里需要解释一下为什么这么写。大部分插件会有一些初始化参数需要在加载时赋值给插件，另外插件可能自己也有一些初始化逻辑，如果每个插件都写一遍参数初始化的代码很麻烦。Lua 中 metatable的工作机制是，当通过键来访问 table 的时候，如果这个键没有值，那么 Lua 就会查找该 table 的 metatable（如果有的话）中的 <strong>index 。如果</strong>index 是一个 table，Lua会在表格中查找相应的键。如果 __index 是一个函数，Lua 就会用 table 和键调用那个函数。这个机制有点类似 JavaScript 中的 prototype 。</p>
+<p>由于 <code>plugin.lua</code> 返回的 table 包含一个 <code>__index</code>，且 <code>__index</code> 是一个函数。那么只要具体的插件把这个 table 设置为自己的 metatable，当在这个插件上调用一个不存在的方法时，Lua 就会去它的 metatable 中调用 <code>__index</code> 键对应的函数。于是像初始化插件这样的通用操作就可以放在 <code>plugin.lua</code> 中实现了。</p>
+<h3 id="一个具体的插件"><a href="#一个具体的插件" class="headerlink" title="一个具体的插件"></a>一个具体的插件</h3><p>上面说了这么多，我们还没有见过真正可以用的插件长什么样。这里展示一个叫做 <code>request-id</code> 的插件，它可以给所有 response headers 加上一个指定的header，其中键可以由插件参数指定，值是一个UUID。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- plugins/request-id.lua</span></span><br><span class="line"></span><br><span class="line"><span class="comment">--- request-id</span></span><br><span class="line"><span class="comment">-- Add request-id in HTTP response headers</span></span><br><span class="line"><span class="comment">-- @module request-id</span></span><br><span class="line"><span class="comment">-- @license MIT</span></span><br><span class="line"><span class="comment">-- @release 0.0.1</span></span><br><span class="line"><span class="comment">-- @phases init_worker, header_filter</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> uuid = <span class="built_in">require</span> <span class="string">"resty.jit-uuid"</span></span><br><span class="line"><span class="keyword">local</span> meta_plugin = <span class="built_in">require</span> <span class="string">"core.plugin"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> _M = &#123;</span><br><span class="line">  <span class="built_in">_VERSION</span> = <span class="string">"0.0.1"</span>,</span><br><span class="line">  _NAME = <span class="string">"request-id"</span>,</span><br><span class="line"></span><br><span class="line">  <span class="comment">-- args</span></span><br><span class="line">  key = <span class="string">""</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(_M, meta_plugin)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.init_worker</span><span class="params">()</span></span></span><br><span class="line">  uuid.seed()</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_M.header_filter</span><span class="params">()</span></span></span><br><span class="line">  ngx.header[_M.key] = uuid()</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> _M</span><br></pre></td></tr></table></figure>
+<p><code>request-id</code> 插件只有一个参数 key，每个插件都必须调用 <code>setmetatable(_M, meta_plugin)</code> 来讲上面说的基础插件设置成自己的 metatable，以便自动获得初始化函数（如果有其他需要在插件之间共享的函数也可以加进去）。这个插件涉及的指令只有 <code>init_worker</code> 和 <code>header_filter</code>，在 init_worker 中为 uuid 库初始化了随机数种子，在 header_filter 中将一个 key 为 ）_M.key，值为 uuid 的 header 设置到 response headers 中，就这么简单。</p>
+<p>还有一些更复杂的插件，由于篇幅所限无法全部展示出来。不过一旦理解了基本原理和设计，要创建新的插件也不是什么难事。</p>
+<h2 id="实现原则"><a href="#实现原则" class="headerlink" title="实现原则"></a>实现原则</h2><p>有一个实现原则是，不同插件之间不应该产生关联，比如共享状态或者对调用顺序有任何假设。这是因为如果插件之间存在关联，则运行时的效果可能是不可预知的。举个比较刻意的例子，假设对 <a href="http://www.foo.com" target="_blank" rel="noopener">www.foo.com</a> 我们注册有 A 和 B 两个插件，A 在设置了 ngx.ctx.foo = “a” 并在之后读取了 ngx.ctx.foo，B 设置了 ngx.ctx.foo = “b” 并在之后读取了 ngx.ctx.foo。由于框架对插件的调用顺序和他们被注册的顺序一致（一般来说这样设计没问题，因为框架本身并不关心插件的被调用顺序，只是按序遍历插件列表逐个调用罢了。）且 A 在 B 之前被注册，则实际结果是 A 在读取 ngx.ctx.foo 时期望读到的是 “a”，但读到的却是 “b”，因为 ngx.ctx.foo 这个变量在 A 和 B 之间是共享的且 B 比 A 晚执行覆盖了这个变量。</p>
+<p>插件间不应产生关联虽说是原则，但从技术上我们无法阻止有人编写存在关联的插件，只能尽量避免。一个比较好的实践是：在插件内如果有需要用到 <code>ngx.ctx</code> 这种请求相关的上下文变量时，给他一个前缀以降低和其他插件冲突的风险。nginx 内部还有一种范围更广共享方式是使用 <code>lua_shared_dict</code>，这种方式是全局的，可以被所有 worker 共享，使用这种共享内存需要特别小心。如果把视角放到 nginx 之外，产生关联方式就更多了：数据库、缓存、文件等等，其实道理都是一样的，插件间的关联会产生不确定性。</p>
+<h2 id="更多"><a href="#更多" class="headerlink" title="更多"></a>更多</h2><p>还可以继续完善这套系统，加入插件管理 API，这部分内容以上面的描述为基础，限于篇幅这里就不展开说了。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Web后端/">Web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenResty/">OpenResty</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/插件/">插件</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/04/25/构建可观察的动态命令行程序/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          构建可观察的动态命令行程序
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/04/02/transformer+source map实现TypeScript函数+行列级别错误定位/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">transformer+source map实现TypeScript函数+行列级别错误定位</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#需求"><span class="nav-number">2.</span> <span class="nav-text">需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ngx-lua-module-中的请求生命周期"><span class="nav-number">3.</span> <span class="nav-text">ngx-lua-module 中的请求生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#init-by-lua"><span class="nav-number">3.1.</span> <span class="nav-text">init_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#init-worker-by-lua"><span class="nav-number">3.2.</span> <span class="nav-text">init_worker_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ssl-certificate-by-lua"><span class="nav-number">3.3.</span> <span class="nav-text">ssl_certificate_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#set-by-lua"><span class="nav-number">3.4.</span> <span class="nav-text">set_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rewrite-by-lua"><span class="nav-number">3.5.</span> <span class="nav-text">rewrite_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#access-by-lua"><span class="nav-number">3.6.</span> <span class="nav-text">access_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#content-by-lua"><span class="nav-number">3.7.</span> <span class="nav-text">content_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#balancer-by-lua"><span class="nav-number">3.8.</span> <span class="nav-text">balancer_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#header-filter-by-lua"><span class="nav-number">3.9.</span> <span class="nav-text">header_filter_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#body-filter-by-lua"><span class="nav-number">3.10.</span> <span class="nav-text">body_filter_by_lua*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#log-by-lua"><span class="nav-number">3.11.</span> <span class="nav-text">log_by_lua*</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本设计"><span class="nav-number">4.</span> <span class="nav-text">基本设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">5.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#指令"><span class="nav-number">5.1.</span> <span class="nav-text">指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行时"><span class="nav-number">5.2.</span> <span class="nav-text">运行时</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#插件"><span class="nav-number">5.3.</span> <span class="nav-text">插件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一个具体的插件"><span class="nav-number">5.4.</span> <span class="nav-text">一个具体的插件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现原则"><span class="nav-number">6.</span> <span class="nav-text">实现原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更多"><span class="nav-number">7.</span> <span class="nav-text">更多</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

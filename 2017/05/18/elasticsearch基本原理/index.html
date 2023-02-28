@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>ElasticSearch基本原理 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="ElasticSearch">
+  
+  
+  
+  
+  <meta name="description" content="本部分简要介绍一下ElasticSearch的基本原理，不会太深入，仅仅是介绍最基础的一些概念。">
+<meta name="keywords" content="ElasticSearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ElasticSearch基本原理">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/18/elasticsearch基本原理/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本部分简要介绍一下ElasticSearch的基本原理，不会太深入，仅仅是介绍最基础的一些概念。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_5.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_6.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_7.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.024Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ElasticSearch基本原理">
+<meta name="twitter:description" content="本部分简要介绍一下ElasticSearch的基本原理，不会太深入，仅仅是介绍最基础的一些概念。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/elasticsearch_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-elasticsearch基本原理" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      ElasticSearch基本原理
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/18/elasticsearch基本原理/" class="article-date">
+	  <time datetime="2017-05-17T16:00:00.000Z" itemprop="datePublished">五月 18, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本部分简要介绍一下ElasticSearch的基本原理，不会太深入，仅仅是介绍最基础的一些概念。</p>
+<a id="more"></a>
+<h2 id="1-基于Apache-Lucene"><a href="#1-基于Apache-Lucene" class="headerlink" title="1.基于Apache Lucene"></a>1.基于Apache Lucene</h2><h2 id="2-使用REST-API"><a href="#2-使用REST-API" class="headerlink" title="2.使用REST API"></a>2.使用REST API</h2><h2 id="3-输入数据分析"><a href="#3-输入数据分析" class="headerlink" title="3.输入数据分析"></a>3.输入数据分析</h2><p>分析(analysis)是这样一个过程：</p>
+<p>首先，表征化一个文本块为适用于倒排索引单独的词(term)<br>然后标准化这些词为标准形式，提高它们的“可搜索性”或“查全率”</p>
+<p>对输入数据的分析是比较复杂的，由分析器完成。分析器(analyzer)的组成：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_1.png" alt="输入分析过程"></p>
+<p>1.零个或多个<em>字符过滤器</em>(character filter)</p>
+<pre><code>这是分词之前的操作，使用字符过滤器可以过滤掉HTML字符，并映射一些字符(比如&apos;&amp;&apos;-&gt;&apos;and)
+</code></pre><p>2.一个<em>分词器</em>(tokenizer)</p>
+<pre><code>对文本进行分词，把完整文本断成一个一个的词(英文或一些西方语言可以利用空格断词，中文或一些东方系语言需要使用词库断词)
+</code></pre><p>3.零个或多个<em>标记过滤器</em>(token filter)，又被称为表征过滤器</p>
+<pre><code>标记过滤器可以把分词后的单词标准化，比如lowercase过滤器可以把所有单词都转换成小写(例如Cat-&gt;cat)，stemmer过滤器则会把单词转换为它的词根或基本形式(例如cats-&gt;cat)。
+</code></pre><p>ElasticSearch内置的一些<em>analyzer</em>：</p>
+<table>
+<thead>
+<tr>
+<th>analyzer</th>
+<th>logical name</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>standard analyzer</td>
+<td>standard</td>
+<td>standard tokenizer, standard filter, lower case filter, stop filter</td>
+</tr>
+<tr>
+<td>simple analyzer</td>
+<td>simple</td>
+<td>lower case tokenizer</td>
+</tr>
+<tr>
+<td>stop analyzer</td>
+<td>stop</td>
+<td>lower case tokenizer, stop filter</td>
+</tr>
+<tr>
+<td>keyword analyzer</td>
+<td>keyword</td>
+<td>不分词，内容整体作为一个token(not_analyzed)</td>
+</tr>
+<tr>
+<td>pattern analyzer</td>
+<td>whitespace</td>
+<td>正则表达式分词，默认匹配\W+</td>
+</tr>
+<tr>
+<td>language analyzers</td>
+<td><a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/analysis-lang-analyzer.html" target="_blank" rel="noopener">lang</a></td>
+<td>各种语言</td>
+</tr>
+<tr>
+<td>snowball analyzer</td>
+<td>snowball</td>
+<td>standard tokenizer, standard filter, lower case filter, stop filter, snowball filter</td>
+</tr>
+<tr>
+<td>custom analyzer</td>
+<td>custom</td>
+<td>一个Tokenizer, 零个或多个Token Filter, 零个或多个Char Filter</td>
+</tr>
+</tbody>
+</table>
+<p>ElasticSearch内置的<em>tokenizer</em>列表：</p>
+<table>
+<thead>
+<tr>
+<th>token filter</th>
+<th>logical name</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>standard filter</td>
+<td>standard</td>
+<td></td>
+</tr>
+<tr>
+<td>ascii folding filter</td>
+<td>asciifolding</td>
+<td></td>
+</tr>
+<tr>
+<td>length filter</td>
+<td>length</td>
+<td>去掉太长或者太短的</td>
+</tr>
+<tr>
+<td>lowercase filter</td>
+<td>lowercase</td>
+<td>转成小写</td>
+</tr>
+<tr>
+<td>ngram filter</td>
+<td>nGram</td>
+<td></td>
+</tr>
+<tr>
+<td>edge ngram filter</td>
+<td>edgeNGram</td>
+<td></td>
+</tr>
+<tr>
+<td>porter stem filter</td>
+<td>porterStem</td>
+<td>波特词干算法</td>
+</tr>
+<tr>
+<td>shingle filter</td>
+<td>shingle</td>
+<td>定义分隔符的正则表达式</td>
+</tr>
+<tr>
+<td>stop filter</td>
+<td>stop</td>
+<td>移除 stop words</td>
+</tr>
+<tr>
+<td>word delimiter filter</td>
+<td>word_delimiter</td>
+<td>将一个单词再拆成子分词</td>
+</tr>
+<tr>
+<td>stemmer token filter</td>
+<td>stemmer</td>
+<td></td>
+</tr>
+<tr>
+<td>stemmer override filter</td>
+<td>stemmer_override</td>
+<td></td>
+</tr>
+<tr>
+<td>keyword marker filter</td>
+<td>keyword_marker</td>
+<td></td>
+</tr>
+<tr>
+<td>keyword repeat filter</td>
+<td>keyword_repeat</td>
+<td></td>
+</tr>
+<tr>
+<td>kstem filter</td>
+<td>kstem</td>
+<td></td>
+</tr>
+<tr>
+<td>snowball filter</td>
+<td>snowball</td>
+<td></td>
+</tr>
+<tr>
+<td>phonetic filter</td>
+<td>phonetic</td>
+<td><a href="https://github.com/elasticsearch/elasticsearch-analysis-phonetic" target="_blank" rel="noopener">插件</a></td>
+</tr>
+<tr>
+<td>synonym filter</td>
+<td>synonyms</td>
+<td>处理同义词</td>
+</tr>
+<tr>
+<td>compound word filter</td>
+<td>dictionary_decompounder, hyphenation_decompounder</td>
+<td>分解复合词</td>
+</tr>
+<tr>
+<td>reverse filter</td>
+<td>reverse</td>
+<td>反转字符串</td>
+</tr>
+<tr>
+<td>elision filter</td>
+<td>elision</td>
+<td>去掉缩略语</td>
+</tr>
+<tr>
+<td>truncate filter</td>
+<td>truncate</td>
+<td>截断字符串</td>
+</tr>
+<tr>
+<td>unique filter</td>
+<td>unique</td>
+<td></td>
+</tr>
+<tr>
+<td>pattern capture filter</td>
+<td>pattern_capture</td>
+<td></td>
+</tr>
+<tr>
+<td>pattern replace filte</td>
+<td>pattern_replace</td>
+<td>用正则表达式替换</td>
+</tr>
+<tr>
+<td>trim filter</td>
+<td>trim</td>
+<td>去掉空格</td>
+</tr>
+<tr>
+<td>limit token count filter</td>
+<td>limit</td>
+<td>限制token数量</td>
+</tr>
+<tr>
+<td>hunspell filter</td>
+<td>hunspell</td>
+<td>拼写检查</td>
+</tr>
+<tr>
+<td>common grams filter</td>
+<td>common_grams</td>
+<td></td>
+</tr>
+<tr>
+<td>normalization filter</td>
+<td>arabic_normalization, persian_normalization</td>
+</tr>
+</tbody>
+</table>
+<p>ES内置的<em>character filter</em>列表：</p>
+<table>
+<thead>
+<tr>
+<th>character filter</th>
+<th>logical name</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mapping char filter</td>
+<td>mapping</td>
+<td>根据配置的映射关系替换字符</td>
+</tr>
+<tr>
+<td>html strip char filter</td>
+<td>html_strip</td>
+<td>去掉HTML元素</td>
+</tr>
+<tr>
+<td>pattern replace char filter</td>
+<td>pattern_replace</td>
+<td>用正则表达式处理字符串</td>
+</tr>
+</tbody>
+</table>
+<p>对具体字段的查询</p>
+<ul>
+<li>当你查询全文(full text)字段，查询将使用相同的分析器来分析查询字符串，以产生正确的词列表。</li>
+<li>当你查询一个确切值(exact value)字段，查询将不分析查询字符串，但是你可以自己指定。</li>
+</ul>
+<h2 id="4-评分和查询相关性"><a href="#4-评分和查询相关性" class="headerlink" title="4.评分和查询相关性"></a>4.评分和查询相关性</h2><p>默认情况下，Apache Lucene使用TF/IDF(term frequency/inverse document frequency，词频/逆向文档频率)评分机制，这是一种计算文档在我们查询上下文中相关度的算法，也可以使用其他算法。</p>
+<h2 id="5-数据架构的主要概念"><a href="#5-数据架构的主要概念" class="headerlink" title="5.数据架构的主要概念"></a>5.数据架构的主要概念</h2><p>(1)索引</p>
+<p>索引(index)是ElasticSearch对逻辑数据的逻辑存储，可以把它认为是关系型数据库的表。ElasticSearch可以把索引放在一台机器上或者分散放在多台机器上，每个索引有一个或多个分片(shard)，每个分片可以有多个副本(replica)。</p>
+<p>(2)文档</p>
+<p>存储在ElasticSearch中的主要实体是文档(document)，它相当于关系型数据库的行。ElasticSearch和MongoDB不同的是，MongoDB中相同字段类型可以不同，但ElasticSearch中相同字段必须是类型相同的。</p>
+<p>文档包含多个字段。<br>从客户端的角度看，文档是一个JSON对象。<br>每个文档存储在一个索引中并由一个ElasticSearch自动生成的唯一标识符和文档类型。</p>
+<p>索引、文档类型和文档ID唯一确定一个文档。</p>
+<p>(3)文档类型</p>
+<p>在ElasticSearch中，一个索引可以存放很多不同用途的文档，可以用文档类型加以区分。</p>
+<p>但是需要记住一点，同一索引的所有文档类型中，同一字段名只能有一种类型。</p>
+<p>(4)映射</p>
+<p><em>映射制定了ElasticSearch应该如何处理相应的字段。</em></p>
+<p>ElasticSearch在映射中存储有关字段的信息，每一个文档类型都有自己的映射，即使我们没有手动指定(当然也可以手动指定)。</p>
+<p>例如年龄字段和内容字段就需要不同的处理，前者不需要做分析，后者需要。</p>
+<h2 id="6-ElasticSearch的主要概念"><a href="#6-ElasticSearch的主要概念" class="headerlink" title="6.ElasticSearch的主要概念"></a>6.ElasticSearch的主要概念</h2><p>(1)节点和集群</p>
+<p>ElasticSearch可以运行在单机上，不过为了处理大规模的数据和保证容错和高可用性，ElasticSearch被设计成分布式的，可以用多台机器组成ElasticSearch集群(cluster)，每台机器称为一个节点(node)。</p>
+<p>(2)分片</p>
+<p>当有大量数据需要处理时，单机的处理能力就不够了，此时可以把一个索引拆分成几个分片，分别放在不同的机器上。当搜索请求到来时，ElasticSearch会把查询发送到相关分片上，并将结果合并到一起回送客户端，然而客户端并不知道这些事情。而且分片可以加快索引速度。</p>
+<p>(3)副本</p>
+<p>为了提高吞吐量和保证高可用性，一个分片可以有零个或多个复制分片，称为副本。这些相同的分片中会有一个作为主分片来响应请求，其余副本保证了当主分片或主分片所在机器挂掉时晋升为主分片，保证可用性。</p>
+<p>(4)节点间的同步</p>
+<p>每个节点都会在本地保存信息，并会自动同步。</p>
+<h2 id="7-Elasticsearch-分片交互过程"><a href="#7-Elasticsearch-分片交互过程" class="headerlink" title="7.Elasticsearch 分片交互过程"></a>7.Elasticsearch 分片交互过程</h2><p>(1)Elasticsearch如何把数据存储到分片中</p>
+<p>这里有一个问题：当我们存储数据时，数据应该存放在哪一个分片中(主分片还是复制分片)？当我们取数据时，应当从哪个分片去取？</p>
+<p>数据存储到分片中使用以下规则：</p>
+<pre><code>shard = hash(routing) % number_of_primary_shards
+</code></pre><p>这里，routing是一个字符串，一般是文档的_id值，也可以是用户自定义的值。使用hash函数计算出routing的散列值，再对主分片数取模运算，结果就是我们想要的那个分片，这个值范围是0-number_of_primary_shards - 1。</p>
+<p>这样做也有个问题，就是在索引建立以后，主分片数不能更改。否则会有一部分数据无法被索引到。</p>
+<p>(2)主分片和复制分片之间如何交互</p>
+<p>这里有3个节点，2个主分片，每个主分片分别对应2个复制分片，node1为主节点：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_2.png" alt="主分片和复制分片示例"></p>
+<p>1、索引与删除一个文档</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_3.png" alt="索引与删除一个文档"></p>
+<p>2、更新一个文档</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_4.png" alt="更新一个文档"></p>
+<p>3、检索文档</p>
+<p>检索的过程将分为查询阶段与获取阶段。</p>
+<p>检索文档-查询语句：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_5.png" alt="检索文档-查询语句"></p>
+<p>检索文档-查询阶段：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_6.png" alt="检索文档-查询阶段"></p>
+<p>查询阶段主要定位了所要检索数据的具体位置，但是我们还必须取回它们才能完成整个检索过程。</p>
+<p>检索文档-获取阶段：</p>
+<p><img src="/assets/images/post_imgs/elasticsearch_7.png" alt="检索文档-获取阶段"></p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ElasticSearch/">ElasticSearch</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/18/使用ElasticSearch搭建高性能可扩展的全文搜索引擎/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          使用ElasticSearch搭建高性能可扩展的全文搜索引擎
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/10/(译)npm-scripts详解/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">(译)npm-scripts详解</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-基于Apache-Lucene"><span class="nav-number">1.</span> <span class="nav-text">1.基于Apache Lucene</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-使用REST-API"><span class="nav-number">2.</span> <span class="nav-text">2.使用REST API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-输入数据分析"><span class="nav-number">3.</span> <span class="nav-text">3.输入数据分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-评分和查询相关性"><span class="nav-number">4.</span> <span class="nav-text">4.评分和查询相关性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-数据架构的主要概念"><span class="nav-number">5.</span> <span class="nav-text">5.数据架构的主要概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-ElasticSearch的主要概念"><span class="nav-number">6.</span> <span class="nav-text">6.ElasticSearch的主要概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-Elasticsearch-分片交互过程"><span class="nav-number">7.</span> <span class="nav-text">7.Elasticsearch 分片交互过程</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

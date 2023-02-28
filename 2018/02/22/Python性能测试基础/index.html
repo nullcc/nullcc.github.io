@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Python性能测试基础 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Python测试">
+  
+  
+  
+  
+  <meta name="description" content="本文中我们来看看在Python中如何做基本的性能测试。">
+<meta name="keywords" content="Python,测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python性能测试基础">
+<meta property="og:url" content="https://nullcc.github.io/2018/02/22/Python性能测试基础/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文中我们来看看在Python中如何做基本的性能测试。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.017Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Python性能测试基础">
+<meta name="twitter:description" content="本文中我们来看看在Python中如何做基本的性能测试。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Python性能测试基础" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Python性能测试基础
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/02/22/Python性能测试基础/" class="article-date">
+	  <time datetime="2018-02-21T16:00:00.000Z" itemprop="datePublished">二月 22, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/测试/">测试</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文中我们来看看在Python中如何做基本的性能测试。</p>
+<a id="more"></a>
+<p>在编程领域中对于性能这个词，有很多评估的角度，比如CPU时间、内存消耗、磁盘I/O、网络带宽等，本文将从CPU时间和内存消耗两个方面来介绍如何对Python程序进行性能分析。</p>
+<p>首先我们需要一段测试代码，我们使用判断一个给定的数字是否是素数的函数<code>isPrime</code>来做测试，这是一段CPU密集型的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> math    </span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">isPrime</span><span class="params">(n)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> n &lt;= <span class="number">1</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">2</span>, int(math.sqrt(n)) + <span class="number">1</span>):</span><br><span class="line">		<span class="keyword">if</span> n % i == <span class="number">0</span>:</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
+<p>下面的一部分测试将使用<code>isPrime</code>函数。</p>
+<h2 id="使用装饰器测量函数运行时间"><a href="#使用装饰器测量函数运行时间" class="headerlink" title="使用装饰器测量函数运行时间"></a>使用装饰器测量函数运行时间</h2><p>代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> wraps</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">timeit</span><span class="params">(fn)</span>:</span></span><br><span class="line"><span class="meta">	@wraps(fn)</span></span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">timeit_</span><span class="params">(*args, **kwargs)</span>:</span></span><br><span class="line">		t1 = time.time()</span><br><span class="line">		res = fn(*args, **kwargs)</span><br><span class="line">		t2 = time.time() </span><br><span class="line">		print(fn.__name__ + <span class="string">" took "</span> + str(t2-t1) + <span class="string">" seconds"</span>)</span><br><span class="line">		<span class="keyword">return</span> res</span><br><span class="line">	<span class="keyword">return</span> timeit_</span><br><span class="line"></span><br><span class="line"><span class="meta">@timeit</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">test</span><span class="params">()</span>:</span></span><br><span class="line">	l1 = [<span class="number">0</span>] * <span class="number">1000000</span></span><br><span class="line">	l2 = [<span class="number">0</span>] * <span class="number">10000000</span></span><br><span class="line">	l3 = [<span class="number">0</span>] * <span class="number">100000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    res = test()</span><br></pre></td></tr></table></figure>
+<p>执行后输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">test took 0.7034409046173096 seconds</span><br></pre></td></tr></table></figure>
+<p>使用装饰器是比较方便的做法，不过装饰器也只能打印整个函数的执行时间，测试粒度较粗。</p>
+<h2 id="使用timeit模块测试一段代码的CPU时间"><a href="#使用timeit模块测试一段代码的CPU时间" class="headerlink" title="使用timeit模块测试一段代码的CPU时间"></a>使用timeit模块测试一段代码的CPU时间</h2><p>直接看代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> math  </span><br><span class="line"><span class="keyword">import</span> timeit</span><br><span class="line">  </span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">isPrime</span><span class="params">(n)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> n &lt;= <span class="number">1</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">2</span>, int(math.sqrt(n)) + <span class="number">1</span>):</span><br><span class="line">		<span class="keyword">if</span> n % i == <span class="number">0</span>:</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fn</span><span class="params">()</span>:</span></span><br><span class="line">	start = <span class="number">1</span></span><br><span class="line">	end = <span class="number">2000000</span></span><br><span class="line">	cnt = <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(start, end + <span class="number">1</span>, <span class="number">1</span>):</span><br><span class="line">   		res = isPrime(i)</span><br><span class="line">   		<span class="keyword">if</span> res:</span><br><span class="line">   			cnt += <span class="number">1</span></span><br><span class="line">	print(<span class="string">"There are "</span> + str(cnt) + <span class="string">" primes in the "</span> + str(start) + <span class="string">"-"</span> + str(end) + <span class="string">" range."</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">	t = timeit.timeit(stmt=fn, number=<span class="number">1</span>)</span><br><span class="line">	print(t)</span><br></pre></td></tr></table></figure>
+<p>我们计算2000000以内的素数个数，在我的Mac笔记本上耗时如下：</p>
+<pre><code>12.233505398966372
+</code></pre><p>执行期间如果你打开活动监视器会发现该Python进程占用的CPU内核使用率达到99%以上，因为isPrime函数是CPU密集型的。</p>
+<p>timeit模块还有很多用法，具体信息可以查阅相关文档。</p>
+<p>使用timeit模块来测量一段代码能直观地获得执行这段代码的总耗时，这是比较粗粒度的测量，我们无法得知其中每行代码的耗时占比。因此这种方式只能在前期粗略地帮我们搜集一些代码整体执行时间的数据，如果要深入分析还是要想其他办法。</p>
+<h2 id="使用UNIX的time命令进行简单的计时"><a href="#使用UNIX的time命令进行简单的计时" class="headerlink" title="使用UNIX的time命令进行简单的计时"></a>使用UNIX的time命令进行简单的计时</h2><p>类UNIX操作系统提供了time命令来对一个程序的执行进行计时，我们把代码修改成下面这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> math  </span><br><span class="line"><span class="keyword">import</span> timeit</span><br><span class="line">  </span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">isPrime</span><span class="params">(n)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> n &lt;= <span class="number">1</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">2</span>, int(math.sqrt(n)) + <span class="number">1</span>):</span><br><span class="line">		<span class="keyword">if</span> n % i == <span class="number">0</span>:</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fn</span><span class="params">()</span>:</span></span><br><span class="line">	start = <span class="number">1</span></span><br><span class="line">	end = <span class="number">2000000</span></span><br><span class="line">	cnt = <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(start, end + <span class="number">1</span>, <span class="number">1</span>):</span><br><span class="line">   		res = isPrime(i)</span><br><span class="line">   		<span class="keyword">if</span> res:</span><br><span class="line">   			cnt += <span class="number">1</span></span><br><span class="line">	print(<span class="string">"There are "</span> + str(cnt) + <span class="string">" primes in the "</span> + str(start) + <span class="string">"-"</span> + str(end) + <span class="string">" range."</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">	fn()</span><br></pre></td></tr></table></figure>
+<p>我们在shell中执行（注意要使用<code>/usr/bin/time</code>来引用time命令，否则会引用到shell内建的time命令，后者对我们的性能测试意义不大）：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/bin/time -p python prime_numbers.py</span><br></pre></td></tr></table></figure>
+<p>获得如下输出：</p>
+<pre><code>real        13.96
+user        13.75
+sys          0.09
+</code></pre><p><code>time</code>命令输出了三行，其中<code>real</code>表示总耗时，<code>user</code>表示CPU花费在实际任务上的时间，这其中不包括陷入内核中执行的时间，<code>sys</code>表示陷入内核执行的时间。</p>
+<p>需要注意的是，上例中<code>/usr/bin/time</code>记录的时间包括了启动Python解释器的时间。</p>
+<h2 id="使用cProfile模块"><a href="#使用cProfile模块" class="headerlink" title="使用cProfile模块"></a>使用cProfile模块</h2><p>python -m cProfile profile.stats prime_numbers.py</p>
+<p>下面的命令使用cProfile模块对prime_numbers.py进行分析：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -m cProfile -s cumulative prime_numbers.py</span><br></pre></td></tr></table></figure>
+<p>输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">4000509 function calls (4000503 primitive calls) in 14.028 seconds</span><br><span class="line"></span><br><span class="line">Ordered by: cumulative time</span><br><span class="line"></span><br><span class="line">ncalls  tottime  percall  cumtime  percall filename:lineno(function)</span><br><span class="line">    2/1    0.000    0.000   14.028   14.028 &#123;built-in method builtins.exec&#125;</span><br><span class="line">    1    0.000    0.000   14.028   14.028 test2.py:1(&lt;module&gt;)</span><br><span class="line">    1    0.405    0.405   14.027   14.027 test2.py:12(fn)</span><br><span class="line">2000000   13.398    0.000   13.622    0.000 test2.py:4(isPrime)</span><br><span class="line">1999999    0.224    0.000    0.224    0.000 &#123;built-in method math.sqrt&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这里只截取前面几行最重要的输出信息，输出结果中每列的含义：</p>
+<ul>
+<li>ncalls：函数被调用了总次数</li>
+<li>tottime：函数执行的总时间（不包括其下的子函数）</li>
+<li>percall：函数单次执行的时间（不包括其下的子函数），即tottime/ncalls</li>
+<li>cumtime：函数执行的总时间（包括其下的子函数）</li>
+<li>percall：函数单次执行的时间（包括其下的子函数），即cumtime/ncalls</li>
+<li>filename:lineno(function)：函数的基本信息</li>
+</ul>
+<h2 id="使用line-profile对代码进行逐行分析"><a href="#使用line-profile对代码进行逐行分析" class="headerlink" title="使用line_profile对代码进行逐行分析"></a>使用line_profile对代码进行逐行分析</h2><p>先安装<code>line_profile</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install line_profiler</span><br></pre></td></tr></table></figure>
+<p>这次我们使用另一端代码，这段代码主要是创建了3个列表，列表长度分别是一百万、一千万和一亿，并且对要测试的函数<code>line_test</code>加上<code>@profile</code>装饰器：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@profile</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">line_test</span><span class="params">()</span>:</span></span><br><span class="line">	l1 = [<span class="number">0</span>] * <span class="number">1000000</span></span><br><span class="line">	l2 = [<span class="number">0</span>] * <span class="number">10000000</span></span><br><span class="line">	l3 = [<span class="number">0</span>] * <span class="number">100000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    line_test()</span><br></pre></td></tr></table></figure>
+<p>下面的命令使用line_profile模块对line_test.py进行分析：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kernprof -l -v line_test.py</span><br></pre></td></tr></table></figure>
+<p>你可能会奇怪我们并没有手动引入<code>profile</code>怎么能运行，其实当执行kernprof时，kernprof会自动将<code>profile</code>注入到<code>__builtins__</code>命名空间中。</p>
+<p>输出结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Wrote profile results to line_test.py.lprof</span><br><span class="line">Timer unit: 1e-06 s</span><br><span class="line"></span><br><span class="line">Total time: 0.582631 s</span><br><span class="line">File: line_test.py</span><br><span class="line">Function: line_test at line 6</span><br><span class="line"></span><br><span class="line">Line #      Hits         Time  Per Hit   % Time  Line Contents</span><br><span class="line">==============================================================</span><br><span class="line">     6                                           @profile</span><br><span class="line">     7                                           def line_test():</span><br><span class="line">     8         1       3440.0   3440.0      0.6  	l1 = [0] * 1000000</span><br><span class="line">     9         1      54167.0  54167.0      9.3  	l2 = [0] * 10000000</span><br><span class="line">    10         1     525024.0 525024.0     90.1  	l3 = [0] * 100000000</span><br></pre></td></tr></table></figure>
+<p>来看看上面输出结果中每列的含义：</p>
+<ul>
+<li>Line #：代码行号，这里的代码行号和源代码文件中的行号是完全一致的</li>
+<li>Hits：代码行的执行次数</li>
+<li>Time：该代码行的总执行时间</li>
+<li>Per Hit：该代码行每次执行的时间</li>
+<li>% Time：代码行执行时间占整个程序执行时间的比率</li>
+<li>Line Contents：具体代码行</li>
+</ul>
+<p>这些输出信息非常直观，比如你会发现第10行创建长度为一亿的列表占用了90%的时间，当你对你自己的代码做line_profile时，根据这些信息很容易发现哪部分代码执行时间比较长，可以着重优化。</p>
+<h2 id="使用memory-profile诊断内存使用量"><a href="#使用memory-profile诊断内存使用量" class="headerlink" title="使用memory_profile诊断内存使用量"></a>使用memory_profile诊断内存使用量</h2><p>先安装<code>memory_profile</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install memory_profiler</span><br></pre></td></tr></table></figure>
+<p>这次我们使用另一端代码，这段代码主要是创建了3个列表，列表长度分别是一百万、一千万和一亿，并且对要测试的函数<code>memory_test</code>加上<code>@profile</code>装饰器：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> memory_profiler <span class="keyword">import</span> profile</span><br><span class="line"></span><br><span class="line"><span class="meta">@profile</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">memory_test</span><span class="params">()</span>:</span></span><br><span class="line">	l1 = [<span class="number">0</span>] * <span class="number">1000000</span></span><br><span class="line">	l2 = [<span class="number">0</span>] * <span class="number">10000000</span></span><br><span class="line">	l3 = [<span class="number">0</span>] * <span class="number">100000000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    memory_test()</span><br></pre></td></tr></table></figure>
+<p>下面的命令使用memory_profile模块对memory_test.py进行分析：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python -m memory_profiler memory_test.py</span><br></pre></td></tr></table></figure>
+<p>输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Filename: memory_test.py</span><br><span class="line"></span><br><span class="line">Line #    Mem usage    Increment   Line Contents</span><br><span class="line">================================================</span><br><span class="line">     6     34.2 MiB     34.2 MiB   @profile</span><br><span class="line">     7                             def memory_test():</span><br><span class="line">     8     41.8 MiB      7.6 MiB   	l1 = [0] * 1000000</span><br><span class="line">     9    118.1 MiB     76.3 MiB   	l2 = [0] * 10000000</span><br><span class="line">    10    881.0 MiB    762.9 MiB   	l3 = [0] * 100000000</span><br></pre></td></tr></table></figure>
+<p>输出结果中每列的含义：</p>
+<ul>
+<li>Line #：代码行号，这里的代码行号和源代码文件中的行号是完全一致的</li>
+<li>Mem usage：当前程序使用的总内存大小</li>
+<li>Increment：内存增长的大小，即和上一行代码相比，执行本行代码导致的内存增量</li>
+<li>Line Contents：具体代码行</li>
+</ul>
+<p>memory_profile的输出结果也很好理解，可以依据代码行来观察具体的内存增量，比如上例中第10行代码创建了长度为一亿的列表，占用了比较多的内存，其Increment是762.9 MiB。需要注意的是，MiB表示的是2^20字节，这和MB有所区别。</p>
+<h2 id="用heapy调查堆上的对象"><a href="#用heapy调查堆上的对象" class="headerlink" title="用heapy调查堆上的对象"></a>用heapy调查堆上的对象</h2><p>先安装依赖:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install guppy</span><br></pre></td></tr></table></figure>
+<p>需要注意的是heapy不支持Python 3.x，所以我们在Python 2.7上测试。</p>
+<p>测试代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#coding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">heapy_test</span><span class="params">()</span>:</span></span><br><span class="line">	l1 = [<span class="number">0</span>] * <span class="number">1000000</span></span><br><span class="line">	<span class="keyword">from</span> guppy <span class="keyword">import</span> hpy</span><br><span class="line">	hp = hpy()</span><br><span class="line">	h = hp.heap()</span><br><span class="line">	<span class="keyword">print</span> h</span><br><span class="line">	<span class="keyword">print</span></span><br><span class="line"></span><br><span class="line">	l2 = [<span class="number">0</span>] * <span class="number">10000000</span></span><br><span class="line">	h = hp.heap()</span><br><span class="line">	<span class="keyword">print</span> h</span><br><span class="line">	<span class="keyword">print</span></span><br><span class="line"></span><br><span class="line">	l3 = [<span class="number">0</span>] * <span class="number">100000000</span></span><br><span class="line">	h = hp.heap()</span><br><span class="line">	<span class="keyword">print</span> h</span><br><span class="line">	<span class="keyword">print</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    heapy_test()</span><br></pre></td></tr></table></figure>
+<p>输出结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">Partition of a set of 26265 objects. Total size = 11526656 bytes.</span><br><span class="line"> Index  Count   %     Size   % Cumulative  % Kind (class / dict of class)</span><br><span class="line">     0    178   1  8152080  71   8152080  71 list</span><br><span class="line">     1  11976  46   985344   9   9137424  79 str</span><br><span class="line">     2   5969  23   481488   4   9618912  83 tuple</span><br><span class="line">     3    323   1   277448   2   9896360  86 dict (no owner)</span><br><span class="line">     4     69   0   219768   2  10116128  88 dict of module</span><br><span class="line">     5   1653   6   211584   2  10327712  90 types.CodeType</span><br><span class="line">     6    200   1   211136   2  10538848  91 dict of type</span><br><span class="line">     7   1615   6   193800   2  10732648  93 function</span><br><span class="line">     8    200   1   177912   2  10910560  95 type</span><br><span class="line">     9    124   0   135328   1  11045888  96 dict of class</span><br><span class="line">&lt;90 more rows. Type e.g. &apos;_.more&apos; to view.&gt;</span><br><span class="line"></span><br><span class="line">Partition of a set of 26274 objects. Total size = 95415008 bytes.</span><br><span class="line"> Index  Count   %     Size   % Cumulative  % Kind (class / dict of class)</span><br><span class="line">     0    179   1 92038232  96  92038232  96 list</span><br><span class="line">     1  11978  46   985472   1  93023704  97 str</span><br><span class="line">     2   5968  23   481424   1  93505128  98 tuple</span><br><span class="line">     3    329   1   279128   0  93784256  98 dict (no owner)</span><br><span class="line">     4     69   0   219768   0  94004024  99 dict of module</span><br><span class="line">     5   1653   6   211584   0  94215608  99 types.CodeType</span><br><span class="line">     6    200   1   211136   0  94426744  99 dict of type</span><br><span class="line">     7   1614   6   193680   0  94620424  99 function</span><br><span class="line">     8    200   1   177912   0  94798336  99 type</span><br><span class="line">     9    124   0   135328   0  94933664  99 dict of class</span><br><span class="line">&lt;90 more rows. Type e.g. &apos;_.more&apos; to view.&gt;</span><br><span class="line"></span><br><span class="line">Partition of a set of 26275 objects. Total size = 900721480 bytes.</span><br><span class="line"> Index  Count   %     Size   % Cumulative  % Kind (class / dict of class)</span><br><span class="line">     0    180   1 897344672 100 897344672 100 list</span><br><span class="line">     1  11978  46   985472   0 898330144 100 str</span><br><span class="line">     2   5968  23   481424   0 898811568 100 tuple</span><br><span class="line">     3    329   1   279128   0 899090696 100 dict (no owner)</span><br><span class="line">     4     69   0   219768   0 899310464 100 dict of module</span><br><span class="line">     5   1653   6   211584   0 899522048 100 types.CodeType</span><br><span class="line">     6    200   1   211136   0 899733184 100 dict of type</span><br><span class="line">     7   1614   6   193680   0 899926864 100 function</span><br><span class="line">     8    200   1   177912   0 900104776 100 type</span><br><span class="line">     9    124   0   135328   0 900240104 100 dict of class</span><br><span class="line">&lt;90 more rows. Type e.g. &apos;_.more&apos; to view.&gt;</span><br></pre></td></tr></table></figure>
+<p>上面的结果是按照在堆上分配内存的大小来排序的。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/测试/">测试</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/">Python</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/测试/">测试</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/24/(译)将Redis作为LRU缓存使用/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          (译)将Redis作为LRU缓存使用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/22/(译)Redis的发布和订阅/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">(译)Redis的发布和订阅</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用装饰器测量函数运行时间"><span class="nav-number">1.</span> <span class="nav-text">使用装饰器测量函数运行时间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用timeit模块测试一段代码的CPU时间"><span class="nav-number">2.</span> <span class="nav-text">使用timeit模块测试一段代码的CPU时间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用UNIX的time命令进行简单的计时"><span class="nav-number">3.</span> <span class="nav-text">使用UNIX的time命令进行简单的计时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用cProfile模块"><span class="nav-number">4.</span> <span class="nav-text">使用cProfile模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用line-profile对代码进行逐行分析"><span class="nav-number">5.</span> <span class="nav-text">使用line_profile对代码进行逐行分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用memory-profile诊断内存使用量"><span class="nav-number">6.</span> <span class="nav-text">使用memory_profile诊断内存使用量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#用heapy调查堆上的对象"><span class="nav-number">7.</span> <span class="nav-text">用heapy调查堆上的对象</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

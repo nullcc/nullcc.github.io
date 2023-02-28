@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>谈谈Golang中goroutine的调度问题 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="go">
+  
+  
+  
+  
+  <meta name="description" content="goroutine的调度问题，同样也是我之前面试的问题，不过这个问题我当时并不是很清楚，回来以后立马查阅资料，现整理出来备忘。">
+<meta name="keywords" content="go">
+<meta property="og:type" content="article">
+<meta property="og:title" content="谈谈Golang中goroutine的调度问题">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/08/谈谈golang中goroutine的调度/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="goroutine的调度问题，同样也是我之前面试的问题，不过这个问题我当时并不是很清楚，回来以后立马查阅资料，现整理出来备忘。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/goroutine_1.jpg">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/goroutine_2.jpg">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/goroutine_3.jpg">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/goroutine_4.jpg">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.043Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="谈谈Golang中goroutine的调度问题">
+<meta name="twitter:description" content="goroutine的调度问题，同样也是我之前面试的问题，不过这个问题我当时并不是很清楚，回来以后立马查阅资料，现整理出来备忘。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/goroutine_1.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-谈谈golang中goroutine的调度" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      谈谈Golang中goroutine的调度问题
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/08/谈谈golang中goroutine的调度/" class="article-date">
+	  <time datetime="2017-05-07T16:00:00.000Z" itemprop="datePublished">五月 8, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>goroutine的调度问题，同样也是我之前面试的问题，不过这个问题我当时并不是很清楚，回来以后立马查阅资料，现整理出来备忘。</p>
+<a id="more"></a>
+<p>有一些预备知识需要说明，就是操作系统中的线程。操作系统中的线程分为两种：内核线程和用户线程。用户平时使用的线程并不是内核线程，而是存在于用户态的用户线程。用户线程并不一定在操作系统内核中对用同等数量的内核线程。这里有三个模型：</p>
+<p>1.一对一模型(1:1)</p>
+<p>2.多对一模型(N:1)</p>
+<p>3.多对多模型(N:M)</p>
+<p>下面就先来谈谈这三种线程模型。</p>
+<h2 id="1-一对一模型-1-1"><a href="#1-一对一模型-1-1" class="headerlink" title="1.一对一模型(1:1)"></a>1.一对一模型(1:1)</h2><p>对于支持线程的操作系统来说，一对一模型是最简单的一种线程模型了，一个用户线程唯一对应一个内核线程，但反过来却不一定，一个内核线程并不一定有对应的用户线程存在。这样一来，由于一个内核线程至多只对应一个用户线程，线程之间可以做到最大程度的并发，不同线程之间不会相互影响，比如一个线程阻塞了也不会影响到其他线程的执行。对于多处理器，一对一的线程模型效率更高。但是很多操作系统限制了内核线程的数量，如果采用一对一模型，用户线程的数量也会受到比较大的限制。而且很多操作系统的内核线程在调度时开销较大，这也会影响用户线程的效率。</p>
+<h2 id="2-多对一模型-N-1"><a href="#2-多对一模型-N-1" class="headerlink" title="2.多对一模型(N:1)"></a>2.多对一模型(N:1)</h2><p>多对一模型意味着多个用户线程对应一个内核线程，用户线程间的切换由代码控制，因为线程间切换的效率比较高(不用陷入内核区去切换)。不过如果其中一个用户线程阻塞了，则和它对应相同内核线程的那些用户线程也都会阻塞，因为内核线程是被共用的(且是绑定的)，此时它无法抽身出来。而且增加处理器个数对于多对一线程模型帮助也不大，毕竟在这种情况下，一个线程阻塞，相关线程也跟着遭殃的事实和处理器个数关系不大。这种模型的好处是线程间切换开销低，且线程数量可以很多。</p>
+<h2 id="3-多对多模型-N-M"><a href="#3-多对多模型-N-M" class="headerlink" title="3.多对多模型(N:M)"></a>3.多对多模型(N:M)</h2><p>多对多线程模型可以说是上面两种模型的结合，也是最复杂的，它把多个用户线程对应到多个内核线程上，且很多时候不是唯一绑定的。因此一个内核线程在一个时间点可以对应0到多个用户线程。且在运行期间，系统可以根据线程执行情况做合理分配。比如用户线程1、用户线程2和用户线程3对应到一个内核线程1，如果用户线程1阻塞了，系统可以调度用户线程2和用户线程3到其他内核线程上去，这是个动态的过程。多对多线程模型的优势是可以让系统资源得到比较均衡的使用，用户线程之间互相影响比较小，且在多处理器上表现不错(虽然增加处理器个数对它性能提升可能不如一对一模型那么高)，关键是它很灵活。</p>
+<p>Golang的goroutine调度和多对多模型密切相关，Golang自己有自己的调度器scheduler。Golang的调度器内部有三个重要结构：M、P和G。</p>
+<p><img src="/assets/images/post_imgs/goroutine_1.jpg" alt="goroutine_1"></p>
+<p>M: 代表内核线程。</p>
+<p>G: 代表一个goroutine，它有自己的栈，指令指针和一些基本信息，用于被调度。</p>
+<p>P: 代表调度的上下文，是Golang内部的调度器，负责让多个goroutine在一个内核线程上运行，它实现了N:1到N:M。</p>
+<p><img src="/assets/images/post_imgs/goroutine_2.jpg" alt="goroutine_2"></p>
+<p>可以看到在某个时刻，一个M对应到一个P，一个P上有一个正在运行的G(蓝色的G)，且这个P上可能还有多个G等待被调度(灰色的G)，P维护着这个调度队列(runqueue)。P的数量可以通过GOMAXPROCS()来设置，它其实也就代表了真正的并发度，即有多少个goroutine可以同时运行。不过需要注意，GOMAXPROCS()的最大值是256。当要启动一个goroutine时，只需要用go function(args)即可，一但我们启动了一个goroutine，就会在runqueue队尾加入这个goroutine，P会负责调度这些goroutine。</p>
+<p>那么如果在某个M被阻塞了呢？这时候就是N:M模型的关键之处了，此时P可以被安排到其他M上去执行，由于P内部维护着一些G的信息，这些G都有独立的栈和指令指针这些基本信息，所以可以很方便地直接换到另一个未被阻塞的M下。</p>
+<p><img src="/assets/images/post_imgs/goroutine_3.jpg" alt="goroutine_3"></p>
+<p>上图描述了这种情况，在左边，G0正在运行，当G0由于系统调用被阻塞时，调度器会创建或者从线程缓存中取得一个线程M1，转投M1。当G0返回时，它必须获得一个P来执行，此时一般是先查看系统中有没有空闲的P，如果有，就获得一个P，用这个P来执行，如果没能获得一个P，这个G0只能暂时放置到一个全局的执行队列(global runqueue)中，它所处的线程M0也就sleep了。系统中的P们会周期性地检查这个队列，取出里面的G来运行。</p>
+<p><img src="/assets/images/post_imgs/goroutine_4.jpg" alt="goroutine_4"></p>
+<p>如上图，还有一种情况是，某个M上的P被分配的G很快就被执行完了，这时M和P都处于闲置状态，无事可做。但也不可能看着其他的P忙碌自己不帮忙吧，此时会先去global runqueue中检查是否有G可以拿，如果并没有，只好尝试去其他P上“偷”一些G来执行，一般就是偷对方runqueue大小的一半，如果还是没偷到，那该只好sleep，该P放入一个闲置的P队列结构等待再次被调度。</p>
+<p>这样处理，就保证了系统中的G能被有效快速地执行，充分利用了系统资源。</p>
+<p>注：以上部分信息和图片来自<a href="http://morsmachine.dk/go-scheduler" target="_blank" rel="noopener">The Go scheduler</a>。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/go/">go</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/08/深入理解JavaScript中的this关键字/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          深入理解JavaScript中的this关键字
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/09/07/CSRF原理浅析/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">CSRF原理浅析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-一对一模型-1-1"><span class="nav-number">1.</span> <span class="nav-text">1.一对一模型(1:1)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-多对一模型-N-1"><span class="nav-number">2.</span> <span class="nav-text">2.多对一模型(N:1)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-多对多模型-N-M"><span class="nav-number">3.</span> <span class="nav-text">3.多对多模型(N:M)</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>理解和使用keepalived（部署配置篇） | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="keepalived">
+  
+  
+  
+  
+  <meta name="description" content="keepalived的用处  在分布式系统架构中，为了保证高可用，我们通常的做法是使用双机热备的方式来提供服务。举个例子，我们有一个nginx作为反向代理对外提供服务，如果只有一个nginx实例，一旦该实例不可用，请求就无法转发到下游服务，造成整体服务出现问题。因此可以准备一个备服务器，一旦主服务器服务挂了，立刻自动切换至备服务器，整个切换过程对外透明，不会给用户造成影响。keepalived的作">
+<meta name="keywords" content="keepalived">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解和使用keepalived（部署配置篇）">
+<meta property="og:url" content="https://nullcc.github.io/2017/08/15/理解和使用keepalived（部署配置篇）/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="keepalived的用处  在分布式系统架构中，为了保证高可用，我们通常的做法是使用双机热备的方式来提供服务。举个例子，我们有一个nginx作为反向代理对外提供服务，如果只有一个nginx实例，一旦该实例不可用，请求就无法转发到下游服务，造成整体服务出现问题。因此可以准备一个备服务器，一旦主服务器服务挂了，立刻自动切换至备服务器，整个切换过程对外透明，不会给用户造成影响。keepalived的作">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/keepalived_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/keepalived_2.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.037Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解和使用keepalived（部署配置篇）">
+<meta name="twitter:description" content="keepalived的用处  在分布式系统架构中，为了保证高可用，我们通常的做法是使用双机热备的方式来提供服务。举个例子，我们有一个nginx作为反向代理对外提供服务，如果只有一个nginx实例，一旦该实例不可用，请求就无法转发到下游服务，造成整体服务出现问题。因此可以准备一个备服务器，一旦主服务器服务挂了，立刻自动切换至备服务器，整个切换过程对外透明，不会给用户造成影响。keepalived的作">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/keepalived_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-理解和使用keepalived（部署配置篇）" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      理解和使用keepalived（部署配置篇）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/08/15/理解和使用keepalived（部署配置篇）/" class="article-date">
+	  <time datetime="2017-08-14T16:00:00.000Z" itemprop="datePublished">八月 15, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="keepalived的用处"><a href="#keepalived的用处" class="headerlink" title="keepalived的用处"></a>keepalived的用处</h2><p>  在分布式系统架构中，为了保证高可用，我们通常的做法是使用双机热备的方式来提供服务。举个例子，我们有一个nginx作为反向代理对外提供服务，如果只有一个nginx实例，一旦该实例不可用，请求就无法转发到下游服务，造成整体服务出现问题。因此可以准备一个备服务器，一旦主服务器服务挂了，立刻自动切换至备服务器，整个切换过程对外透明，不会给用户造成影响。keepalived的作用就是负责检测主服务器的服务状态，一旦发现不可用，就切换到备服务器上，如果主服务器恢复正常，会再次切换到主服务器上。</p>
+<a id="more"></a>
+<h2 id="目标系统"><a href="#目标系统" class="headerlink" title="目标系统"></a>目标系统</h2><p>  Ubuntu Server LTS 16.04.3 x64（两台，主备）</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>  安装keepalived:</p>
+<pre><code>sudo apt-get install keepalived
+</code></pre><p>  安装nginx:</p>
+<pre><code>sudo apt-get install nginx
+</code></pre><h2 id="开启SSH服务"><a href="#开启SSH服务" class="headerlink" title="开启SSH服务"></a>开启SSH服务</h2><p>  sudo apt-get install openssh-server</p>
+<p>  安装后可以通过：</p>
+<pre><code>ssh username@host -p 22
+</code></pre><p>  ssh到虚拟机中操作</p>
+<h2 id="网络配置"><a href="#网络配置" class="headerlink" title="网络配置"></a>网络配置</h2><p>准备两台Ubuntu虚拟主机，配置内网IP地址：</p>
+<p>主：</p>
+<pre><code>sudo ifconfig ens33 172.16.130.130 netmask 255.255.255.0
+</code></pre><p>备：</p>
+<pre><code>sudo ifconfig ens33 172.16.130.131 netmask 255.255.255.0
+</code></pre><p>配置后：</p>
+<pre><code>master: 172.16.130.130（主）
+
+backup: 172.16.130.131（备）
+</code></pre><p>需要注意的是主备机器的IP必须在相同的网段。</p>
+<p>然后需要配置主备机器的虚拟IP地址，设置为172.16.130.150，分别对主备两台机器运行：</p>
+<pre><code>sudo ifconfig ens33:0 172.16.130.150 netmask 255.255.255.0
+</code></pre><p>配置后：</p>
+<pre><code>vip: 172.16.130.150（虚拟IP）
+</code></pre><p>如果要删除虚拟IP，可以运行：</p>
+<pre><code>ifconfig ens33:0 down
+</code></pre><p>为了让虚拟机重启后虚拟IP的配置依然有效，需要在/etc/network/interfaces文件中添加：</p>
+<pre><code>auto ens33:0  
+iface ens33:0 inet static  
+name Ethernet alias LAN card  
+address 172.16.130.150
+netmask 255.255.255.0
+broadcast 172.16.130.255
+network 172.16.130.0
+</code></pre><p>然后重启网络服务：</p>
+<pre><code>/etc/init.d/networking restart
+</code></pre><p>然后在/etc/keepalived/keepalived.conf中输入配置，注意主从服务器的配置有一点点差别：</p>
+<p>主服务器：</p>
+<pre><code>global_defs {
+   notification_email {
+
+   }
+}
+
+vrrp_script chk_nginx {
+    script &quot;/etc/keepalived/check_nginx.sh&quot;
+    interval 2                    # 每2s检查一次
+    weight -5                     # 检测失败（脚本返回非0）则优先级减少5个值
+    fall 3                        # 如果连续失败次数达到此值，则认为服务器已down
+    rise 2                        # 如果连续成功次数达到此值，则认为服务器已up，但不修改优先级
+}
+
+vrrp_instance VI_1 {              # 实例名称
+    state MASTER                  # 可以是MASTER或BACKUP，不过当其他节点keepalived启动时会自动将priority比较大的节点选举为MASTER
+    interface ens33                # 节点固有IP（非VIP）的网卡，用来发VRRP包做心跳检测
+    virtual_router_id 51          # 虚拟路由ID,取值在0-255之间,用来区分多个instance的VRRP组播,同一网段内ID不能重复;主备必须为一样
+    priority 100                  # 权重，主服务器要比备服务器高
+    advert_int 1                  # 检查间隔默认为1秒,即1秒进行一次master选举(可以认为是健康查检时间间隔)
+    authentication {              # 认证区域,认证类型有PASS和HA（IPSEC）,推荐使用PASS(密码只识别前8位)
+        auth_type PASS            # 默认是PASS认证
+        auth_pass 1111            # PASS认证密码
+    }
+    virtual_ipaddress {
+        172.16.130.150           # 虚拟VIP地址,允许多个,一行一个
+    }
+    track_script {                # 引用VRRP脚本，即在 vrrp_script 部分指定的名字。定期运行它们来改变优先级，并最终引发主备切换。
+        chk_nginx          
+    }                
+}
+</code></pre><p>备服务器：</p>
+<pre><code>global_defs {
+   notification_email {
+
+   }
+}
+
+vrrp_script chk_nginx {
+    script &quot;/etc/keepalived/check_nginx.sh&quot;
+    interval 2                    # 每2s检查一次
+    weight -5                     # 检测失败（脚本返回非0）则优先级减少5个值
+    fall 3                        # 如果连续失败次数达到此值，则认为服务器已down
+    rise 2                        # 如果连续成功次数达到此值，则认为服务器已up，但不修改优先级
+}
+
+vrrp_instance VI_1 {              # 实例名称
+    state BACKUP                  # 可以是MASTER或BACKUP，不过当其他节点keepalived启动时会自动将priority比较大的节点选举为MASTER
+    interface ens33                # 节点固有IP（非VIP）的网卡，用来发VRRP包做心跳检测
+    virtual_router_id 51          # 虚拟路由ID,取值在0-255之间,用来区分多个instance的VRRP组播,同一网段内ID不能重复;主备必须为一样
+    priority 50                   # 权重，主服务器要比备服务器高
+    advert_int 1                  # 检查间隔默认为1秒,即1秒进行一次master选举(可以认为是健康查检时间间隔)
+    authentication {              # 认证区域,认证类型有PASS和HA（IPSEC）,推荐使用PASS(密码只识别前8位)
+        auth_type PASS            # 默认是PASS认证
+        auth_pass 1111            # PASS认证密码
+    }
+    virtual_ipaddress {
+        172.16.130.150           # 虚拟VIP地址,允许多个,一行一个
+    }
+    track_script {                # 引用VRRP脚本，即在 vrrp_script 部分指定的名字。定期运行它们来改变优先级，并最终引发主备切换。
+        chk_nginx          
+    }                
+}
+</code></pre><p>check_nginx.sh:</p>
+<pre><code>#more /etc/keepalived/check_http.sh  
+#!/bin/bash  
+#代码一定注意空格，逻辑就是：如果nginx进程不存在则启动nginx,如果nginx无法启动则kill掉keepalived所有进程  
+A=`ps -C nginx --no-header | wc -l`  
+if [ $A -eq 0 ];then  
+  /etc/init.d/nginx start  
+  sleep 3  
+  if [ `ps -C nginx --no-header | wc -l` -eq 0 ];then  
+    killall keepalived  
+  fi  
+fi  
+</code></pre><p>需要注意的一个问题是，check_nginx.sh的执行权限一定要配置正确，否则keepalived运行可能会有问题。</p>
+<p>保存后执行：</p>
+<pre><code>sudo /etc/init.d/keepalived restart
+</code></pre><p>配置完毕。</p>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p>我们在172.16.130.130（主）这台机器上执行：</p>
+<pre><code>ps -ef | grep nginx
+</code></pre><p>结果如下：</p>
+<pre><code>root       5230      1  0 16:27 ?        00:00:00 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+www-data   5231   5230  0 16:27 ?        00:00:00 nginx: worker process
+nullcc     5233   5046  0 16:27 pts/0    00:00:00 grep --color=auto nginx
+</code></pre><p>说明这台机器nginx确实是在后台运行的，172.16.130.131（备）也是类似。测试结果如下：</p>
+<pre><code>http://172.16.130.130（主）正常
+http://172.16.130.131（备）正常
+http://172.16.130.150（虚拟IP）正常
+</code></pre><p>此时可以在172.16.130.130（主）上执行：</p>
+<pre><code>ip a
+</code></pre><p>当前虚拟IP指向的是主服务器：</p>
+<p><img src="/assets/images/post_imgs/keepalived_1.png" alt="虚拟IP指向主服务器"></p>
+<p>如上图所示，此时访问虚拟IP <a href="http://172.16.130.150" target="_blank" rel="noopener">http://172.16.130.150</a> 实际上访问的是172.16.130.130这台主服务器的nginx服务。现在我们直接关闭172.16.130.130（主）的服务，再依次访问主备服务器和虚拟IP：</p>
+<pre><code>http://172.16.130.130（主）失败
+http://172.16.130.131（备）正常
+http://172.16.130.150（虚拟IP）正常
+</code></pre><p>说明此时keepalived已经监测到主服务器的nginx不可用了，把虚拟IP漂移到备服务器上，保证了nginx的高可用。</p>
+<p>此时可以在172.16.130.131（备）上执行：</p>
+<pre><code>ip a
+</code></pre><p>当前虚拟IP指向的是备服务器：</p>
+<p><img src="/assets/images/post_imgs/keepalived_2.png" alt="虚拟IP指向备服务器"></p>
+<p>如果我们再把172.16.130.130（主）启动起来，keepalived会感知到主服务器恢复正常，会再次把虚拟IP指向主服务器。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/keepalived/">keepalived</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/08/17/MySQL主从复制详解/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          MySQL主从复制详解
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/08/09/后端架构设计的一些想法/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">后端架构设计的一些想法</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#keepalived的用处"><span class="nav-number">1.</span> <span class="nav-text">keepalived的用处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#目标系统"><span class="nav-number">2.</span> <span class="nav-text">目标系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装"><span class="nav-number">3.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开启SSH服务"><span class="nav-number">4.</span> <span class="nav-text">开启SSH服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网络配置"><span class="nav-number">5.</span> <span class="nav-text">网络配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试"><span class="nav-number">6.</span> <span class="nav-text">测试</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

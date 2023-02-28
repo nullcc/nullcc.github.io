@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC) | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="后端架构">
+  
+  
+  
+  
+  <meta name="description" content="为什么需要微服务随着后端系统的演进，在单一项目上做开发已经不能适应快速的迭代和团队分工，功能模块之间开始出现明显的界限，部分功能模块变成公共模块，需要暴露接口供外部调用。这时候是采用微服务的时候了。微服务的关键是识别功能模块的分界，将各个功能模块抽取出来，独立成一个服务，以提高复用性、可维护性和改进性能。">
+<meta name="keywords" content="后端架构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/28/Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="为什么需要微服务随着后端系统的演进，在单一项目上做开发已经不能适应快速的迭代和团队分工，功能模块之间开始出现明显的界限，部分功能模块变成公共模块，需要暴露接口供外部调用。这时候是采用微服务的时候了。微服务的关键是识别功能模块的分界，将各个功能模块抽取出来，独立成一个服务，以提高复用性、可维护性和改进性能。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_arch_rpc_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_arch_rpc_2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_arch_rpc_3.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.023Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)">
+<meta name="twitter:description" content="为什么需要微服务随着后端系统的演进，在单一项目上做开发已经不能适应快速的迭代和团队分工，功能模块之间开始出现明显的界限，部分功能模块变成公共模块，需要暴露接口供外部调用。这时候是采用微服务的时候了。微服务的关键是识别功能模块的分界，将各个功能模块抽取出来，独立成一个服务，以提高复用性、可维护性和改进性能。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/web_arch_rpc_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/28/Web后端系统架构漫谈(5)——微服务和远程过程调用(RPC)/" class="article-date">
+	  <time datetime="2017-11-27T16:00:00.000Z" itemprop="datePublished">十一月 28, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="为什么需要微服务"><a href="#为什么需要微服务" class="headerlink" title="为什么需要微服务"></a>为什么需要微服务</h2><p>随着后端系统的演进，在单一项目上做开发已经不能适应快速的迭代和团队分工，功能模块之间开始出现明显的界限，部分功能模块变成公共模块，需要暴露接口供外部调用。这时候是采用微服务的时候了。微服务的关键是识别功能模块的分界，将各个功能模块抽取出来，独立成一个服务，以提高复用性、可维护性和改进性能。</p>
+<a id="more"></a>
+<p>拿一个网络商城来说，比较常见的拆分方式如下：</p>
+<ol>
+<li>用户服务</li>
+<li>订单服务</li>
+<li>商品信息服务</li>
+<li>物流信息服务</li>
+<li>数据统计服务</li>
+<li>消息推送服务</li>
+</ol>
+<p>在后端架构中，这些服务均位于service层，service层的上游是web server层，当web server层的服务器收到请求后，会调用service层的一个或多个服务。在<a href="/2017/11/23/Web后端系统架构漫谈(一">Web后端系统架构漫谈(五)——负载均衡</a>-负载均衡.html)中有一幅图，展示了web后端系统架构的负载均衡体系，其中从web server层到service层有负载均衡，微服务化后，各个服务可以独立部署和维护，因此也可以独立进行负载均衡，这有利于整个后端系统的可扩展性和高可用性。</p>
+<p>拆分服务后，各个服务也可以使用不同的技术选型，比如用户服务使用Java，消息推送服务使用Python，这在大公司的大型系统中是有很优势的。</p>
+<h2 id="RPC框架"><a href="#RPC框架" class="headerlink" title="RPC框架"></a>RPC框架</h2><p>在web server调用service层的具体服务时，一般是跨服务器调用，或者叫“远程过程调用”，就是常说的RPC。</p>
+<p>在同一个进程空间内，一个函数要调用另一个函数的场景是我们习以为常的情况。但是如果要通过网络远程调用函数，就会经历一个比较复杂的过程，下面看一下RPC的过程示意图：</p>
+<p><img src="/assets/images/post_imgs/web_arch_rpc_1.png" alt="rpc_1"></p>
+<p>（图片来源：<a href="https://www.cs.rutgers.edu/~pxk/417/notes/03-rpc.html" target="_blank" rel="noopener">https://www.cs.rutgers.edu/~pxk/417/notes/03-rpc.html</a> ）</p>
+<p>我们来看看执行一个RPC要经历的过程：</p>
+<ol>
+<li>客户端调用本地的client stub，client stub会将函数名和参数等信息按照一定格式序列化成字节流。</li>
+<li>client stub使用系统调用将信息发送给内核。</li>
+<li>内核使用某种协议（比如TCP）将网络数据包发送给远端服务器。</li>
+<li>远端服务器的server stub收到消息，将字节流反序列化，获得函数名和参数。</li>
+<li>远端服务器在本地调用使用参数调用该函数，获得结果。</li>
+<li>获得结果后，将结果返回给server stub。</li>
+<li>远端服务器的server stub将结果序列化成字节流，发送给内核。</li>
+<li>远端服务器的内核将网络数据包发送给客户端。</li>
+<li>客户端从内核中读取消息。</li>
+<li>客户端client stub将字节流反序列化后获得调用结果。</li>
+</ol>
+<p>这个过程还是比较复杂的，涉及了数据的序列化和反序列化、连接池、I/O管理、线程管理、收发队列、超时管理等。如果每次调用都要关注这些细节，就会变得很繁琐。RPC框架的出现就是为了屏蔽这些复杂性，它已经将这些通用的功能封装好。</p>
+<h2 id="Apache-Thrift"><a href="#Apache-Thrift" class="headerlink" title="Apache Thrift"></a>Apache Thrift</h2><p>下面我们将来实践一把RPC框架，这里选择的是<a href="http://thrift.apache.org/" target="_blank" rel="noopener">Apache Thrift</a>。Apache Thrift是Facebook开发的一款RPC框架，开源后捐献给Apache软件基金会。</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>首先从<a href="http://thrift.apache.org/download" target="_blank" rel="noopener">这里</a>下载Thrift的源码，对照<a href="http://thrift.apache.org/docs/BuildingFromSource" target="_blank" rel="noopener">这里</a>安装。</p>
+<p>我们使用Python来演示，假设项目根目录为<code>thrift_demo</code>。首先建立一个<code>shared.thrift</code>文件：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Licensed to the Apache Software Foundation (ASF) under one</span></span><br><span class="line"><span class="comment"> * or more contributor license agreements. See the NOTICE file</span></span><br><span class="line"><span class="comment"> * distributed with this work for additional information</span></span><br><span class="line"><span class="comment"> * regarding copyright ownership. The ASF licenses this file</span></span><br><span class="line"><span class="comment"> * to you under the Apache License, Version 2.0 (the</span></span><br><span class="line"><span class="comment"> * "License"); you may not use this file except in compliance</span></span><br><span class="line"><span class="comment"> * with the License. You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing,</span></span><br><span class="line"><span class="comment"> * software distributed under the License is distributed on an</span></span><br><span class="line"><span class="comment"> * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</span></span><br><span class="line"><span class="comment"> * KIND, either express or implied. See the License for the</span></span><br><span class="line"><span class="comment"> * specific language governing permissions and limitations</span></span><br><span class="line"><span class="comment"> * under the License.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * This Thrift file can be included by other Thrift files that want to share</span></span><br><span class="line"><span class="comment"> * these definitions.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line">namespace cpp shared</span><br><span class="line">namespace d share <span class="comment">// "shared" would collide with the eponymous D keyword.</span></span><br><span class="line">namespace dart shared</span><br><span class="line">namespace java shared</span><br><span class="line">namespace perl shared</span><br><span class="line">namespace php shared</span><br><span class="line">namespace haxe shared</span><br><span class="line">namespace netcore shared</span><br><span class="line"></span><br><span class="line">struct SharedStruct &#123;</span><br><span class="line">  <span class="number">1</span>: i32 key</span><br><span class="line">  <span class="number">2</span>: string value</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">service SharedService &#123;</span><br><span class="line">  <span class="function">SharedStruct <span class="title">getStruct</span><span class="params">(<span class="number">1</span>: i32 key)</span></span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>然后建立<code>tutorial.thrift</code>文件：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Licensed to the Apache Software Foundation (ASF) under one</span></span><br><span class="line"><span class="comment"> * or more contributor license agreements. See the NOTICE file</span></span><br><span class="line"><span class="comment"> * distributed with this work for additional information</span></span><br><span class="line"><span class="comment"> * regarding copyright ownership. The ASF licenses this file</span></span><br><span class="line"><span class="comment"> * to you under the Apache License, Version 2.0 (the</span></span><br><span class="line"><span class="comment"> * "License"); you may not use this file except in compliance</span></span><br><span class="line"><span class="comment"> * with the License. You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *   http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing,</span></span><br><span class="line"><span class="comment"> * software distributed under the License is distributed on an</span></span><br><span class="line"><span class="comment"> * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</span></span><br><span class="line"><span class="comment"> * KIND, either express or implied. See the License for the</span></span><br><span class="line"><span class="comment"> * specific language governing permissions and limitations</span></span><br><span class="line"><span class="comment"> * under the License.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"># Thrift Tutorial</span><br><span class="line"># Mark Slee (mcslee@facebook.com)</span><br><span class="line">#</span><br><span class="line"># This file aims to teach you how to use Thrift, in a .thrift file. Neato. The</span><br><span class="line"># first thing to notice is that .thrift files support standard shell comments.</span><br><span class="line"># This lets you make your thrift file executable and include your Thrift build</span><br><span class="line"># step on the top line. And you can place comments like this anywhere you like.</span><br><span class="line">#</span><br><span class="line"># Before running this file, you will need to have installed the thrift compiler</span><br><span class="line"># into /usr/local/bin.</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The first thing to know about are types. The available types in Thrift are:</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *  bool        Boolean, one byte</span></span><br><span class="line"><span class="comment"> *  i8 (byte)   Signed 8-bit integer</span></span><br><span class="line"><span class="comment"> *  i16         Signed 16-bit integer</span></span><br><span class="line"><span class="comment"> *  i32         Signed 32-bit integer</span></span><br><span class="line"><span class="comment"> *  i64         Signed 64-bit integer</span></span><br><span class="line"><span class="comment"> *  double      64-bit floating point value</span></span><br><span class="line"><span class="comment"> *  string      String</span></span><br><span class="line"><span class="comment"> *  binary      Blob (byte array)</span></span><br><span class="line"><span class="comment"> *  map&lt;t1,t2&gt;  Map from one type to another</span></span><br><span class="line"><span class="comment"> *  list&lt;t1&gt;    Ordered list of one type</span></span><br><span class="line"><span class="comment"> *  set&lt;t1&gt;     Set of unique elements of one type</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Did you also notice that Thrift supports C style comments?</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Just in case you were wondering... yes. We support simple C comments too.</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Thrift files can reference other Thrift files to include common struct</span></span><br><span class="line"><span class="comment"> * and service definitions. These are found using the current path, or by</span></span><br><span class="line"><span class="comment"> * searching relative to any paths specified with the -I compiler flag.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Included objects are accessed using the name of the .thrift file as a</span></span><br><span class="line"><span class="comment"> * prefix. i.e. shared.SharedObject</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">include <span class="string">"shared.thrift"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Thrift files can namespace, package, or prefix their output in various</span></span><br><span class="line"><span class="comment"> * target languages.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">namespace cpp tutorial</span><br><span class="line">namespace d tutorial</span><br><span class="line">namespace dart tutorial</span><br><span class="line">namespace java tutorial</span><br><span class="line">namespace php tutorial</span><br><span class="line">namespace perl tutorial</span><br><span class="line">namespace haxe tutorial</span><br><span class="line">namespace netcore tutorial</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Thrift lets you do typedefs to get pretty names for your types. Standard</span></span><br><span class="line"><span class="comment"> * C style here.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">typedef i32 MyInteger</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Thrift also lets you define constants for use across languages. Complex</span></span><br><span class="line"><span class="comment"> * types and structs are specified using JSON notation.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">const</span> i32 INT32CONSTANT = <span class="number">9853</span></span><br><span class="line"><span class="keyword">const</span> map&lt;string,string&gt; MAPCONSTANT = &#123;<span class="string">'hello'</span>:<span class="string">'world'</span>, <span class="string">'goodnight'</span>:<span class="string">'moon'</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * You can define enums, which are just 32 bit integers. Values are optional</span></span><br><span class="line"><span class="comment"> * and start at 1 if not supplied, C style again.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">enum</span> Operation &#123;</span><br><span class="line">  ADD = <span class="number">1</span>,</span><br><span class="line">  SUBTRACT = <span class="number">2</span>,</span><br><span class="line">  MULTIPLY = <span class="number">3</span>,</span><br><span class="line">  DIVIDE = <span class="number">4</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Structs are the basic complex data structures. They are comprised of fields</span></span><br><span class="line"><span class="comment"> * which each have an integer identifier, a type, a symbolic name, and an</span></span><br><span class="line"><span class="comment"> * optional default value.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Fields can be declared "optional", which ensures they will not be included</span></span><br><span class="line"><span class="comment"> * in the serialized output if they aren't set.  Note that this requires some</span></span><br><span class="line"><span class="comment"> * manual management in some languages.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">struct Work &#123;</span><br><span class="line">  <span class="number">1</span>: i32 num1 = <span class="number">0</span>,</span><br><span class="line">  <span class="number">2</span>: i32 num2,</span><br><span class="line">  <span class="number">3</span>: Operation op,</span><br><span class="line">  <span class="number">4</span>: optional string comment,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Structs can also be exceptions, if they are nasty.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">exception InvalidOperation &#123;</span><br><span class="line">  <span class="number">1</span>: i32 whatOp,</span><br><span class="line">  <span class="number">2</span>: string why</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Ahh, now onto the cool part, defining a service. Services just need a name</span></span><br><span class="line"><span class="comment"> * and can optionally inherit from another service using the extends keyword.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">service Calculator extends shared.SharedService &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * A method definition looks like C code. It has a return type, arguments,</span></span><br><span class="line"><span class="comment">   * and optionally a list of exceptions that it may throw. Note that argument</span></span><br><span class="line"><span class="comment">   * lists and exception lists are specified using the exact same syntax as</span></span><br><span class="line"><span class="comment">   * field lists in struct or exception definitions.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">void</span> <span class="title">ping</span><span class="params">()</span>,</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">   i32 <span class="title">add</span><span class="params">(<span class="number">1</span>:i32 num1, <span class="number">2</span>:i32 num2)</span>,</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">   i32 <span class="title">calculate</span><span class="params">(<span class="number">1</span>:i32 logid, <span class="number">2</span>:Work w)</span> <span class="title">throws</span> <span class="params">(<span class="number">1</span>:InvalidOperation ouch)</span>,</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">   <span class="comment">/**</span></span></span><br><span class="line"><span class="function"><span class="comment">    * This method has a oneway modifier. That means the client only makes</span></span></span><br><span class="line"><span class="function"><span class="comment">    * a request and does not listen for any response at all. Oneway methods</span></span></span><br><span class="line"><span class="function"><span class="comment">    * must be void.</span></span></span><br><span class="line"><span class="function"><span class="comment">    */</span></span></span><br><span class="line"><span class="function">   oneway <span class="keyword">void</span> <span class="title">zip</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">&#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="comment">/**</span></span></span><br><span class="line"><span class="function"><span class="comment"> * That just about covers the basics. Take a look in the test/ folder for more</span></span></span><br><span class="line"><span class="function"><span class="comment"> * detailed examples. After you run this file, your generated code shows up</span></span></span><br><span class="line"><span class="function"><span class="comment"> * in folders with names gen-&lt;language&gt;. The generated code isn't too scary</span></span></span><br><span class="line"><span class="function"><span class="comment"> * to look at. It even has pretty indentation.</span></span></span><br><span class="line"><span class="function"><span class="comment"> */</span></span></span><br></pre></td></tr></table></figure>
+<p>运行命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">thrift -r --gen py tutorial.thrift</span><br></pre></td></tr></table></figure>
+<p>生成gen-py目录，在gen-py目录下建立<code>client.py</code>和<code>server.py</code>两个文件。</p>
+<p><code>client.py</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> glob</span><br><span class="line"><span class="comment"># sys.path.append('gen-py')</span></span><br><span class="line"><span class="comment"># sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> tutorial <span class="keyword">import</span> Calculator</span><br><span class="line"><span class="keyword">from</span> tutorial.ttypes <span class="keyword">import</span> InvalidOperation, Operation, Work</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> thrift <span class="keyword">import</span> Thrift</span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TSocket</span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TTransport</span><br><span class="line"><span class="keyword">from</span> thrift.protocol <span class="keyword">import</span> TBinaryProtocol</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="comment"># Make socket</span></span><br><span class="line">    transport = TSocket.TSocket(<span class="string">'localhost'</span>, <span class="number">9090</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Buffering is critical. Raw sockets are very slow</span></span><br><span class="line">    transport = TTransport.TBufferedTransport(transport)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Wrap in a protocol</span></span><br><span class="line">    protocol = TBinaryProtocol.TBinaryProtocol(transport)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Create a client to use the protocol encoder</span></span><br><span class="line">    client = Calculator.Client(protocol)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Connect!</span></span><br><span class="line">    transport.open()</span><br><span class="line"></span><br><span class="line">    client.ping()</span><br><span class="line">    print(<span class="string">'ping()'</span>)</span><br><span class="line"></span><br><span class="line">    sum_ = client.add(<span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">    print(<span class="string">'1+1=%d'</span> % sum_)</span><br><span class="line"></span><br><span class="line">    work = Work()</span><br><span class="line"></span><br><span class="line">    work.op = Operation.DIVIDE</span><br><span class="line">    work.num1 = <span class="number">1</span></span><br><span class="line">    work.num2 = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        quotient = client.calculate(<span class="number">1</span>, work)</span><br><span class="line">        print(<span class="string">'Whoa? You know how to divide by zero?'</span>)</span><br><span class="line">        print(<span class="string">'FYI the answer is %d'</span> % quotient)</span><br><span class="line">    <span class="keyword">except</span> InvalidOperation <span class="keyword">as</span> e:</span><br><span class="line">        print(<span class="string">'InvalidOperation: %r'</span> % e)</span><br><span class="line"></span><br><span class="line">    work.op = Operation.SUBTRACT</span><br><span class="line">    work.num1 = <span class="number">15</span></span><br><span class="line">    work.num2 = <span class="number">10</span></span><br><span class="line"></span><br><span class="line">    diff = client.calculate(<span class="number">1</span>, work)</span><br><span class="line">    print(<span class="string">'15-10=%d'</span> % diff)</span><br><span class="line"></span><br><span class="line">    log = client.getStruct(<span class="number">1</span>)</span><br><span class="line">    print(<span class="string">'Check log: %s'</span> % log.value)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Close!</span></span><br><span class="line">    transport.close()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+<p><code>server.py</code>文件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> glob</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="comment"># sys.path.append('gen-py')</span></span><br><span class="line"><span class="comment"># sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> tutorial <span class="keyword">import</span> Calculator</span><br><span class="line"><span class="keyword">from</span> tutorial.ttypes <span class="keyword">import</span> InvalidOperation, Operation</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> shared.ttypes <span class="keyword">import</span> SharedStruct</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TSocket</span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TTransport</span><br><span class="line"><span class="keyword">from</span> thrift.protocol <span class="keyword">import</span> TBinaryProtocol</span><br><span class="line"><span class="keyword">from</span> thrift.server <span class="keyword">import</span> TServer</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CalculatorHandler</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.log = &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">ping</span><span class="params">(self)</span>:</span></span><br><span class="line">        print(<span class="string">'ping()'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">add</span><span class="params">(self, n1, n2)</span>:</span></span><br><span class="line">        print(<span class="string">'add(%d,%d)'</span> % (n1, n2))</span><br><span class="line">        <span class="keyword">return</span> n1 + n2</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">calculate</span><span class="params">(self, logid, work)</span>:</span></span><br><span class="line">        print(<span class="string">'calculate(%d, %r)'</span> % (logid, work))</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> work.op == Operation.ADD:</span><br><span class="line">            val = work.num1 + work.num2</span><br><span class="line">        <span class="keyword">elif</span> work.op == Operation.SUBTRACT:</span><br><span class="line">            val = work.num1 - work.num2</span><br><span class="line">        <span class="keyword">elif</span> work.op == Operation.MULTIPLY:</span><br><span class="line">            val = work.num1 * work.num2</span><br><span class="line">        <span class="keyword">elif</span> work.op == Operation.DIVIDE:</span><br><span class="line">            <span class="keyword">if</span> work.num2 == <span class="number">0</span>:</span><br><span class="line">                x = InvalidOperation()</span><br><span class="line">                x.whatOp = work.op</span><br><span class="line">                x.why = <span class="string">'Cannot divide by 0'</span></span><br><span class="line">                <span class="keyword">raise</span> x</span><br><span class="line">            val = work.num1 / work.num2</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            x = InvalidOperation()</span><br><span class="line">            x.whatOp = work.op</span><br><span class="line">            x.why = <span class="string">'Invalid operation'</span></span><br><span class="line">            <span class="keyword">raise</span> x</span><br><span class="line"></span><br><span class="line">        log = SharedStruct()</span><br><span class="line">        log.key = logid</span><br><span class="line">        log.value = <span class="string">'%d'</span> % (val)</span><br><span class="line">        self.log[logid] = log</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> val</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">getStruct</span><span class="params">(self, key)</span>:</span></span><br><span class="line">        print(<span class="string">'getStruct(%d)'</span> % (key))</span><br><span class="line">        <span class="keyword">return</span> self.log[key]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">zip</span><span class="params">(self)</span>:</span></span><br><span class="line">        print(<span class="string">'zip()'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    handler = CalculatorHandler()</span><br><span class="line">    processor = Calculator.Processor(handler)</span><br><span class="line">    transport = TSocket.TServerSocket(port=<span class="number">9090</span>)</span><br><span class="line">    tfactory = TTransport.TBufferedTransportFactory()</span><br><span class="line">    pfactory = TBinaryProtocol.TBinaryProtocolFactory()</span><br><span class="line"></span><br><span class="line">    server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)</span><br><span class="line"></span><br><span class="line">    print(<span class="string">'Starting the server...'</span>)</span><br><span class="line">    server.serve()</span><br><span class="line">    print(<span class="string">'done.'</span>)</span><br></pre></td></tr></table></figure>
+<p>在根目录下按顺序运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python gen-py/server.py</span><br></pre></td></tr></table></figure>
+<p>和</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python gen-py/client.py</span><br></pre></td></tr></table></figure>
+<p>效果如下：</p>
+<p>server:<br><img src="/assets/images/post_imgs/web_arch_rpc_2.png" alt="rpc_2"></p>
+<p>client:<br><img src="/assets/images/post_imgs/web_arch_rpc_3.png" alt="rpc_3"></p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/web后端/">web后端</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/后端架构/">后端架构</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/30/垃圾回收(GC)算法介绍(4)——GC标记-压缩算法/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          垃圾回收(GC)算法介绍(4)——GC标记-压缩算法
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/28/互联网创业公司技术团队的管理/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">互联网创业公司技术团队的管理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么需要微服务"><span class="nav-number">1.</span> <span class="nav-text">为什么需要微服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RPC框架"><span class="nav-number">2.</span> <span class="nav-text">RPC框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Apache-Thrift"><span class="nav-number">3.</span> <span class="nav-text">Apache Thrift</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装"><span class="nav-number">3.1.</span> <span class="nav-text">安装</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

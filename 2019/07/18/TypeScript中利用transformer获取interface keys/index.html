@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>TypeScript中利用transformer获取interface keys | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="typescript">
+  
+  
+  
+  
+  <meta name="description" content="本文分成四个部分：  需求和灵感 TypeScript的抽象语法树简介 TypeScript transformer简介 编写获取TypeScript interface keys的transformer">
+<meta name="keywords" content="typescript">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TypeScript中利用transformer获取interface keys">
+<meta property="og:url" content="https://nullcc.github.io/2019/07/18/TypeScript中利用transformer获取interface keys/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文分成四个部分：  需求和灵感 TypeScript的抽象语法树简介 TypeScript transformer简介 编写获取TypeScript interface keys的transformer">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/ts-ast-1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/ts-ast-2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/ts-ast-3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/ts-ast-4.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.021Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TypeScript中利用transformer获取interface keys">
+<meta name="twitter:description" content="本文分成四个部分：  需求和灵感 TypeScript的抽象语法树简介 TypeScript transformer简介 编写获取TypeScript interface keys的transformer">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/ts-ast-1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-TypeScript中利用transformer获取interface keys" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      TypeScript中利用transformer获取interface keys
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/07/18/TypeScript中利用transformer获取interface keys/" class="article-date">
+	  <time datetime="2019-07-17T16:00:00.000Z" itemprop="datePublished">七月 18, 2019</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文分成四个部分：</p>
+<ol>
+<li>需求和灵感</li>
+<li>TypeScript的抽象语法树简介</li>
+<li>TypeScript transformer简介</li>
+<li>编写获取TypeScript interface keys的transformer</li>
+</ol>
+<a id="more"></a>
+<h2 id="需求和灵感"><a href="#需求和灵感" class="headerlink" title="需求和灵感"></a>需求和灵感</h2><p>使用过TypeScript写代码的同学都对interface这个东西不陌生，借助interface来定义一些纯值对象的类型是再简单不过了。最开始我的需求很简单，想用interface来定义一个HTTP API的response DTO，在对一个API进行测试的时候，可以验证这个API的response结构是否和我用interface定义的结构相同。</p>
+<p>刚开始想到可以使用ES 6的class来定义DTO，然后通过在运行时获取class的属性。这确实可以，但是用起来有点麻烦，比如下面的代码：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> X &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b: <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getOwnPropertyNames(<span class="keyword">new</span> X())); <span class="comment">// []</span></span><br></pre></td></tr></table></figure>
+<p>这还不够，需要对每个属性赋值：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> X &#123;</span><br><span class="line">  a = <span class="number">0</span>;</span><br><span class="line">  b = <span class="string">''</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getOwnPropertyNames(<span class="keyword">new</span> X())); <span class="comment">// [ 'a', 'b' ]</span></span><br></pre></td></tr></table></figure>
+<p>或者在<code>X</code>的<code>constructor</code>里初始化一下属性（如果只是为了拿到属性名字，直接对每个属性赋值null即可）：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> X &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b: <span class="built_in">string</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.a = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">this</span>.b = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.getOwnPropertyNames(<span class="keyword">new</span> X())); <span class="comment">// [ 'a', 'b' ]</span></span><br></pre></td></tr></table></figure>
+<p>虽然这样做也许可行，但是很快我就否定了这种用法。我只是想简单地声明一种类型，然后再需要的时候可以获取这个类型的所有属性。现在不仅要显式初始化所有属性（在<code>constructor</code>中或者直接在class声明属性的时候赋值），还要用<code>new</code>生成一个实例，实在不够优雅。其实在TypeScript中声明DTO一类的东西用interface会好一些，声明的代码简洁，支持直接嵌套属性，也可以声明属性的类型为其他interface，这和真实的HTTP Response Data的结构几乎一模一样：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> X &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b: &#123;</span><br><span class="line">    c: <span class="built_in">string</span>;</span><br><span class="line">    d: Y;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">interface</span> Y &#123;</span><br><span class="line">  u: <span class="built_in">string</span>;</span><br><span class="line">  v: &#123;</span><br><span class="line">    w: <span class="built_in">number</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>遗憾的是，虽然interface很适合用来描述HTTP Response Data，但正常情况下如果想在运行时获取interface的keys用来和真正的HTTP Response Data结构做对比是不行的，因为TypeScript的interface实际上并不存在于runtime，要理解这个问题需要知道TypeScript针对JavaScript提供了一整套的类型辅助系统，但仅仅是辅助，最终的代码还是要转换成JavaScript来执行。由于JavaScript中并不存在interface，因此也就无法在runtime获得interface的keys了。</p>
+<p>不过也不是完全没有希望，经过一番搜索，我发现了<a href="https://github.com/kimamula/ts-transformer-keys" target="_blank" rel="noopener">ts-transformer-keys</a>这个包，该包宣称可以获得interface的keys。仔细研究了一下，发现这个包提供一个<code>keys&lt;T&gt;()</code>方法，其实现原理是使用了自定义的transformer在将代码转换成JavaScript时获取了interface的信息，然后修改了调用<code>keys&lt;T&gt;()</code>处的抽象语法树(Abstract Syntax Tree, AST)节点信息。换句话说，这个包提供的transformer在将代码转换成JavaScript时直接从AST中找到相应interface的keys，然后创建一个包含所有keys数组，并将这个数组直接输出到转换出来的JavaScript代码中。</p>
+<p>举个简单的例子：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> Foo &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b: <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(keys&lt;Foo&gt;());</span><br></pre></td></tr></table></figure>
+<p>上面这几行代码在被转换成JavaScript时被替换成了下面这行：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log([<span class="string">"a"</span>, <span class="string">"b"</span>]);</span><br></pre></td></tr></table></figure>
+<p>正如上面所描述的，<code>ts-transformer-keys</code>对AST Nodes做了遍历-转换，这种能力正是我所需要的。进一步说，由于response DTO内部经常是嵌套结构的，因此很自然想到是否可以支持嵌套interface，比如下面这种情况：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> Foo &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b: Bar;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">interface</span> Bar &#123;</span><br><span class="line">  c: <span class="built_in">boolean</span>;</span><br><span class="line">  d: <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(keys&lt;Foo&gt;());</span><br></pre></td></tr></table></figure>
+<p>但是<code>ts-transformer-keys</code>的输出还是只有a和b，看来<code>ts-transformer-keys</code>尚未支持这种用法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log([<span class="string">"a"</span>, <span class="string">"b"</span>]);</span><br></pre></td></tr></table></figure>
+<p>再进一步，我还想要得到interface各个key的类型和存在性，目前<code>ts-transformer-keys</code>也不支持。不过没关系，知道了内部的实现原理，完全可以自己写一个transformer。</p>
+<h2 id="TypeScript的抽象语法树简介"><a href="#TypeScript的抽象语法树简介" class="headerlink" title="TypeScript的抽象语法树简介"></a>TypeScript的抽象语法树简介</h2><p>在真正开始编写自己的transformer之前，有必要简单了解一下TypeScript的抽象语法树和TypeScript对操作抽象语法树所提供的支持。</p>
+<p>抽象语法树(Abstract Syntax Tree，AST)，下文简称为AST，是源代码语法结构的一种抽象表示。为了更直观地观察TypeScript的AST，可以借助<a href="https://ts-ast-viewer.com/" target="_blank" rel="noopener">ts-ast-viewer</a>这个工具来以树形结构将其可视化。先看一个基本的TypeScript interface的抽象语法树表示，假设有如下代码：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> Foo &#123;</span><br><span class="line">  a?: <span class="built_in">number</span>;</span><br><span class="line">  b: <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用ts-ast-viewer可以得到上面代码的AST结构：</p>
+<p><img src="/assets/images/post_imgs/ts-ast-1.png" alt="interface的AST结构"></p>
+<p>从图中可以很清楚地看到Foo的AST表示，另外在右边的Node部分，还能查看到其AST中具体节点的信息，对于TypeScript的interface我们关心的属性名称、存在性和类型都可找到相应的字段来对应。</p>
+<p>图形化表示如下：</p>
+<p><img src="/assets/images/post_imgs/ts-ast-2.png" alt="interface的AST结构图形表示"></p>
+<p>源代码的几乎每一个细节，在AST中都有体现。让我们从上到下走马观花一下：</p>
+<ol>
+<li>最顶层是<code>SourceFile</code>，每一个TypeScript源代码文件都会对应一个SourceFile。</li>
+<li><code>SourceFile</code>下直接包含的<code>SyntaxList</code>包括了这个文件中的所有语法结构，在这里只有这个interface声明，如果还有其他语法结构，也将被包含在内。</li>
+<li><code>InterfaceDeclaration</code>表示这个interface的声明。</li>
+<li><code>InterfaceKeyword</code>表示关键字interface。</li>
+<li>紧接着的<code>Identifier</code>对应的是interface的名字<code>Foo</code>。</li>
+<li><code>OpenBraceToken</code>表示<code>{</code>。</li>
+<li>接下来又是一个<code>SyntaxList</code>，这个SyntaxList和刚才看到的那个不一样，它只包括了interface Foo中声明的所有语法结构，这样的结构划分有点类似作用域。</li>
+<li>之后的<code>PropertySignature</code>是一个属性签名，表示<code>a?: number;</code>。</li>
+<li>PropertySignature下的一些属性，<code>Identifier</code>表示属性名<code>a</code>，<code>QuestionToken</code>表示<code>?</code>，<code>ColonToken</code>表示<code>:</code>，<code>NumberKeyword</code>表示属性名a的类型是<code>number</code>，<code>SemicolonToken</code>则表示<code>;</code>。</li>
+</ol>
+<p>后面的结构和前面差不多就不赘述了。</p>
+<p>值得一提的是，在TypeScript的类型声明文件<code>typeacript.t.ts</code>的<code>SyntaxKind</code>这个<code>enum</code>声明中，可以找到上面列举的AST语法结构类型的声明，编写transformer的时候我们还会用到它。另外，之前提到<code>ts-transformer-keys</code>是使用transformer来遍历AST Nodes以获取interface keys，并就地创建一个Array，将keys数组（是一个字符串数组）复制给原来TypeScript代码中<code>keys&lt;T&gt;()</code>对应的左值。因此我们还需要能遍历，修改和创建AST Nodes，实际上TypeScript对这些操作已经提供了支持，具体细节之后会谈到。</p>
+<p>上面AST内部的细节部分将在实际编写transformer的时候再来研究，现在只需要大致知道它的结构就可以了。</p>
+<h2 id="TypeScript-transformer简介"><a href="#TypeScript-transformer简介" class="headerlink" title="TypeScript transformer简介"></a>TypeScript transformer简介</h2><p>在介绍transformer之前需要大致了解一下TypeScript的编译过程。</p>
+<p>在<a href="https://github.com/microsoft/TypeScript/" target="_blank" rel="noopener">TypeScript</a>的Wiki中可以找到一篇和TypeScript内部架构和编译过程有关的文章，大部分网络上涉及TypeScript编译过程的文章大都参考它：<a href="https://github.com/microsoft/TypeScript/wiki/Architectural-Overview" target="_blank" rel="noopener">TypeScript Architectural Overview</a>。</p>
+<p>根据文章中的介绍，TypeScript的核心编译过程中涉及的编译组件主要有下面几个：</p>
+<ol>
+<li>Pre-processor: 预处理器（包含Scanner）。</li>
+<li>Parser: 语法分析器。</li>
+<li>Binder: 绑定器。</li>
+<li>Type resolver/ Checker: 类型检查器，解析每种类型的构造，负责处理、检查针对每个类型的语义操作，并生成合适的诊断信息。</li>
+<li>Emitter：生成器，负责根据输入的.ts和.d.ts文件生成最终的结果，它有三种可能的输出：JavaScript源码(.js)、类型定义文件(.d.ts)或source map文件(.js.map)，其中类型定义文件可以帮助开发者在各种IDE中获取TypeScript的类型信息，source map文件则是一个存储源代码与编译代码对应位置映射的信息文件，在debug时我们需要利用source map文件来找到实际运行的代码(最终生成的.js文件)和其原始代码(开发者实际编写的.ts文件)的位置对应关系。</li>
+</ol>
+<p>TypeScript的编译过程简单归纳如下：</p>
+<ol>
+<li>在编译过程的开始阶段，输入是一些.ts源代码，Pre-processor会计算出有哪些源代码文件将参与编译过程（它会查找import语句和用<code>///</code>的引用语句），并在内部调用扫描器(Scanner)对所有源文件进行扫描，并封装成Tokens流，作为之后Parser的输入。</li>
+<li>Parser以预处理器产生的Tokens流作为输入，根据语言语法规则生成抽象语法树(AST)，每个源文件的AST都有一个SourceFile节点。</li>
+<li>Binder会遍历AST，并使用符号(Symbol)来链接相同结构的声明（例如对于具有相同结构的interface或模块，或者同名的函数或模块）。这个机制能帮助类型系统推导出这些具名声明。Binder也会处理作用域，确保每个Symbol都在正确的作用域中被创建。到目前为止，编译过程已经对每个单独的.ts文件进行了处理，得到了每个.ts文件的AST（每个AST都有一个SourceFile节点作为根节点）。接下来还需要将所有.ts文件的SourceFile合并在一起形成一个程序(Program)，TypeScript提供了一个<code>ts.createProgram</code>API来创建Program。我们知道源代码文件经常互相引用，下一步还将处理这些引用关系。</li>
+<li>生成Program后，TypeChecker会负责计算出不同SourceFile中的Symbol引用关系，并将<code>Type</code>赋值给<code>Symbol</code>，并在此时生成语义诊断（如果有错误的话）。</li>
+<li>对于一个Program，会生成一个Emitter，Emitter要做的就是针对每个SourceFile生成输出(.js/.d.ts/.js.map)。</li>
+</ol>
+<p>另外，在TypeScript的Wiki还能找到一篇比较“残缺”的文章（估计是项目开发人员忙于具体实现懒得更新Wiki了），提到了transformer：<a href="https://github.com/microsoft/TypeScript/wiki/Compiler-Internals#transformer" target="_blank" rel="noopener">TypeScript Compiler-Internals</a></p>
+<p>摘录transformer部分的内容如下，其中<code>translated</code>和<code>transforms</code>颇为微妙：</p>
+<blockquote>
+<p>The transformer is nearing completion to replace the emitter. The change in name is because the emitter <strong>translated</strong> TypeScript to JavaScript. The transformer <strong>transforms</strong> TypeScript or JavaScript (various versions) to JavaScript (various versions) using various module systems. The input and output are basically both trees from the same AST type, just using different features. There is still a small printer that writes any AST back to text.</p>
+</blockquote>
+<p>这里对emitter的功能描述是<code>translated TypeScript to JavaScript</code>，emitter的作用是将TypeScript代码<code>翻译</code>成JavaScript代码。而翻译的意思是保持原文意思不变，也就是说emitter对TypeScript代码没有添油加醋，是照原样转成JavaScript的。而对transformer的功能描述是<code>transforms TypeScript or JavaScript (various versions) to JavaScript (various versions) using various module systems</code>，这里的transforms还有转换、变换的功能。</p>
+<p>一言以蔽之，transformer对开发者暴露了AST，使我们能按照我们的意愿遍历和修改AST（这种修改包括删除、创建和直接修改AST Nodes）。</p>
+<p>有了这些信息做铺垫后，可以用一张流程图来表示TypeScript的编译过程：</p>
+<p><img src="/assets/images/post_imgs/ts-ast-3.png" alt="TypeScript的编译过程"></p>
+<h2 id="编写获取TypeScript-interface-keys的transformer"><a href="#编写获取TypeScript-interface-keys的transformer" class="headerlink" title="编写获取TypeScript interface keys的transformer"></a>编写获取TypeScript interface keys的transformer</h2><p>终于到了实际写代码的环节了。在真正实现获取interface keys的transformer之前我们还有几个准备工作要做：</p>
+<ol>
+<li>实现一个最简单的transformer，之后的工作将在此基础上展开。</li>
+<li>研究如何将transformer集成到TypeScript项目中。</li>
+</ol>
+<p>首先我们需要一种能在项目中使用transformer的方式，这里我选择<a href="https://github.com/cevek/ttypescript" target="_blank" rel="noopener">ttypescript</a>，因为它使用起来非常简单，另外还有一种方式是使用<a href="https://github.com/TypeStrong/ts-loader" target="_blank" rel="noopener">ts-loader</a>结合webpack，篇幅关系这里就只介绍使用<code>ttypescript</code>的方式。</p>
+<p>以<code>ttypescript</code>提供的例子为基础，我们可以先写一个基础的transformer（部分代码来自于<a href="https://github.com/kimamula/ts-transformer-keys" target="_blank" rel="noopener">ts-transformer-keys</a>）：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/transformer.ts</span></span><br><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> ts <span class="keyword">from</span> <span class="string">'typescript'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> (program: ts.Program): ts.TransformerFactory&lt;ts.SourceFile&gt; =&gt; &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function">(<span class="params">ctx: ts.TransformationContext</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> (sourceFile: ts.SourceFile): ts.SourceFile =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> visitor = (node: ts.Node): ts.Node =&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> ts.visitEachChild(visitNode(node, program), visitor, ctx);</span><br><span class="line">      &#125;;</span><br><span class="line">      <span class="keyword">return</span> &lt;ts.SourceFile&gt; ts.visitEachChild(visitNode(sourceFile, program), visitor, ctx);</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> visitNode = (node: ts.Node, program: ts.Program): ts.Node =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> typeChecker = program.getTypeChecker();</span><br><span class="line">  <span class="keyword">if</span> (!isKeysCallExpression(node, typeChecker)) &#123;</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> ts.createStringLiteral(<span class="string">'will be replaced by interface keys later'</span>);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> indexTs = path.join(__dirname, <span class="string">'./index.ts'</span>);</span><br><span class="line"><span class="keyword">const</span> isKeysCallExpression = (node: ts.Node, typeChecker: ts.TypeChecker): node is ts.CallExpression =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (!ts.isCallExpression(node)) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> signature = typeChecker.getResolvedSignature(node);</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> signature === <span class="string">'undefined'</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> &#123; declaration &#125; = signature;</span><br><span class="line">  <span class="keyword">return</span> !!declaration</span><br><span class="line">    &amp;&amp; !ts.isJSDocSignature(declaration)</span><br><span class="line">    &amp;&amp; (path.join(declaration.getSourceFile().fileName) === indexTs)</span><br><span class="line">    &amp;&amp; !!declaration.name</span><br><span class="line">    &amp;&amp; declaration.name.getText() === <span class="string">'keys'</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>几个地方解释一下：</p>
+<ol>
+<li>在导出方法中，<code>ts.visitEachChild</code>可以使用开发者提供的visitor来访问AST Node的每个子节点，并且在visitor中允许返回一个相同类型的新节点来替换当前被访问的节点。</li>
+<li><code>visitNode</code>接受一个<code>ts.Node</code>和<code>ts.Program</code>类型的参数会在访问指定节点的每个子节点时被调用，这个方法需要放回一个<code>ts.Node</code>类型的对象，如果不想对当前节点做任何改变的话，直接返回实参中的<code>node</code>即可，如果想要做一些转换，那就需要自己编码实现了，这也是这个transformer实际发挥作用的地方。目前这里的做法是遇到<code>keys&lt;T&gt;()</code>调用就将节点替换为一个字符串’will be replaced by interface keys later’。</li>
+<li>这里会沿用<code>ts-transformer-keys</code>的调用方式<code>keys&lt;T&gt;()</code>，我们需要判断调用点，<code>isKeysCallExpression</code>就是用来判断源码中调用<code>keys&lt;T&gt;()</code>的地方。</li>
+</ol>
+<p>写个测试来验证一下：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// test/transformer.test.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; keys &#125; <span class="keyword">from</span> <span class="string">'../index'</span>;</span><br><span class="line"></span><br><span class="line">describe(<span class="string">'Test transformer.'</span>, <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  test(<span class="string">'Should output \"will be replaced by interface keys later\".'</span>, <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">interface</span> Foo &#123;&#125;</span><br><span class="line">    expect(keys&lt;Foo&gt;()).toEqual(<span class="string">'will be replaced by interface keys later'</span>); <span class="comment">// true</span></span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>测试通过说明我们的transformer生效了。</p>
+<p>接下来要进入本文最重要的部分（请原谅我前面铺垫了这么多=。=）：编写获取interface keys的代码了。在第一部分已经列出了一个包含interface的SourceFile的AST结构，不过里面的interface的结构是平坦的，没有嵌套的层级关系。而我们的目的是能够支持具有层级关系和嵌套的interface，一个有层级关系的interface的AST结构如下：</p>
+<p><img src="/assets/images/post_imgs/ts-ast-4.png" alt="具有层级关系的interface的AST结构"></p>
+<p>我们需要嵌套地对interface的property做处理，完整的代码如下：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> ts <span class="keyword">from</span> <span class="string">'typescript'</span>;</span><br><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> path <span class="keyword">from</span> <span class="string">'path'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> (program: ts.Program): ts.TransformerFactory&lt;ts.SourceFile&gt; =&gt; &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function">(<span class="params">ctx: ts.TransformationContext</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> (sourceFile: ts.SourceFile): ts.SourceFile =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> visitor = (node: ts.Node): ts.Node =&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> ts.visitEachChild(visitNode(node, program), visitor, ctx);</span><br><span class="line">      &#125;;</span><br><span class="line">      <span class="keyword">return</span> &lt;ts.SourceFile&gt; ts.visitEachChild(visitNode(sourceFile, program), visitor, ctx);</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">interface</span> InterfaceProperty &#123;</span><br><span class="line">  name: <span class="built_in">string</span>;</span><br><span class="line">  optional: <span class="built_in">boolean</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> symbolMap = <span class="keyword">new</span> Map&lt;<span class="built_in">string</span>, ts.Symbol&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> visitNode = (node: ts.Node, program: ts.Program): ts.Node =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (node.kind === ts.SyntaxKind.SourceFile) &#123;</span><br><span class="line">    (&lt;<span class="built_in">any</span>&gt;node).locals.forEach(<span class="function">(<span class="params">value: <span class="built_in">any</span>, key: <span class="built_in">string</span></span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (!symbolMap.get(key)) &#123;</span><br><span class="line">        symbolMap.set(key, value);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> typeChecker = program.getTypeChecker();</span><br><span class="line">  <span class="keyword">if</span> (!isKeysCallExpression(node, typeChecker)) &#123;</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!node.typeArguments) &#123;</span><br><span class="line">    <span class="keyword">return</span> ts.createArrayLiteral([]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> <span class="keyword">type</span> = typeChecker.getTypeFromTypeNode(node.typeArguments[<span class="number">0</span>]);</span><br><span class="line">  <span class="keyword">let</span> properties: InterfaceProperty[] = [];</span><br><span class="line">  <span class="keyword">const</span> symbols = typeChecker.getPropertiesOfType(<span class="keyword">type</span>);</span><br><span class="line">  symbols.forEach(<span class="function"><span class="params">symbol</span> =&gt;</span> &#123;</span><br><span class="line">    properties = [ ...properties, ...getPropertiesOfSymbol(symbol, [], symbolMap) ];</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> ts.createArrayLiteral(properties.map(<span class="function"><span class="params">property</span> =&gt;</span> ts.createRegularExpressionLiteral(<span class="built_in">JSON</span>.stringify(property))));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> getPropertiesOfSymbol = (symbol: ts.Symbol, outerLayerProperties: InterfaceProperty[], symbolMap: Map&lt;<span class="built_in">string</span>, ts.Symbol&gt;): InterfaceProperty[] =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> properties: InterfaceProperty[] = [];</span><br><span class="line">  <span class="keyword">let</span> propertyPathElements = <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(outerLayerProperties.map(<span class="function"><span class="params">property</span> =&gt;</span> property)));</span><br><span class="line">  <span class="keyword">const</span> property = symbol.escapedName;</span><br><span class="line">  propertyPathElements.push(property);</span><br><span class="line">  <span class="keyword">let</span> optional = <span class="literal">true</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> declaration of symbol.declarations) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">undefined</span> === (&lt;<span class="built_in">any</span>&gt;declaration).questionToken) &#123;</span><br><span class="line">      optional = <span class="literal">false</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> key = &lt;InterfaceProperty&gt; &#123;</span><br><span class="line">    name: propertyPathElements.join(<span class="string">'.'</span>),</span><br><span class="line">    optional,</span><br><span class="line">  &#125;;</span><br><span class="line">  properties.push(key);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> propertiesOfSymbol = _getPropertiesOfSymbol(symbol, propertyPathElements, symbolMap);</span><br><span class="line">  properties = [</span><br><span class="line">    ...properties,</span><br><span class="line">    ...propertiesOfSymbol,</span><br><span class="line">  ];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> properties;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> isOutermostLayerSymbol = (symbol: <span class="built_in">any</span>): <span class="function"><span class="params">boolean</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> symbol.valueDeclaration &amp;&amp; symbol.valueDeclaration.symbol.valueDeclaration.type.members;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> isInnerLayerSymbol = (symbol: <span class="built_in">any</span>): <span class="function"><span class="params">boolean</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> symbol.valueDeclaration &amp;&amp; symbol.valueDeclaration.symbol.valueDeclaration.type.typeName;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> _getPropertiesOfSymbol = (symbol: ts.Symbol, propertyPathElements: InterfaceProperty[], symbolMap: Map&lt;<span class="built_in">string</span>, ts.Symbol&gt;): InterfaceProperty[] =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (!isOutermostLayerSymbol(symbol) &amp;&amp; !isInnerLayerSymbol(symbol)) &#123;</span><br><span class="line">    <span class="keyword">return</span> [];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> properties: InterfaceProperty[] = [];</span><br><span class="line">  <span class="keyword">let</span> members: <span class="built_in">any</span>;</span><br><span class="line">  <span class="keyword">if</span> ((&lt;<span class="built_in">any</span>&gt;symbol.valueDeclaration).type.symbol) &#123;</span><br><span class="line">    members = <span class="function">(<span class="params">&lt;<span class="built_in">any</span>&gt;symbol.valueDeclaration</span>).<span class="params">type</span>.<span class="params">members</span>.<span class="params">map</span>(<span class="params">(<span class="params">member: <span class="built_in">any</span></span>) =&gt; member.symbol</span>);</span></span><br><span class="line"><span class="function">  &#125; <span class="params">else</span> &#123;</span></span><br><span class="line"><span class="function">    <span class="params">const</span> <span class="params">propertyTypeName</span> = (<span class="params">&lt;<span class="built_in">any</span>&gt;symbol.valueDeclaration</span>).<span class="params">type</span>.<span class="params">typeName</span>.<span class="params">escapedText</span>;</span></span><br><span class="line"><span class="function">    <span class="params">const</span> <span class="params">propertyTypeSymbol</span> = <span class="params">symbolMap</span>.<span class="params">get</span>(<span class="params">propertyTypeName</span>);</span></span><br><span class="line"><span class="function">    <span class="params">if</span> (<span class="params">propertyTypeSymbol</span>) &#123;</span></span><br><span class="line"><span class="function">      <span class="params">if</span> (<span class="params">propertyTypeSymbol.members</span>) &#123;</span></span><br><span class="line"><span class="function">        <span class="params">members</span> = <span class="params">propertyTypeSymbol</span>.<span class="params">members</span>;</span></span><br><span class="line"><span class="function">      &#125; <span class="params">else</span> &#123;</span></span><br><span class="line"><span class="function">        <span class="params">members</span> = (<span class="params">&lt;<span class="built_in">any</span>&gt;propertyTypeSymbol</span>).<span class="params">exportSymbol</span>.<span class="params">members</span>;</span></span><br><span class="line"><span class="function">      &#125;</span></span><br><span class="line"><span class="function">    &#125;</span></span><br><span class="line"><span class="function">  &#125;</span></span><br><span class="line"><span class="function">  <span class="params">if</span> (<span class="params">members</span>) &#123;</span></span><br><span class="line"><span class="function">    <span class="params">members</span>.<span class="params">forEach</span>(<span class="params">(<span class="params">member: <span class="built_in">any</span></span>) =&gt; &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">      properties = [</span></span></span><br><span class="line"><span class="function"><span class="params">        ...properties,</span></span></span><br><span class="line"><span class="function"><span class="params">        ...getPropertiesOfSymbol(<span class="params">member, propertyPathElements, symbolMap</span>),</span></span></span><br><span class="line"><span class="function"><span class="params">      ];</span></span></span><br><span class="line"><span class="function"><span class="params">    &#125;</span>);</span></span><br><span class="line"><span class="function">  &#125;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">  <span class="params">return</span> <span class="params">properties</span>;</span></span><br><span class="line"><span class="function">&#125;;</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="params">const</span> <span class="params">indexTs</span> = <span class="params">path</span>.<span class="params">join</span>(<span class="params">__dirname, './index.ts'</span>);</span></span><br><span class="line"><span class="function"><span class="params">const</span> <span class="params">isKeysCallExpression</span> = (<span class="params">node: ts.Node, typeChecker: ts.TypeChecker</span>): <span class="params">node</span> <span class="params">is</span> <span class="params">ts</span>.<span class="params">CallExpression</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (!ts.isCallExpression(node)) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> signature = typeChecker.getResolvedSignature(node);</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> signature === <span class="string">'undefined'</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> &#123; declaration &#125; = signature;</span><br><span class="line">  <span class="keyword">return</span> !!declaration</span><br><span class="line">    &amp;&amp; !ts.isJSDocSignature(declaration)</span><br><span class="line">    &amp;&amp; (path.join(declaration.getSourceFile().fileName) === indexTs)</span><br><span class="line">    &amp;&amp; !!declaration.name</span><br><span class="line">    &amp;&amp; declaration.name.getText() === <span class="string">'keys'</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>完整的repo可以移步<a href="https://github.com/nullcc/ts-interface-keys-transformer" target="_blank" rel="noopener">ts-interface-keys-transformer</a>。</p>
+<p>使用该transformer非常简单，首先安装<code>ttypescript</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm i ttypescript</span><br></pre></td></tr></table></figure>
+<p>然后在tsconfig.json的<code>compilerOptions</code>下增加如下信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&quot;plugins&quot;: [</span><br><span class="line">  &#123; &quot;transform&quot;: &quot;ts-interface-keys-transformer/transformer&quot; &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>例子如下：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; keys &#125; <span class="keyword">from</span> <span class="string">'ts-interface-keys-transformer'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">interface</span> Foo &#123;</span><br><span class="line">  a: <span class="built_in">number</span>;</span><br><span class="line">  b?: <span class="built_in">string</span>;</span><br><span class="line">  c: &#123;</span><br><span class="line">    d: <span class="built_in">number</span>;</span><br><span class="line">    e?: <span class="built_in">boolean</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  f: Bar;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">interface</span> Bar &#123;</span><br><span class="line">  x: <span class="built_in">string</span>;</span><br><span class="line">  y: <span class="built_in">number</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(keys&lt;Foo&gt;());</span><br><span class="line"></span><br><span class="line"><span class="comment">// output:</span></span><br><span class="line"><span class="comment">// [ &#123; name: 'a', optional: false &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'b', optional: true &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'c', optional: false &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'c.d', optional: false &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'c.e', optional: true &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'f', optional: false &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'f.x', optional: false &#125;,</span></span><br><span class="line"><span class="comment">//   &#123; name: 'f.y', optional: false &#125; ]</span></span><br></pre></td></tr></table></figure>
+<p>在build TypeScript项目时，一般用的是<code>tsc</code>命令，现在由于使用了ttypescript，需要改用<code>ttsc</code>，这里有一个<a href="https://github.com/nullcc/ts-interface-keys-transformer-demo" target="_blank" rel="noopener">ts-interface-keys-transformer-demo</a>展示了用法。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://github.com/microsoft/TypeScript/wiki/Architectural-Overview" target="_blank" rel="noopener">TypeScript Architectural Overview</a></li>
+<li><a href="https://github.com/microsoft/TypeScript/wiki/Compiler-Internals#transformer" target="_blank" rel="noopener">TypeScript Compiler-Internals</a></li>
+<li><a href="https://github.com/kimamula/ts-transformer-keys" target="_blank" rel="noopener">ts-transformer-keys</a></li>
+<li><a href="https://ts-ast-viewer.com/" target="_blank" rel="noopener">ts-ast-viewer</a></li>
+</ol>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/typescript/">typescript</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/09/29/CSAPP读书笔记(长期更新)/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          CSAPP读书笔记(书已看完，剩下的读书笔记都在心里（逃。。)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/03/23/node.js中利用IPC和共享内存机制实现计算密集型任务转移/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">node.js中利用IPC和共享内存机制实现计算密集型任务转移</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#需求和灵感"><span class="nav-number">1.</span> <span class="nav-text">需求和灵感</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TypeScript的抽象语法树简介"><span class="nav-number">2.</span> <span class="nav-text">TypeScript的抽象语法树简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TypeScript-transformer简介"><span class="nav-number">3.</span> <span class="nav-text">TypeScript transformer简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编写获取TypeScript-interface-keys的transformer"><span class="nav-number">4.</span> <span class="nav-text">编写获取TypeScript interface keys的transformer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>理解JavaScript的立即调用函数表达式(IIFE) | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="js">
+  
+  
+  
+  
+  <meta name="description" content="首先这是js的一种函数调用写法，叫立即执行函数表达式(IIFE，即immediately-invoked function expression)。顾名思义IIFE可以让你的函数立即得到执行(废话)。">
+<meta name="keywords" content="js">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解JavaScript的立即调用函数表达式(IIFE)">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/08/理解JavaScript的立即调用函数表达式(IIFE)/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="首先这是js的一种函数调用写法，叫立即执行函数表达式(IIFE，即immediately-invoked function expression)。顾名思义IIFE可以让你的函数立即得到执行(废话)。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.036Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解JavaScript的立即调用函数表达式(IIFE)">
+<meta name="twitter:description" content="首先这是js的一种函数调用写法，叫立即执行函数表达式(IIFE，即immediately-invoked function expression)。顾名思义IIFE可以让你的函数立即得到执行(废话)。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-理解JavaScript的立即调用函数表达式(IIFE)" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      理解JavaScript的立即调用函数表达式(IIFE)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/08/理解JavaScript的立即调用函数表达式(IIFE)/" class="article-date">
+	  <time datetime="2017-05-07T16:00:00.000Z" itemprop="datePublished">五月 8, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>首先这是js的一种函数调用写法，叫立即执行函数表达式(IIFE，即immediately-invoked function expression)。顾名思义IIFE可以让你的函数立即得到执行(废话)。</p>
+<a id="more"></a>
+<p>一般来说，IIFE有以下几种用途：</p>
+<ol>
+<li>创建只使用一次的函数，并立即执行它。</li>
+<li>创建闭包，保存状态，隔离作用域。</li>
+<li>作为独立模块存在(例子如jQuery)，防止命名冲突，命名空间注入(模块解耦)。</li>
+</ol>
+<h2 id="1-创建只使用一次的函数，并立即执行它"><a href="#1-创建只使用一次的函数，并立即执行它" class="headerlink" title="1.创建只使用一次的函数，并立即执行它"></a>1.创建只使用一次的函数，并立即执行它</h2><p>创建只使用一次的函数比较好理解，在需要调用函数的地方使用IIFE，类似内联的效果：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">1</span>, b = <span class="number">2</span>;</span><br><span class="line">  <span class="built_in">console</span>.log(a+b); <span class="comment">// 3</span></span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>还可以传入参数：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params">c</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">1</span>, b = <span class="number">2</span>;</span><br><span class="line">  <span class="built_in">console</span>.log(a+b+c); <span class="comment">// 6</span></span><br><span class="line">&#125;)(<span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>IIFE比较常见的形式是匿名函数，但是也可以是命名的函数：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> <span class="title">adder</span>(<span class="params">a, b</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(a+b); <span class="comment">// 7</span></span><br><span class="line">&#125;)(<span class="number">3</span>, <span class="number">4</span>);</span><br></pre></td></tr></table></figure>
+<p>在js中应该尽量使用命名函数，因为匿名函数在堆栈跟踪的时候会造成一些不便。</p>
+<h2 id="2-创建闭包，保存状态，隔离作用域"><a href="#2-创建闭包，保存状态，隔离作用域" class="headerlink" title="2.创建闭包，保存状态，隔离作用域"></a>2.创建闭包，保存状态，隔离作用域</h2><p>隔离作用域比较复杂一点，在ES6以前，JS没有块级作用域，只有函数作用域，作为一种对块级作用域的模拟就只能用function模拟一个作用域，比如如下代码：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> myBomb = (<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> bomb = <span class="string">"Atomic Bomb"</span></span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    <span class="keyword">get</span>: function()&#123;</span><br><span class="line">      <span class="keyword">return</span> bomb</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="keyword">set</span>: function(val)&#123;</span><br><span class="line">      bomb = val</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(myBomb.get()) <span class="comment">// Atomic Bomb</span></span><br><span class="line">myBomb.set(<span class="string">"h-bomb"</span>)</span><br><span class="line"><span class="built_in">console</span>.log(myBomb.get()) <span class="comment">// h-bomb</span></span><br><span class="line"><span class="built_in">console</span>.log(bomb) <span class="comment">// ReferenceError: bomb is not defined</span></span><br><span class="line">bomb = <span class="string">"none"</span></span><br><span class="line"><span class="built_in">console</span>.log(bomb) <span class="comment">// none</span></span><br></pre></td></tr></table></figure>
+<p>可以看到一个比较奇特的现象，按照常理，一个函数执行完毕，在它内部声明的变量都会被销毁，但是这里变量bomb却可以通过myBomb.get和myBomb.set去读写，但是从外部直接去读和写却不行，这是闭包造成的典型效果。要清楚解释闭包到底是什么，这里有一篇文章学习<a href="http://www.ruanyifeng.com/blog/2009/08/learning_javascript_closures.html" target="_blank" rel="noopener">Javascript闭包（Closure）</a>，上面的代码已经用到了闭包。所有闭包都有一个特点，就是可以通过导出方法从函数外部改变函数内部变量的值，因此可以利用这个特点来隔离作用域，模拟一种“私有”的效果。</p>
+<p>举一个IIFE保存变量的例子，我们要写入三个文件，先定义了一个内容数组，然后用for循环遍历这个数组写入文件，最后依次用for循环的下标打印出”File i is written.”：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fileContents = [<span class="string">"text1"</span>, <span class="string">"text2"</span>, <span class="string">"text3"</span>];</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; fileContents.length; i++) &#123;</span><br><span class="line">  fs.writeFile(<span class="string">"file"</span>+i+<span class="string">".txt"</span>, fileContents[i], <span class="function"><span class="keyword">function</span>(<span class="params">err</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err) &#123;</span><br><span class="line">      <span class="built_in">console</span>.log(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"File "</span> + i + <span class="string">" is written."</span>)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码结果是：</p>
+<p>File 3 is written.<br>File 3 is written.<br>File 3 is written.</p>
+<p>很明显和我们的意愿相违背，打印了3次”File 3 is written.”。<br>我们希望的是每个文件的下标索引打印一次。</p>
+<p>原因在于写文件是个异步操作，在写完文件调用回调函数时，for循环已经遍历完毕，此时i=3。<br>要解决这个问题，可以使用IIFE：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> fileContents = [<span class="string">"text1"</span>, <span class="string">"text2"</span>, <span class="string">"text3"</span>];</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; fileContents.length; i++) &#123;</span><br><span class="line">  (<span class="function"><span class="keyword">function</span>(<span class="params">index</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> fileIndex = index;</span><br><span class="line">    fs.writeFile(<span class="string">"file"</span>+fileIndex+<span class="string">".txt"</span>, fileContents[fileIndex], <span class="function"><span class="keyword">function</span>(<span class="params">err</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (err) &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(err)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">"File "</span> + fileIndex + <span class="string">" is written."</span>)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;)(i)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这次结果是正确的(尽管不是按序，这不在我们考虑范围内)：</p>
+<p>File 1 is written.<br>File 2 is written.<br>File 0 is written.</p>
+<p>可以看到这里用IIFE做了一个变量捕获，或者说保存。</p>
+<p>再回到myBomb那个例子，这其中用到了一个模式，叫Module模式，很多js模块都是这么写，在IIFE中定义一些私有变量或者私有函数，然后在return的时候导出(一般用一个Object导出)需要暴露给外部的方法。另外在IIFE中定义的变量和函数也不会污染全局作用域，它们都通过统一的入口访问。</p>
+<h2 id="3-作为独立模块存在，防止命名冲突，命名空间注入-模块解耦"><a href="#3-作为独立模块存在，防止命名冲突，命名空间注入-模块解耦" class="headerlink" title="3.作为独立模块存在，防止命名冲突，命名空间注入(模块解耦)"></a>3.作为独立模块存在，防止命名冲突，命名空间注入(模块解耦)</h2><p>可以使用以下代码为ns这个命名空间注入变量和方法：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> ns = ns || &#123;&#125;;</span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">ns</span>)</span>&#123;</span><br><span class="line">  ns.name = <span class="string">'Tom'</span>;</span><br><span class="line">  ns.greet = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello!'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)(ns);</span><br><span class="line"><span class="built_in">console</span>.log(ns); <span class="comment">// &#123; name: 'Tom', greet: [Function] &#125;</span></span><br></pre></td></tr></table></figure>
+<p>还可以扩展到更多的用途：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">ns, undefined</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> salary = <span class="number">5000</span>; <span class="comment">// 私有属性</span></span><br><span class="line">  ns.name = <span class="string">'Tom'</span>; <span class="comment">// 公有属性</span></span><br><span class="line">  ns.greet = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123; <span class="comment">// 公有方法</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello!'</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ns.externalEcho = <span class="function"><span class="keyword">function</span>(<span class="params">msg</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'external echo: '</span> + msg);</span><br><span class="line">    insideEcho(msg);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">insideEcho</span>(<span class="params">msg</span>)</span>&#123; <span class="comment">// 私有方法</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'inside echo: '</span> + msg);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;)(<span class="built_in">window</span>.ns = <span class="built_in">window</span>.ns || &#123;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ns.name); <span class="comment">// Tom</span></span><br><span class="line">ns.greet(); <span class="comment">// hello</span></span><br><span class="line">ns.age = <span class="number">25</span>;</span><br><span class="line"><span class="built_in">console</span>.log(ns.age); <span class="comment">// 25</span></span><br><span class="line"><span class="built_in">console</span>.log(ns.salary); <span class="comment">// undefined</span></span><br><span class="line">ns.externalEcho(<span class="string">'JavaScript'</span>); <span class="comment">// external echo: JavaScript/inside echo: JavaScript</span></span><br><span class="line">insideEcho(<span class="string">'JavaScript'</span>); <span class="comment">// Uncaught ReferenceError: insideEcho is not defined</span></span><br><span class="line">ns.insideEcho(<span class="string">'JavaScript'</span>); <span class="comment">// Uncaught TypeError: ns.insideEcho is not a function</span></span><br></pre></td></tr></table></figure>
+<p>在这里，命名空间可以在局部被修改而不重写函数外面的上下文，起到了防止命名冲突的作用。</p>
+<p>注(如果不感兴趣可以直接忽略)：还需要解释一下上面IIFE中第二个参数undefined。在js中，undefined表示值的空缺，是预定义的全局变量，它并不是关键字：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> a); <span class="comment">// undefined</span></span><br><span class="line"><span class="keyword">var</span> a;</span><br><span class="line"><span class="built_in">console</span>.log(a); <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>undefined有多重含义，第一种是一个数据类型叫做undefined，另一种是表示undefined这个数据类型中的唯一值undefined。我们在js代码中看到的undefined一般是全局对象的一个属性，该属性的初始值就是undefined，另一种情况是，这个undefined是个局部变量，和普通变量一样，它的值可以是undefined，也可以是别的。</p>
+<p>在ECMAScript 3中undefined是可变的，这意味着你可以给undefined赋值，但在ECMAScript 5标准下，无法修改全局的undefined：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="built_in">window</span>.undefined); <span class="comment">// undefined</span></span><br><span class="line"><span class="built_in">window</span>.undefined = <span class="number">1</span>;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">window</span>.undefined); <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>严格模式下则会直接报错：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">'use strict'</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">window</span>.undefined); <span class="comment">// undefined</span></span><br><span class="line"><span class="built_in">window</span>.undefined = <span class="number">1</span>;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">window</span>.undefined); <span class="comment">// Uncaught TypeError: Cannot assign to read only property 'undefined' of object '#&lt;Window&gt;'</span></span><br></pre></td></tr></table></figure>
+<p>因此我们需要保护这个局部的undefined：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">window, document, undefined</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;)(<span class="built_in">window</span>, <span class="built_in">document</span>);</span><br></pre></td></tr></table></figure>
+<p>这时候就算有人给undefined赋值也没有问题：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">undefined</span> = <span class="literal">true</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">window, document, undefined</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// undefined指向的还是一个本地的undefined变量</span></span><br><span class="line">&#125;)(<span class="built_in">window</span>, <span class="built_in">document</span>);</span><br></pre></td></tr></table></figure>
+<p>不过随着ECMAScript 5的普及(现在几乎没有哪款浏览器不支持ECMAScript 5了)，这种担忧基本没有必要了，jQuery也是为了最大程度的兼容性才这么做。</p>
+<p>以上例子说明我们可以把命名空间作为参数传给IIFE，以对其进行扩展和装饰：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">ns, undefined</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> salary = <span class="number">5000</span>; <span class="comment">// 私有属性</span></span><br><span class="line">  ns.name = <span class="string">'Tom'</span>; <span class="comment">// 公有属性</span></span><br><span class="line">  ns.greet = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123; <span class="comment">// 公有方法</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello!'</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ns.externalEcho = <span class="function"><span class="keyword">function</span>(<span class="params">msg</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'external echo: '</span> + msg);</span><br><span class="line">    insideEcho(msg);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">insideEcho</span>(<span class="params">msg</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'inside echo: '</span> + msg);</span><br><span class="line">  &#125;    </span><br><span class="line">&#125;)(<span class="built_in">window</span>.ns = <span class="built_in">window</span>.ns || &#123;&#125;);</span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">ns, undefined</span>)</span>&#123;</span><br><span class="line">  ns.talk = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(ns.name + <span class="string">' says hello.'</span>);</span><br><span class="line">    <span class="built_in">console</span>.log(ns.name + <span class="string">' says goodbye.'</span>);</span><br><span class="line">    <span class="comment">// 注意这里不能调用私有函数insideEcho，否则会报错，因为talk和insideEcho不在同一个闭包中</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;)(<span class="built_in">window</span>.ns = <span class="built_in">window</span>.ns || &#123;&#125;);</span><br><span class="line"></span><br><span class="line">ns.talk(); <span class="comment">// Tom says hello. Tom says goodbye.</span></span><br></pre></td></tr></table></figure>
+<h3 id="命名空间注入"><a href="#命名空间注入" class="headerlink" title="命名空间注入"></a>命名空间注入</h3><p>命名空间注入是IIFE作为命名空间的装饰器和扩展器的一个变体，使其更具有通用性。作用是可以在一个IIFE(这里可以把它理解成一个函数包装器)内部为一个特定的命名空间注入变量/属性和方法，并且在内部使用this指向该命名空间：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> app = app || &#123;&#125;;</span><br><span class="line">app.view = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> name = <span class="string">'main'</span>;</span><br><span class="line">  <span class="keyword">this</span>.getName = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> name;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.setName = <span class="function"><span class="keyword">function</span>(<span class="params">newName</span>)</span>&#123;</span><br><span class="line">    name = newName;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.tabs = &#123;&#125;;</span><br><span class="line">&#125;).apply(app.view);</span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> selectedIndex = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">this</span>.getSelectedIndex = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> selectedIndex;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.setSelectedIndex = <span class="function"><span class="keyword">function</span>(<span class="params">index</span>)</span>&#123;</span><br><span class="line">    selectedIndex = index;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;).apply(app.view.tabs);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(app.view.getName()); <span class="comment">// main</span></span><br><span class="line"><span class="built_in">console</span>.log(app.view.tabs.getSelectedIndex()); <span class="comment">// 0</span></span><br><span class="line">app.view.tabs.setSelectedIndex(<span class="number">1</span>);</span><br><span class="line"><span class="built_in">console</span>.log(app.view.tabs.getSelectedIndex()); <span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
+<p>我们还可以写一个模块构造器来批量生产模块：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> ns1 = ns1 || &#123;&#125;, ns2 = ns2 || &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> creator = <span class="function"><span class="keyword">function</span>(<span class="params">val</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> val = val || <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">this</span>.getVal = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> val;    </span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.increase = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    val += <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.reduce = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    val -= <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>.reset = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    val = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">creator.call(ns1);</span><br><span class="line">creator.call(ns2, <span class="number">100</span>);</span><br><span class="line"><span class="built_in">console</span>.log(ns1.getVal()); <span class="comment">// 0</span></span><br><span class="line">ns1.increase();</span><br><span class="line"><span class="built_in">console</span>.log(ns1.getVal()); <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(ns2.getVal()); <span class="comment">// 100</span></span><br></pre></td></tr></table></figure>
+<p>对某个私有变量，用API的形式对其进行读写，这其实就是OOP的一些思想在js的应用了。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/js/">js</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/09/koa2中controller实现类似sleep的延迟功能/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          koa2中controller实现类似sleep的延迟功能
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/08/深入理解JavaScript中的this关键字/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">深入理解JavaScript中的this关键字</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-创建只使用一次的函数，并立即执行它"><span class="nav-number">1.</span> <span class="nav-text">1.创建只使用一次的函数，并立即执行它</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-创建闭包，保存状态，隔离作用域"><span class="nav-number">2.</span> <span class="nav-text">2.创建闭包，保存状态，隔离作用域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-作为独立模块存在，防止命名冲突，命名空间注入-模块解耦"><span class="nav-number">3.</span> <span class="nav-text">3.作为独立模块存在，防止命名冲突，命名空间注入(模块解耦)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#命名空间注入"><span class="nav-number">3.1.</span> <span class="nav-text">命名空间注入</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

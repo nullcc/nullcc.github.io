@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>构建可观察的动态命令行程序 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="领域驱动设计">
+  
+  
+  
+  
+  <meta name="description" content="本文讨论了构建可观察的动态命令行程序的一些实践。">
+<meta name="keywords" content="领域驱动设计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="构建可观察的动态命令行程序">
+<meta property="og:url" content="https://nullcc.github.io/2022/04/25/构建可观察的动态命令行程序/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文讨论了构建可观察的动态命令行程序的一些实践。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-5.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-6.png">
+<meta property="og:updated_time" content="2022-05-12T06:55:08.386Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="构建可观察的动态命令行程序">
+<meta name="twitter:description" content="本文讨论了构建可观察的动态命令行程序的一些实践。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-构建可观察的动态命令行程序" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      构建可观察的动态命令行程序
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2022/04/25/构建可观察的动态命令行程序/" class="article-date">
+	  <time datetime="2022-04-24T16:00:00.000Z" itemprop="datePublished">四月 25, 2022</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/领域驱动设计/">领域驱动设计</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文讨论了构建可观察的动态命令行程序的一些实践。</p>
+<a id="more"></a>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><p>有些时候我们会开发出具有如下特征的命令行程序：</p>
+<pre><code>* 需要运行较长时间（几分钟至数小时，甚至数天），并有可能会放在持续集成系统中运行（例如Jenkins）
+* 参数较多，且可以灵活配置
+</code></pre><p>这种命令行程序在自动化测试领域很常见，例如用来批量生成某些数据、批量运行自动化测试用例等。这些程序的运行方式一般会从开发者在本地运行慢慢变成在持续集成系统中运行，从开发者主动触发运行慢慢变成定时地或被某些上游系统以调用持续集成系统API的方式自动运行。</p>
+<h3 id="动态修改命令行程序的参数"><a href="#动态修改命令行程序的参数" class="headerlink" title="动态修改命令行程序的参数"></a>动态修改命令行程序的参数</h3><p>一般来说，一旦一个命令行程序开始运行，此时如果用户想修改某些参数，那就必须停掉正在运行的程序，修改参数后再重新运行这个程序。这在大部分情况下是没问题的，但如果用户希望在不停止程序运行的情况下动态地修改参数怎么办呢？有一些情形下我们希望具备这种能力，这里列举几个：</p>
+<pre><code>1. 一个较大的自动化测试用例集已经运行了一段时间，此时用户发现原来的用例集不全，还需要再加入一些新用例。
+2. 一个数据准备程序已经运行了一段时间，此时用户希望加入一些新数据。
+3. 一个会向后端组件发送大量请求的命令行程序，刚开始时由于后端资源紧张并发数很低，之后后端资源充裕了想要提高并发数。
+</code></pre><p>上述情况下，最直接的做法肯定是停掉正在运行的程序重新运行，但这么做也是有成本的，需要花费更多时间重启程序、或者在最后需要聚合多份自动化测试报告。重启程序的成本根据实际情况或高或低，不过无论如何，成本确实存在。</p>
+<h3 id="监控命令行程序"><a href="#监控命令行程序" class="headerlink" title="监控命令行程序"></a>监控命令行程序</h3><p>还有一种情形是用户希望看到长时间运行的命令行程序的状态，比如进度、成功率、并发数等信息。这些信息是动态的，传统方式下一般通过输出日志来实现。那还有没有其他的方式呢？能否把这些数据集成到 dashboard 里进行监控？</p>
+<hr>
+<h2 id="什么是可观察的动态命令行程序？"><a href="#什么是可观察的动态命令行程序？" class="headerlink" title="什么是可观察的动态命令行程序？"></a>什么是可观察的动态命令行程序？</h2><h3 id="可观察的命令行程序"><a href="#可观察的命令行程序" class="headerlink" title="可观察的命令行程序"></a>可观察的命令行程序</h3><p>有了上面的需求，很自然地会去思考如何解决。先来看观察命令行程序的可能方式：</p>
+<pre><code>1. 输出日志/文件
+2. 将数据写到外部系统(数据库/信息收集系统)
+3. 在本地开放 HTTP API
+</code></pre><h4 id="1-输出日志-文件"><a href="#1-输出日志-文件" class="headerlink" title="1. 输出日志/文件"></a>1. 输出日志/文件</h4><p>这是最简单直接的方式，优点是一目了然，方便保留过程日志，缺点是不利于提供即时信息，对监控和集成不友好。</p>
+<h4 id="2-将数据写到外部系统-数据库-信息收集系统"><a href="#2-将数据写到外部系统-数据库-信息收集系统" class="headerlink" title="2. 将数据写到外部系统(数据库/信息收集系统)"></a>2. 将数据写到外部系统(数据库/信息收集系统)</h4><p>这种方式的优点是既可以保留过程日志也可以提供实时信息，缺点是开销较大，而且引入了外部依赖。</p>
+<h4 id="3-在本地开放-HTTP-API"><a href="#3-在本地开放-HTTP-API" class="headerlink" title="3. 在本地开放 HTTP API"></a>3. 在本地开放 HTTP API</h4><p>这种方式会在命令行运行的本地启动一个 HTTP Server，对外提供 HTTP API。优点是方便获取及时信息，对监控和集成友好，缺点是不利于保留过程日志。</p>
+<h4 id="如何选择？"><a href="#如何选择？" class="headerlink" title="如何选择？"></a>如何选择？</h4><p>我们会比较希望既可以保留过程日志又可以监控即时信息，那么可以组合使用1和3，或者2和3。</p>
+<h3 id="动态"><a href="#动态" class="headerlink" title="动态"></a>动态</h3><p>再来看可动态这个特性。一般来说，动态意味着可在运行时修改行为。对于命令行程序来说，有几种可能的方式：</p>
+<pre><code>1. 通过一个配置文件，命令行程序定期去读，用来更新内部数据
+2. 监听消息队列
+3. 通过本地开放的 HTTP API
+</code></pre><h4 id="定期读配置文件"><a href="#定期读配置文件" class="headerlink" title="定期读配置文件"></a>定期读配置文件</h4><p>虽然可以达到目的，但不太方便，尤其在 Jenkins 上执行时，用户需要远程连接到执行机来修改配置。很多情况下用户是没有权限这样做的。</p>
+<h4 id="监听消息队列"><a href="#监听消息队列" class="headerlink" title="监听消息队列"></a>监听消息队列</h4><p>监听消息队列需要引入外部依赖，成本较高。</p>
+<h4 id="通过本地开放的-HTTP-API"><a href="#通过本地开放的-HTTP-API" class="headerlink" title="通过本地开放的 HTTP API"></a>通过本地开放的 HTTP API</h4><p>这种方式适用于本地和远程执行，也可以和上面提到的监控即时信息的做法相契合。</p>
+<h4 id="如何选择？-1"><a href="#如何选择？-1" class="headerlink" title="如何选择？"></a>如何选择？</h4><p>综合来看，通过在本地开放 HTTP API 来提供可观察的即时数据和动态修改程序行为是一种比较靠谱的方式。</p>
+<hr>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="程序入口"><a href="#程序入口" class="headerlink" title="程序入口"></a>程序入口</h3><p>通过在本地开放 HTTP API 来构建可观察的动态命令行程序有很多方式，这里我给出一个我觉得比较优雅的实现方式以供参考。</p>
+<p>首先要说明的是，实现这个想法本身是框架无关的，可以基于任何框架去实现，甚至不用框架。不过既然有合适的工具，我们没理由置之不理，因此下面讨论的实现还是使用了框架来做。先简要介绍下这种方式，我使用了 <a href="https://nestjs.com" target="_blank" rel="noopener">nest.js</a> 这个框架，这是个类 Spring 的 TS/JS 框架，内建了依赖注入支持，还有不少官方和第三方的优质插件。</p>
+<p>我创建了一个示例工程 <a href="https://github.com/nullcc/any-factory" target="_blank" rel="noopener">any-factory</a> 来展示如何实现。这个示例展示了一个工厂，我们可以通过命令行指定需要生成哪些产品，以及它们的个数。另外还提供了可选的 HTTP Server 来实时获取工厂内部数据和动态修改待生产的产品参数的能力。</p>
+<p>先来看入口文件 <code>main.ts</code>:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/main.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; NestFactory &#125; <span class="keyword">from</span> <span class="string">'@nestjs/core'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ConsoleLogger &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; BootstrapConsole &#125; <span class="keyword">from</span> <span class="string">'nestjs-console'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; DocumentBuilder, SwaggerModule &#125; <span class="keyword">from</span> <span class="string">'@nestjs/swagger'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; AppModule &#125; <span class="keyword">from</span> <span class="string">'./app.module'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ExceptionInterceptor &#125; <span class="keyword">from</span> <span class="string">'@infrastructure/interceptors/exception.interceptor'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> CustomBootstrapConsole <span class="keyword">extends</span> BootstrapConsole &#123;</span><br><span class="line">  <span class="keyword">async</span> create() &#123;</span><br><span class="line">    <span class="keyword">const</span> app = <span class="keyword">await</span> NestFactory.create(AppModule);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> appLogger = <span class="keyword">new</span> ConsoleLogger(<span class="string">'Any Factory'</span>);</span><br><span class="line">    <span class="keyword">const</span> config = <span class="keyword">new</span> DocumentBuilder()</span><br><span class="line">      .setTitle(<span class="string">'Any Factory'</span>)</span><br><span class="line">      .setDescription(<span class="string">'The any factory web API description'</span>)</span><br><span class="line">      .setVersion(<span class="string">'1.0'</span>)</span><br><span class="line">      .addTag(<span class="string">'Any Factory'</span>)</span><br><span class="line">      .build();</span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">document</span> = SwaggerModule.createDocument(app, config);</span><br><span class="line">    SwaggerModule.setup(<span class="string">'docs'</span>, app, <span class="built_in">document</span>);</span><br><span class="line"></span><br><span class="line">    app.useGlobalInterceptors(<span class="keyword">new</span> ExceptionInterceptor());</span><br><span class="line"></span><br><span class="line">    app.enableShutdownHooks();</span><br><span class="line"></span><br><span class="line">    app.getHttpServer().on(<span class="string">'listening'</span>, <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> port = app.getHttpServer().address().port;</span><br><span class="line">      appLogger.log(<span class="string">`Application is listening on port <span class="subst">$&#123;port&#125;</span>`</span>);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> app.listen(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> app;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> withServer = (): <span class="function"><span class="params">boolean</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> !!process.argv.find(<span class="function">(<span class="params">e</span>) =&gt;</span> e === <span class="string">'--with-server'</span>);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> getBootstrap = (): <span class="function"><span class="params">BootstrapConsole</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (withServer()) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> CustomBootstrapConsole(&#123;</span><br><span class="line">      <span class="keyword">module</span>: AppModule,</span><br><span class="line">      withContainer: true, // This is the key that will give you access to the app container from the service cli</span><br><span class="line">      useDecorators: true,</span><br><span class="line">      contextOptions: &#123; logger: <span class="literal">false</span> &#125;,</span><br><span class="line">    &#125; <span class="keyword">as</span> <span class="built_in">any</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> BootstrapConsole(&#123;</span><br><span class="line">    <span class="keyword">module</span>: AppModule,</span><br><span class="line">    useDecorators: true,</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">const bootstrap = getBootstrap();</span><br><span class="line"></span><br><span class="line">bootstrap</span><br><span class="line">  .init()</span><br><span class="line">  .then(async (app) =&gt; &#123;</span><br><span class="line">    <span class="keyword">await</span> app.init();</span><br><span class="line">    <span class="keyword">await</span> bootstrap.boot();</span><br><span class="line">  &#125;)</span><br><span class="line">  .catch(<span class="function">(<span class="params">e</span>) =&gt;</span> &#123;</span><br><span class="line">    process.exit(<span class="number">1</span>);</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+<p>入口文件有几个值得一提的地方，首先是使用了 <a href="https://github.com/Pop-Code/nestjs-console" target="_blank" rel="noopener">nestjs-console</a> 这个 npm package，由于 nest.js 默认不提供命令行的使用方式，因此我们需要这个库来提供命令行的支持。我们实现了一个 <code>CustomBootstrapConsole</code> 类，该类在 <code>create</code> 方法里创建了一个 nest.js HTTP server，并内部配置了一个 swagger module，最后监听在<code>0</code>端口。这里有个小技巧，如果监听0端口，则操作系统会随机分配一个可用的端口号。这么做的好处是我们不需要显式指定监听的端口号，可以在机器上同时运行多个该程序而不用担心端口号冲突。</p>
+<p><code>withServer</code> 方法用来判断是否需要启动一个 HTTP server：当命令行参数中存在 <code>--with-server</code> 选项时启动一个 HTTP server。</p>
+<p><code>getBootstrap</code> 方法作为 <code>main.ts</code> 的入口方法，负责判断命令行程序的启动方式：带 HTTP Server 或者不带。注意看 <code>getBootstrap</code> 的实现，当 <code>withServer()</code> 为 true 时，我们创建了一个 <code>CustomBootstrapConsole</code> 实例，参数 <code>withContainer: true</code> 非常重要，它允许我们从 CLI 中访问 app container，在这里就是 <code>module: AppModule</code>。这个特性非常重要，它允许 CLI 和 我们的应用程序通信。这里我们倒不需要去追究它的实现方式。接着就是初始化了，这部分 nest.js 框架的方法会帮我们处理。</p>
+<p>有一幅图帮助理解这个项目的基本结构：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-0.png" alt="any-factory的基本结构"></p>
+<p>接着看 <code>app.module.ts</code> 里的 <code>AppModule</code>：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/app.module.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Module &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ConfigModule &#125; <span class="keyword">from</span> <span class="string">'nestjs-config'</span>;</span><br><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> path <span class="keyword">from</span> <span class="string">'path'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; MonitorModule &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/monitor.module'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProductionModule &#125; <span class="keyword">from</span> <span class="string">'@modules/production/production.module'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Module</span>(&#123;</span><br><span class="line">  imports: [</span><br><span class="line">    ConfigModule.load(path.resolve(__dirname, <span class="string">'config'</span>, <span class="string">'**/!(*.d).&#123;ts,js&#125;'</span>)),</span><br><span class="line">    MonitorModule,</span><br><span class="line">    ProductionModule,</span><br><span class="line">  ],</span><br><span class="line">  controllers: [],</span><br><span class="line">  providers: [],</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> AppModule &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>抛开 nest.js 具体的使用细节不谈（尽管这也很重要，但目前它们对我们来说是手段而不是目的，故先避开），在 <code>AppModule</code> 中我们导入了3个 module: <code>ProductionModule</code>, <code>MonitorModule</code> 和 <code>ConfigModule</code>。<code>ProductionModule</code> 是这个项目的核心上下文，负责生产产品。<code>MonitorModule</code> 负责提供可观察、动态修改命令行程序的入口。<code>ConfigModule</code> 负责配置处理文件。为了保持示例的简单，这里只导入3个modules，但已足够说明问题了。</p>
+<h3 id="生产模块"><a href="#生产模块" class="headerlink" title="生产模块"></a>生产模块</h3><p>接着来看 <code>ProductionModule</code>:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/production/production.module.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Module, Global &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CqrsModule &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ConsoleModule &#125; <span class="keyword">from</span> <span class="string">'nestjs-console'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductCliController &#125; <span class="keyword">from</span> <span class="string">'./commands/produce-product/produce-product.cli.controller'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductService &#125; <span class="keyword">from</span> <span class="string">'./commands/produce-product/produce-product.service'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; UpdateSchedulerService &#125; <span class="keyword">from</span> <span class="string">'../monitor/commands/update-scheduler/update-scheduler.service'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; productionServiceLoggerProvider &#125; <span class="keyword">from</span> <span class="string">'./providers/production.providers'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> cliControllers = [ProduceProductCliController];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> commandHandlers = [ProduceProductService, UpdateSchedulerService];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> customProviders = [productionServiceLoggerProvider];</span><br><span class="line"></span><br><span class="line"><span class="meta">@Global</span>()</span><br><span class="line"><span class="meta">@Module</span>(&#123;</span><br><span class="line">  imports: [CqrsModule, ConsoleModule],</span><br><span class="line">  controllers: [],</span><br><span class="line">  providers: [...cliControllers, ...commandHandlers, ...customProviders],</span><br><span class="line">  exports: [...commandHandlers],</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> ProductionModule &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p><code>production.module.ts</code> 这种模块文件本身没有任何逻辑，它只是一个模块的入口，负责组装模块。<code>imports</code> 字段指明该模块依赖两个外部模块 <code>CqrsModule</code> 和 <code>ConsoleModule</code>，稍后会解释其含义。<code>controllers</code> 字段本来是用来声明需要注入的 HTTP controllers，但在这里 ProductionModule 并不直接提供 HTTP API，所以是个空数组。我们稍后会看到这个字段在 MonitorModule 是有用的。在 <code>providers</code> 字段中声明了一些东西：</p>
+<ul>
+<li>cliControllers: 命令行相关的 controllers，即用户和应用程序核心之间的命令行控制器。</li>
+<li>commandHandlers: 负责执行命令行控制器接收到的命令，cliControllers 是 commandHandlers 的直接用户。</li>
+<li>customProviders: 一些自定义 providers，这里只有一个 logger。</li>
+</ul>
+<p>接着看 <code>produce-product.cli.controller.ts</code>:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/production/commands/produce-product/produce-product.cli.controller.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Injectable &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandBus &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Command, Console &#125; <span class="keyword">from</span> <span class="string">'nestjs-console'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductCommand &#125; <span class="keyword">from</span> <span class="string">'./produce-product.command'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Production &#125; <span class="keyword">from</span> <span class="string">'@src/interface-adapters/interfaces/production/production.interface'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Console</span>()</span><br><span class="line"><span class="meta">@Injectable</span>()</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> ProduceProductCliController &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"><span class="keyword">private</span> readonly commandBus: CommandBus</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Command</span>(&#123;</span><br><span class="line">    command: <span class="string">'produce-products'</span>,</span><br><span class="line">    description: <span class="string">'Produce products'</span>,</span><br><span class="line">    options: [</span><br><span class="line">      &#123;</span><br><span class="line">        flags: <span class="string">'-s, --specs &lt;specs&gt;'</span>,</span><br><span class="line">        required: <span class="literal">true</span>,</span><br><span class="line">        fn: <span class="function">(<span class="params">value</span>) =&gt;</span> value.split(<span class="string">';'</span>),</span><br><span class="line">        description: <span class="string">'Product specs'</span>,</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">        flags: <span class="string">'-c, --concurrency &lt;concurrency&gt;'</span>,</span><br><span class="line">        required: <span class="literal">false</span>,</span><br><span class="line">        defaultValue: <span class="number">1</span>,</span><br><span class="line">        fn: <span class="function">(<span class="params">value</span>) =&gt;</span> <span class="built_in">parseInt</span>(value),</span><br><span class="line">        description: <span class="string">'Concurrency of pipeline'</span>,</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123;</span><br><span class="line">        flags: <span class="string">'--with-server'</span>,</span><br><span class="line">        required: <span class="literal">false</span>,</span><br><span class="line">        description:</span><br><span class="line">          <span class="string">'Will start a HTTP server to provide a way to inspect some internal data if specified'</span>,</span><br><span class="line">      &#125;,</span><br><span class="line">    ],</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="keyword">async</span> produceProducts(opts: Production): <span class="built_in">Promise</span>&lt;<span class="built_in">void</span>&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> command = <span class="keyword">new</span> ProduceProductCommand(opts);</span><br><span class="line">    <span class="keyword">await</span> <span class="keyword">this</span>.commandBus.execute(command);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>@Console()</code> 装饰器声明这是一个命令行控制器，另外在构造参数中有一个 <code>CommandBus</code>，这个东西来自 <code>@nestjs/cqrs</code> 这个 package，<a href="https://martinfowler.com/bliki/CQRS.html" target="_blank" rel="noopener">CQRS</a> 表示<code>命令查询职责分离</code>，也就是我们将读操作和写操作分开处理，这在微服务和领域驱动设计(DDD)的实践中有非常多的应用，由于这次的主题并不是关于 CQRS 的，这里只是顺带一提。简单来说在 CQRS 将写操作视为一种命令(command)，这里的 <code>CommandBus</code> 提供了一种执行命令的一致性方法。在 <code>produceProducts</code> 方法中，我们使用 <code>@Command()</code> 装饰器声明了一个命令，用来生产产品，里面的参数简单易懂，这里就不细说了。继续看这个方法的实现，我们使用方法入参 <code>opt</code> 实例化了一个 <code>ProduceProductCommand</code> 命令对象，这个对象其实只是一个命令信息的载体而已，没什么特别的：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/production/commands/produce-product/produce-product.command.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  Command,</span><br><span class="line">  CommandProps,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">'@src/libs/ddd/domain/base-classes/command.base'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> ProduceProductCommand <span class="keyword">extends</span> Command &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params">props: CommandProps&lt;ProduceProductCommand&gt;</span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>(props);</span><br><span class="line">    <span class="keyword">this</span>.specs = props.specs;</span><br><span class="line">    <span class="keyword">this</span>.concurrency = props.concurrency;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  readonly specs: <span class="built_in">string</span>[];</span><br><span class="line"></span><br><span class="line">  readonly concurrency: <span class="built_in">number</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>真正有意思的地方是：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">await</span> <span class="keyword">this</span>.commandBus.execute(command);</span><br></pre></td></tr></table></figure>
+<p>这就是上面提到的 <code>执行命令的一致性方法</code>。它的神奇之处在于在 <code>produceProducts</code> 方法中，我们不需要了解谁会负责处理这个 <code>ProduceProductCommand</code> 命令对象，我们只需要知道把这个命令对象传给 <code>this.commandBus</code> 的 <code>execute</code> 方法就行了。</p>
+<p>那谁会来处理 <code>ProduceProductCommand</code> 命令对象呢？它是：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/production/commands/produce-product/produce-product.service.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Injectable, Inject &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandBus, CommandHandler &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ConfigService &#125; <span class="keyword">from</span> <span class="string">'nestjs-config'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Result &#125; <span class="keyword">from</span> <span class="string">'@libs/ddd/domain/utils/result.util'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Logger &#125; <span class="keyword">from</span> <span class="string">'@libs/ddd/domain/ports/logger.port'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandHandlerBase &#125; <span class="keyword">from</span> <span class="string">'@src/libs/ddd/domain/base-classes/command-handler.base'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductCommand &#125; <span class="keyword">from</span> <span class="string">'./produce-product.command'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; PipelineEntity &#125; <span class="keyword">from</span> <span class="string">'@modules/production/domain/entities/pipeline.entity'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Production &#125; <span class="keyword">from</span> <span class="string">'@modules/production/domain/value-objects/production.value-object'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Spec &#125; <span class="keyword">from</span> <span class="string">'@modules/production/domain/value-objects/spec.value-object'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Concurrency &#125; <span class="keyword">from</span> <span class="string">'@modules/production/domain/value-objects/concurrency.value-object'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Summary &#125; <span class="keyword">from</span> <span class="string">'@modules/production/domain/value-objects/summary.value-object'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; produceProductServiceLoggerSymbol &#125; <span class="keyword">from</span> <span class="string">'@modules/production/providers/production.providers'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Injectable</span>()</span><br><span class="line"><span class="meta">@CommandHandler</span>(ProduceProductCommand)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> ProduceProductService <span class="keyword">extends</span> CommandHandlerBase &#123;</span><br><span class="line">  <span class="keyword">private</span> pipelineEntity: PipelineEntity;</span><br><span class="line">  <span class="keyword">private</span> isRunning = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"></span></span><br><span class="line"><span class="params">    <span class="keyword">private</span> readonly commandBus: CommandBus,</span></span><br><span class="line"><span class="params">    <span class="meta">@Inject</span>(produceProductServiceLoggerSymbol)</span></span><br><span class="line"><span class="params">    <span class="keyword">private</span> readonly logger: Logger,</span></span><br><span class="line"><span class="params">    <span class="keyword">private</span> readonly config: ConfigService,</span></span><br><span class="line"><span class="params">  </span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> handle(</span><br><span class="line">    command: ProduceProductCommand,</span><br><span class="line">  ): <span class="built_in">Promise</span>&lt;Result&lt;<span class="built_in">boolean</span>, <span class="built_in">Error</span>&gt;&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> specServer = <span class="keyword">this</span>.config.get(<span class="string">'app.specServer'</span>);</span><br><span class="line">    <span class="keyword">const</span> production = <span class="keyword">new</span> Production(&#123;</span><br><span class="line">      specs: command.specs.map(<span class="function">(<span class="params">spec</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">const</span> [name, count] = spec.split(<span class="string">':'</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Spec(&#123;</span><br><span class="line">          name,</span><br><span class="line">          count: <span class="built_in">isNaN</span>(<span class="built_in">parseInt</span>(count)) ? <span class="number">1</span> : <span class="built_in">parseInt</span>(count),</span><br><span class="line">        &#125;);</span><br><span class="line">      &#125;),</span><br><span class="line">      concurrency: <span class="keyword">new</span> Concurrency(&#123;</span><br><span class="line">        n: command.concurrency,</span><br><span class="line">      &#125;),</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">this</span>.logger.log(<span class="string">`Spec server: <span class="subst">$&#123;specServer&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">this</span>.logger.log(</span><br><span class="line">      <span class="string">`Produces products: <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(production.getRawProps(), <span class="literal">null</span>, <span class="number">2</span>)&#125;</span>`</span>,</span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">const</span> result = PipelineEntity.create(&#123; production: production &#125;);</span><br><span class="line">    <span class="keyword">return</span> result.unwrap(</span><br><span class="line">      <span class="keyword">async</span> (pipeline) =&gt; &#123;</span><br><span class="line">        <span class="keyword">this</span>.isRunning = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">this</span>.pipelineEntity = pipeline;</span><br><span class="line">        <span class="keyword">await</span> <span class="keyword">this</span>.pipelineEntity.run();</span><br><span class="line">        <span class="keyword">return</span> Result.ok(<span class="literal">true</span>);</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="keyword">async</span> (error) =&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> Result.err(error);</span><br><span class="line">      &#125;,</span><br><span class="line">    );</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  isAvailable(): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.isRunning;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  getConcurrency(): <span class="built_in">number</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.pipelineEntity.getConcurrency();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  setConcurrency(value: <span class="built_in">number</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.logger.log(<span class="string">`Sets concurrency to: <span class="subst">$&#123;value&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">const</span> newConcurrency = <span class="keyword">new</span> Concurrency(&#123;</span><br><span class="line">      n: value,</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">this</span>.pipelineEntity.setConcurrency(newConcurrency);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  addSpecs(specs: <span class="built_in">string</span>[]) &#123;</span><br><span class="line">    <span class="keyword">this</span>.logger.log(<span class="string">`Adds specs: <span class="subst">$&#123;specs&#125;</span>`</span>);</span><br><span class="line">    <span class="keyword">const</span> additionalSpecs = specs.map(<span class="function">(<span class="params">spec</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> [name, count] = spec.split(<span class="string">':'</span>);</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">new</span> Spec(&#123;</span><br><span class="line">        name,</span><br><span class="line">        count: <span class="built_in">isNaN</span>(<span class="built_in">parseInt</span>(count)) ? <span class="number">1</span> : <span class="built_in">parseInt</span>(count),</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">this</span>.pipelineEntity.addSpecs(additionalSpecs);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  getSummary(): Summary &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.pipelineEntity.getSummary();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  getSpecs(): Spec[] &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.pipelineEntity.getSpecs();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>又是一长串代码，我们只看要点。下面的装饰器声明了这个类会负责处理 <code>ProduceProductCommand</code> 命令对象：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@CommandHandler</span>(ProduceProductCommand)</span><br></pre></td></tr></table></figure>
+<p>第二个重点是 <code>handle</code> 方法。如果你仔细看会发现这个方法已经碰到一点点业务的边了，但这还不是真正的业务逻辑，只是业务逻辑的组装。这个位置对应到领域驱动设计中是应用层(Appplicaiton Layer)。在这个方法中，我们先实例化了一个 <code>Production</code> 值对象(Value Object)，值对象不包含业务逻辑，它用来表示领域概念。比如在这里表示<code>生产</code>这个概念。需要注意的是，在这个建模过程中，我们始终紧密围绕生产这个核心上下文进行建模，以更好地表达领域语言。再往后看，出现了一个 <code>PipelineEntity</code>，<code>Production</code> 值对象作为 <code>PipelineEntity</code> 的 <code>create</code> 工厂方法的参数。<code>PipelineEntity</code> 是整个生产过程的核心，几乎所有业务逻辑都封装在这里面。<code>pipelineEntity.run()</code> 开始执行生产任务。</p>
+<p>其他的一些方法，比如 <code>isAvailable</code>、<code>getConcurrency</code>、<code>setConcurrency</code> 等方法要么是维护一些简单的状态，要么只是 <code>pipelineEntity</code> 的代理，用来向外部提供一些方法以在可控的范围内获取/修改 <code>pipelineEntity</code> 的内部信息。</p>
+<p>关于 <code>pipeline.entity.ts</code> 里的 <code>PipelineEntity</code> 只需要知道两点：</p>
+<ul>
+<li>PipelineEntity 是具体处理业务逻辑的地方。</li>
+<li>PipelineEntity 会以一个给定的并发数从任务队列中取出产品规格进行生产，直到生产完全部产品。</li>
+<li>我们可以通过 PipelineEntity 的 <code>setConcurrency</code> 方法设置并发数，通过 <code>addSpecs</code> 方法添加需要生产的产品规格和相应数量。</li>
+</ul>
+<h3 id="监控模块"><a href="#监控模块" class="headerlink" title="监控模块"></a>监控模块</h3><p><code>monitor.module.ts</code> 的代码如下：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/monitor.module.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Module &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CqrsModule &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; MonitorHttpController &#125; <span class="keyword">from</span> <span class="string">'./queries/monitor.http.controller'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; MonitorQueryHandler &#125; <span class="keyword">from</span> <span class="string">'./queries/monitor.query-handler'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; UpdatePipelineHttpController &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/commands/update-pipeline/update-pipeline.http.controller'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProductionModule &#125; <span class="keyword">from</span> <span class="string">'@modules/production/production.module'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> httpControllers = [MonitorHttpController, UpdatePipelineHttpController];</span><br><span class="line"></span><br><span class="line"><span class="meta">@Module</span>(&#123;</span><br><span class="line">  imports: [CqrsModule, ProductionModule],</span><br><span class="line">  controllers: [...httpControllers],</span><br><span class="line">  providers: [MonitorQueryHandler],</span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> MonitorModule &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>我们将 <code>ProductionModule</code> 导入 <code>MonitorModule</code>，因为后者依赖前者。<code>controllers</code> 里是 <code>MonitorModule</code> 开放给外部的 HTTP API。<code>httpControllers</code> 中 <code>MonitorHttpController</code> 里放的是查询 controller，<code>UpdatePipelineHttpController</code> 放的是命令 controller。这里专门做了区分。<code>providers</code> 字段里是一个 <code>MonitorQueryHandler</code>，CQRS 将命令和查询分离，因此命令处理器和查询处理器也要分离。</p>
+<p>先看 <code>monitor.http.controller.ts</code>:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/queries/monitor.http.controller.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Controller, HttpStatus, Get &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ApiTags, ApiOperation, ApiResponse &#125; <span class="keyword">from</span> <span class="string">'@nestjs/swagger'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; MonitorQueryHandler &#125; <span class="keyword">from</span> <span class="string">'./monitor.query-handler'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; StatusHttpResponse &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/dtos/status.response.dto'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@ApiTags</span>(<span class="string">'Monitor'</span>)</span><br><span class="line"><span class="meta">@Controller</span>()</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> MonitorHttpController &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"><span class="keyword">private</span> readonly monitorQueryHandler: MonitorQueryHandler</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Get</span>(<span class="string">'/pipeline/status'</span>)</span><br><span class="line">  <span class="meta">@ApiOperation</span>(&#123; summary: <span class="string">'Get status of pipeline'</span> &#125;)</span><br><span class="line">  <span class="meta">@ApiResponse</span>(&#123;</span><br><span class="line">    status: HttpStatus.OK,</span><br><span class="line">    <span class="keyword">type</span>: StatusHttpResponse,</span><br><span class="line">  &#125;)</span><br><span class="line">  getStatus(): StatusHttpResponse &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> StatusHttpResponse(<span class="keyword">this</span>.monitorQueryHandler.getPipelineStatus());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>MonitorHttpController</code> 很简单，暴露一个 endpoint <code>GET /pipeline/status</code>，内部直接调用 <code>MonitorQueryHandler</code> 的 <code>getPipelineStatus</code> 方法。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/queries/monitor.query-handler.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Injectable &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductService &#125; <span class="keyword">from</span> <span class="string">'@modules/production/commands/produce-product/produce-product.service'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProductionStatus &#125; <span class="keyword">from</span> <span class="string">'@src/interface-adapters/interfaces/production/production-status.interface'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Injectable</span>()</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> MonitorQueryHandler &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"><span class="keyword">private</span> readonly produceProductService: ProduceProductService</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  getPipelineStatus(): ProductionStatus &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">this</span>.produceProductService.isAvailable()) &#123;</span><br><span class="line">      <span class="keyword">return</span> &#123;&#125; <span class="keyword">as</span> ProductionStatus;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      summary: <span class="keyword">this</span>.produceProductService.getSummary().getRawProps(),</span><br><span class="line">      concurrency: <span class="keyword">this</span>.produceProductService.getConcurrency(),</span><br><span class="line">      specs: <span class="keyword">this</span>.produceProductService</span><br><span class="line">        .getSpecs()</span><br><span class="line">        .map(<span class="function">(<span class="params">spec</span>) =&gt;</span> spec.getRawProps()),</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>MonitorQueryHandler</code> 里通过依赖注入的 <code>ProduceProductService</code> 获取 pipeline 状态。</p>
+<p>接着再看 <code>update-pipeline.http.controller.ts</code>:</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/commands/update-pipeline/update-pipeline.http.controller.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; ApiTags &#125; <span class="keyword">from</span> <span class="string">'@nestjs/swagger'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Controller, Patch, Body &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandBus &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; UpdatePipelineHttpRequest &#125; <span class="keyword">from</span> <span class="string">'./update-pipeline.request.dto'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; UpdatePipelineCommand &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/commands/update-pipeline/update-pipeline.command'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@ApiTags</span>(<span class="string">'Monitor'</span>)</span><br><span class="line"><span class="meta">@Controller</span>()</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> UpdatePipelineHttpController &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"><span class="keyword">private</span> readonly commandBus: CommandBus</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Patch</span>(<span class="string">'/pipeline'</span>)</span><br><span class="line">  <span class="keyword">async</span> update(<span class="meta">@Body</span>() body: UpdatePipelineHttpRequest) &#123;</span><br><span class="line">    <span class="keyword">const</span> command = <span class="keyword">new</span> UpdatePipelineCommand(body);</span><br><span class="line">    <span class="keyword">await</span> <span class="keyword">this</span>.commandBus.execute(command);</span><br><span class="line">    <span class="keyword">return</span> &#123;&#125;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>UpdatePipelineHttpController</code> 通过暴露一个 endpoint <code>PATCH /pipeline</code> 来动态更新命令行程序，它创建一个 <code>UpdatePipelineCommand</code> 实例，然后通过 <code>this.commandBus</code> 执行。</p>
+<p>同样地，<code>UpdatePipelineCommand</code> 也是一个命令的信息载体：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/commands/update-pipeline/update-pipeline.command.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123;</span><br><span class="line">  Command,</span><br><span class="line">  CommandProps,</span><br><span class="line">&#125; <span class="keyword">from</span> <span class="string">'@libs/ddd/domain/base-classes/command.base'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> UpdatePipelineCommand <span class="keyword">extends</span> Command &#123;</span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params">props: CommandProps&lt;UpdatePipelineCommand&gt;</span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>(props);</span><br><span class="line">    <span class="keyword">this</span>.concurrency = props.concurrency;</span><br><span class="line">    <span class="keyword">this</span>.specs = props.specs;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  readonly concurrency: <span class="built_in">number</span>;</span><br><span class="line"></span><br><span class="line">  readonly specs: <span class="built_in">string</span>[];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接着会触发 <code>UpdatePipelineService</code> 的 <code>handle</code> 方法执行，这里也通过依赖注入的方式注入了一个 <code>ProduceProductService</code>实例，最后直接执行上面的 <code>setConcurrency</code> 和 <code>addSpecs</code> 方法来动态修改生产上下文中的参数：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// src/modules/monitor/commands/update-pipeline/update-pipeline.service.ts</span></span><br><span class="line"><span class="keyword">import</span> &#123; Injectable, Scope, ConsoleLogger &#125; <span class="keyword">from</span> <span class="string">'@nestjs/common'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandBus, CommandHandler &#125; <span class="keyword">from</span> <span class="string">'@nestjs/cqrs'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; Result &#125; <span class="keyword">from</span> <span class="string">'@libs/ddd/domain/utils/result.util'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; CommandHandlerBase &#125; <span class="keyword">from</span> <span class="string">'@libs/ddd/domain/base-classes/command-handler.base'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; ProduceProductService &#125; <span class="keyword">from</span> <span class="string">'@modules/production/commands/produce-product/produce-product.service'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; UpdatePipelineCommand &#125; <span class="keyword">from</span> <span class="string">'@modules/monitor/commands/update-pipeline/update-pipeline.command'</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Injectable</span>(&#123;</span><br><span class="line">  scope: Scope.DEFAULT,</span><br><span class="line">&#125;)</span><br><span class="line"><span class="meta">@CommandHandler</span>(UpdatePipelineCommand)</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> UpdatePipelineService <span class="keyword">extends</span> CommandHandlerBase &#123;</span><br><span class="line">  <span class="keyword">private</span> logger = <span class="keyword">new</span> ConsoleLogger(UpdatePipelineService.name);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">constructor</span>(<span class="params"></span></span><br><span class="line"><span class="params">    <span class="keyword">private</span> readonly commandBus: CommandBus,</span></span><br><span class="line"><span class="params">    <span class="keyword">private</span> readonly produceProductService: ProduceProductService,</span></span><br><span class="line"><span class="params">  </span>) &#123;</span><br><span class="line">    <span class="keyword">super</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">async</span> handle(</span><br><span class="line">    command: UpdatePipelineCommand,</span><br><span class="line">  ): <span class="built_in">Promise</span>&lt;Result&lt;<span class="built_in">boolean</span>, <span class="built_in">Error</span>&gt;&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">this</span>.produceProductService.isAvailable()) &#123;</span><br><span class="line">      <span class="keyword">return</span> Result.ok(<span class="literal">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.produceProductService.setConcurrency(command.concurrency);</span><br><span class="line">    <span class="keyword">if</span> (command.specs) &#123;</span><br><span class="line">      <span class="keyword">this</span>.produceProductService.addSpecs(command.specs);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> Result.ok(<span class="literal">true</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>让我们运行一下程序看看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm i -g @nullcc/any-factory</span><br><span class="line">any-factory produce-products --specs=<span class="string">"a:10;b:20;c:30"</span> --concurrency=1 --with-server</span><br></pre></td></tr></table></figure>
+<p>命令行中的日志：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-1.png" alt="命令行中的日志"></p>
+<p>HTTP Server swagger API：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-2.png" alt="HTTP Server swagger API"></p>
+<p>请求 pipeline 状态：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-3.png" alt="请求 pipeline 状态"></p>
+<p>修改 pipeline 参数：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-4.png" alt="修改 pipeline 参数"></p>
+<p>请求更新后的 pipeline 状态：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-5.png" alt="请求更新后的 pipeline 状态"></p>
+<p>现在可以更新一下可观察的动态命令行程序的基本结构图以给出一种通用结构：</p>
+<p><img src="/assets/images/post_imgs/building-observable-and-dynamic-cli-app-6.png" alt="可观察的动态命令行程序"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在上面的实现中，我们在本地运行命令行程序时同时启动了一个 HTTP Server，对用户开放了一些 API，同时传统的日志记录形式还是可以继续使用（在文中和示例项目中没有展示出来）。在实现过程中，我们还通过模块化将不同上下文隔离开，它们之间可能会产生耦合，但都在我们的控制之中。例如虽然 MonitorModule 依赖于 ProductionModule，但后者的逻辑不会泄露到前者中。</p>
+<p>上面除了讨论了如何构建可观察可修改的命令行程序以外，还应用了领域驱动设计的方法指导实现。当然，由于领域驱动设计是个相当大的主题，本文中无法详细描述。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://martinfowler.com/bliki/CQRS.html" target="_blank" rel="noopener">CQRS(命令查询职责分离)</a><br><a href="https://martinfowler.com/tags/domain%20driven%20design.html" target="_blank" rel="noopener">Domain Driven Design(领域驱动设计)</a><br><a href="https://github.com/nullcc/domain-driven-hexagon/blob/master/README-zh_CN.md" target="_blank" rel="noopener">DDD六边形架构(翻译)</a></p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/领域驱动设计/">领域驱动设计</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/领域驱动设计/">领域驱动设计</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2022/07/19/领域驱动设计实践(0)-基础概念/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          领域驱动设计实践(0)-基础概念
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2021/07/09/基于OpenResty的插件化网关平台架构设计/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">基于 OpenResty 的插件化网关平台架构设计</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#需求"><span class="nav-number">1.</span> <span class="nav-text">需求</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#动态修改命令行程序的参数"><span class="nav-number">1.1.</span> <span class="nav-text">动态修改命令行程序的参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#监控命令行程序"><span class="nav-number">1.2.</span> <span class="nav-text">监控命令行程序</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是可观察的动态命令行程序？"><span class="nav-number">2.</span> <span class="nav-text">什么是可观察的动态命令行程序？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#可观察的命令行程序"><span class="nav-number">2.1.</span> <span class="nav-text">可观察的命令行程序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-输出日志-文件"><span class="nav-number">2.1.1.</span> <span class="nav-text">1. 输出日志/文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-将数据写到外部系统-数据库-信息收集系统"><span class="nav-number">2.1.2.</span> <span class="nav-text">2. 将数据写到外部系统(数据库/信息收集系统)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-在本地开放-HTTP-API"><span class="nav-number">2.1.3.</span> <span class="nav-text">3. 在本地开放 HTTP API</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何选择？"><span class="nav-number">2.1.4.</span> <span class="nav-text">如何选择？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#动态"><span class="nav-number">2.2.</span> <span class="nav-text">动态</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#定期读配置文件"><span class="nav-number">2.2.1.</span> <span class="nav-text">定期读配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#监听消息队列"><span class="nav-number">2.2.2.</span> <span class="nav-text">监听消息队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#通过本地开放的-HTTP-API"><span class="nav-number">2.2.3.</span> <span class="nav-text">通过本地开放的 HTTP API</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何选择？-1"><span class="nav-number">2.2.4.</span> <span class="nav-text">如何选择？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#程序入口"><span class="nav-number">3.1.</span> <span class="nav-text">程序入口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生产模块"><span class="nav-number">3.2.</span> <span class="nav-text">生产模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#监控模块"><span class="nav-number">3.3.</span> <span class="nav-text">监控模块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

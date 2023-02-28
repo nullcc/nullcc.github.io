@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>(译)分片：如何将数据存储在不同的Redis实例中 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Redis">
+  
+  
+  
+  
+  <meta name="description" content="本文翻译自Partitioning: how to split data among multiple Redis instances。">
+<meta name="keywords" content="Redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(译)分片：如何将数据存储在不同的Redis实例中">
+<meta property="og:url" content="https://nullcc.github.io/2018/03/03/(译)分片：如何将数据存储在不同的Redis实例中/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文翻译自Partitioning: how to split data among multiple Redis instances。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.012Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="(译)分片：如何将数据存储在不同的Redis实例中">
+<meta name="twitter:description" content="本文翻译自Partitioning: how to split data among multiple Redis instances。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-(译)分片：如何将数据存储在不同的Redis实例中" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      (译)分片：如何将数据存储在不同的Redis实例中
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/03/03/(译)分片：如何将数据存储在不同的Redis实例中/" class="article-date">
+	  <time datetime="2018-03-02T16:00:00.000Z" itemprop="datePublished">三月 3, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文翻译自<a href="https://redis.io/topics/partitioning" target="_blank" rel="noopener">Partitioning: how to split data among multiple Redis instances</a>。</p>
+<a id="more"></a>
+<p>分片就是将你的数据切分成多个部分存放在多个Redis实例中的过程，因此每个实例中将只有你的所有键的一个子集。本文档的第一部分将向你介绍分片的概念，第二部分将向你展示Redis的分片方案。</p>
+<h2 id="为什么分片很有用？"><a href="#为什么分片很有用？" class="headerlink" title="为什么分片很有用？"></a>为什么分片很有用？</h2><p>Redis中的分片主要有两个目标：</p>
+<p>它使用多台计算机的内存综合来构建更大型的数据库。如果不分片，你将只能使用单个计算机所能支持的内存量。它允许将计算能力扩展至多核以及多台计算机，并将网络带宽扩展到多台计算机和网络适配器上。</p>
+<h2 id="分片的基础概念"><a href="#分片的基础概念" class="headerlink" title="分片的基础概念"></a>分片的基础概念</h2><p>这里有一些不同的分片标准。假设我们有4个Redis实例：<code>R0</code>、<code>R1</code>、<code>R2</code>、<code>R3</code>，且代表用户的键的名称类似user:1、user:2，以此类推，我们有几个不同的方法来选择一个实例并将一个给定的键存储在这个实例中。换句话说，即有不同的方式将一个给定的键映射到一个给定的Redis服务器上。</p>
+<p>最简单的一种方式是<code>范围分片</code>，将一定范围的对象映射到指定的Redis实例上，例如，我们可以让ID范围在0-10000内的用户映射到<code>R0</code>，ID范围在10001-20000内的用户映射到<code>R1</code>，以此类推。</p>
+<p>该系统在实际工作中可行，然而，它的缺点是需要一个将对象范围映射到实例的表。对于每一类对象，我们都需要管理这样一个表，因此，范围分片在Redis中往往是不可取的，因为它比其他的分片方式更低效。</p>
+<p>一个范围分片的替代方案是<code>哈希分片</code>。这种模式对任何键都有效，它不需要键采用<code>object_name:&lt;id&gt;</code>的形式，而且它很简单：</p>
+<ul>
+<li>使用哈希函数（比如，crc32哈希函数）将键名称转换为一个数字。例如，如果键名称为foobar，crc32(foobar)将输出类似<code>93024922</code>这样的数字。</li>
+<li>对这个数字使用取模操作，将它转换成0-3之间的整数，以便这个数字可以映射到我们的其中一个Redis实例上。93024922对4取模等于2，因此键foorbar将被存储在<code>R2</code>上。注意：取模操作返回的是一个除法操作的余数，它在很多编程语言中被实现为<code>%</code>操作符。</li>
+</ul>
+<p>还有很多其他方式来执行分片操作，但看了这两个例子后你应该有一些想法了。一个基于哈希分片的高级方式被称为<code>一致性哈希</code>，它是由几个Redis客户端和代理实现的。</p>
+<h2 id="分片的不同实现"><a href="#分片的不同实现" class="headerlink" title="分片的不同实现"></a>分片的不同实现</h2><p>分片在软件上可以被分为几个不同的部分。</p>
+<ul>
+<li><code>客户端分片</code>意味着由客户端直接选择正确的节点进行写操作或读取一个给定的键。很多Redis客户端都实现了客户端分片。</li>
+<li><code>代理辅助分片</code>意味着我们的客户端将请求发送给一个能够支持Redis协议的代理，而不是直接将请求发送给正确的Redis实例。代理在确认后将根据已配置的分区模式将我们的请求发送给正确的Redis实例，之后会将回复回送给客户端。Redis和Memcached代理twemproxy实现了辅助代理分区。</li>
+<li><code>请求路由</code>意味着你可以将请求随机发送给一个实例，这个实例确认后将会把这个请求发送给正确的节点。Redis集群实现了一个混合形式的请求路由，这里面有来自客户端的帮助（请求不是从一个Redis实例直接发送给另一个实例，而是将客户端重定向到正确的节点）。</li>
+</ul>
+<h2 id="分片的缺点"><a href="#分片的缺点" class="headerlink" title="分片的缺点"></a>分片的缺点</h2><p>在使用分片时，Redis的有些功能表现不佳：</p>
+<ul>
+<li>涉及多个键的操作通常不受支持。例如，你无法对两个存在于不同Redis实例上的集合执行交集操作（实际上这里有两种方法来完成这个操作，但都是间接的）。</li>
+<li>无法使用涉及多个键的Redis事务。</li>
+<li>分片的粒度是键，因此无法将类似一个非常大的有序集合这样的大键分片到多个实例上。 </li>
+<li>当使用了分片时，数据处理会更加复杂，例如你不得不处理多个RDB/AOF文件，并且为了备份你的数据就需要将多个实例和主机上的持久化文件进行聚合。</li>
+<li>增加和减少容量都很复杂。例如，Redis集群支持在运行时增减节点来几乎透明地对数据进行平衡，但其他一些系统比如客户端分片和代理辅助分片不支持这种功能。然而，一种叫做<code>预分片</code>的技术在这里会有所帮助。</li>
+</ul>
+<h2 id="Redis是作为数据存储还是缓存？"><a href="#Redis是作为数据存储还是缓存？" class="headerlink" title="Redis是作为数据存储还是缓存？"></a>Redis是作为数据存储还是缓存？</h2><p>虽然Redis的分片不管在将Redis作为数据存储使用或者作为缓存使用在概念上都是相同的，但在将Redis作为数据存储使用时有一个重要的限制。当Redis被用来作为数据存储使用，一个给定的键必须总是被映射到相同的Redis实例上。当Redis被用来作为缓存，因一个给定节点不可用而转而使用另一个节点也不是什么大问题，我们可以改变键-实例映射关系来提高系统可用性（也就是系统对我们的查询的响应能力）。</p>
+<p>如果对于一个给定键，首选节点不可用的话，一致性哈希实现通常能够将其切换到其他节点上。类似地如果你添加了一个新节点，一部分新键将开始被存储在这个新节点上。</p>
+<p>这里的主要概念如下：</p>
+<ul>
+<li>如果Redis被当成一个缓存使用，使用一致性哈希进行扩容和缩容是很容易的。</li>
+<li>如果Redis被当成一个数据存储使用，使用了一个固定的键-节点映射，则节点数量是固定的，不能改变。否则，我们需要一个在节点被添加或移除时能够在节点之间进行再平衡键的系统，目前只有Redis集群能够做到 —— Redis集群在2015-04-01之后在正产环境中可用。</li>
+</ul>
+<h2 id="预分片"><a href="#预分片" class="headerlink" title="预分片"></a>预分片</h2><p>我们发现关于分片的一个问题是，除非我们将Redis作为一个缓存使用，否则添加或删除节点可能很麻烦，使用固定的键-实例映射要简单得多。</p>
+<p>然而，数据存储的需求可能会随着时间变化。今天我只要10个Redis节点就能搞定，但明天我可能就需要50个节点。</p>
+<p>由于Redis非常的小和轻量级（空闲实例值占用1MB内存），一个解决该问题的简单方法是在一开始就启动大量实例。即使你只使用一台服务器，你也可以决定从一开始就采用分布式的方法进行部署，使用分片将多个Redis实例运行在一台服务器上。</p>
+<p>而且从一开始你就可以选择一个非常大的实例数量。例如，32或64个实例对大多数用户都是一个不错的选择，这个数量可以为将来的增长预留足够的空间。</p>
+<p>这样，d昂你的数据存储需求增加，需要更多的Redis服务器，你需要做的就是简单地将Redis实例从一台服务器移动到另一台。一旦你添加了第一台额外的服务器，你将需要把一半的Redis实例从第一台移动到第二台，以此类推。</p>
+<p>使用Redis复制你将能够在很少或者没有停机时间的情况下为你的用户们移动数据：</p>
+<ul>
+<li>在新服务器上启动新Redis实例。</li>
+<li>通过将这些新实例设置为你旧实例的的从节点来移动数据。</li>
+<li>停止你的客户端。</li>
+<li>用新的服务器IP更新被移动实例的配置。</li>
+<li>对新服务器上的从节点发送<code>SLAVEOF NO ONE</code>命令。</li>
+<li>使用更新后的配置重启你的客户端。</li>
+<li>最后关闭旧服务器上那些不再使用的Redis实例。</li>
+</ul>
+<h2 id="Redis分片的各种实现"><a href="#Redis分片的各种实现" class="headerlink" title="Redis分片的各种实现"></a>Redis分片的各种实现</h2><p>到目前为止，我们涵盖了Redis分片的理论部分，但在实践中要如何做呢？我们应该使用哪种系统？</p>
+<h3 id="Redis集群"><a href="#Redis集群" class="headerlink" title="Redis集群"></a>Redis集群</h3><p>Redis集群是获得自动分片和高可用性的首选方式。它从2015-04-01开始就在生产环境中可用了。你可以在<a href="https://redis.io/topics/cluster-tutorial" target="_blank" rel="noopener">集群教程</a>中获取更多有关Redis集群的信息。</p>
+<p>一旦Redis集群可用，而且如果你使用的编程语言中有一个Redis集群兼容的客户端，那么Redis集群将变为Redis分片的事实标准。</p>
+<p>Redis集群是请求路由和客户端分片之间的一种混合方式。</p>
+<h3 id="Twemproxy"><a href="#Twemproxy" class="headerlink" title="Twemproxy"></a>Twemproxy</h3><p>Twemproxy是一个由Twitter为Memcached ASCII和Redis协议开发的一个代理。它是单线程的，使用C编写而成，并且它非常快。它是一个使用Apache 2.0许可证的开源软件。</p>
+<p>Twemproxy支持在多个Redis实例中自动分片，如果节点不可用，会将节点移出（这将改变键-实例映射，因此你应该只在将Redis作为一个缓存使用时采用这种方式）。</p>
+<p>由于你可以启动多个代理且可以指示你的客户端连接到接收连接的第一个节点，因此使用代理不会造成单点失败问题。</p>
+<p>基本上Twemproxy是一个介于客户端和Redis实例之间的中间层，这将可靠地为我们以最小的复杂度处理分片。</p>
+<p>你可以从<a href="http://antirez.com/news/44" target="_blank" rel="noopener">antirez的这篇blog</a>中阅读到更多关于Twemproxy的信息。</p>
+<h3 id="支持一致性哈希的客户端"><a href="#支持一致性哈希的客户端" class="headerlink" title="支持一致性哈希的客户端"></a>支持一致性哈希的客户端</h3><p>一种Twemproxy的替代方案是，使用支持采用一致性哈希或其他类似算法进行分片的客户端。这里有多个Redis客户端支持一致性哈希，尤其是<a href="https://github.com/redis/redis-rb" target="_blank" rel="noopener">Redis-rb</a>和<a href="https://github.com/nrk/predis" target="_blank" rel="noopener">Predis</a>。</p>
+<p>请查看<a href="http://redis.io/clients" target="_blank" rel="noopener">Redis客户端的完整列表</a>来确认是否有一个你的编程语言下支持的一致性哈希的成熟的客户端实现。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/03/06/关于TDD和BDD的一点浅见/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          关于TDD和BDD的一点浅见
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/03/03/深入解析Javascript异步编程/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">深入解析Javascript异步编程</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么分片很有用？"><span class="nav-number">1.</span> <span class="nav-text">为什么分片很有用？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分片的基础概念"><span class="nav-number">2.</span> <span class="nav-text">分片的基础概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分片的不同实现"><span class="nav-number">3.</span> <span class="nav-text">分片的不同实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分片的缺点"><span class="nav-number">4.</span> <span class="nav-text">分片的缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis是作为数据存储还是缓存？"><span class="nav-number">5.</span> <span class="nav-text">Redis是作为数据存储还是缓存？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#预分片"><span class="nav-number">6.</span> <span class="nav-text">预分片</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis分片的各种实现"><span class="nav-number">7.</span> <span class="nav-text">Redis分片的各种实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis集群"><span class="nav-number">7.1.</span> <span class="nav-text">Redis集群</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Twemproxy"><span class="nav-number">7.2.</span> <span class="nav-text">Twemproxy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#支持一致性哈希的客户端"><span class="nav-number">7.3.</span> <span class="nav-text">支持一致性哈希的客户端</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

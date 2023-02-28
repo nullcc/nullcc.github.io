@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Web API设计实践 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="API">
+  
+  
+  
+  
+  <meta name="description" content="本文将讨论Web API设计的实践。">
+<meta name="keywords" content="API">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web API设计实践">
+<meta property="og:url" content="https://nullcc.github.io/2018/12/17/Web API设计实践/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文将讨论Web API设计的实践。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.021Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Web API设计实践">
+<meta name="twitter:description" content="本文将讨论Web API设计的实践。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Web API设计实践" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Web API设计实践
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/17/Web API设计实践/" class="article-date">
+	  <time datetime="2018-12-16T16:00:00.000Z" itemprop="datePublished">十二月 17, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Web/">Web</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文将讨论Web API设计的实践。</p>
+<a id="more"></a>
+<h2 id="Web-API的基本概念"><a href="#Web-API的基本概念" class="headerlink" title="Web API的基本概念"></a>Web API的基本概念</h2><p>Web世界在发展了一段时间后，出现了很多在线服务，这些在线服务不但本身提供一些功能，还公开了自己的Web API。第三方应用可以以Web API的方式接入这些在线服务开发自己的应用，从而也衍生出很多周边服务，甚至以这些已存在的在线服务为基础搭建自己的核心服务。</p>
+<p>人们在Web系统中使用URI(Uniform Resource Identifier, 统一资源标识符)来定位资源，顾名思义URI是用来表示资源的，因此URI应该（或者说大部分情况下，特殊情况之后会提到）是一个名词。另外HTTP协议中定义了一些HTTP Method来表示如何操作这个URI，这是动词。HTTP Method + URI就构成了一个基本的操作：动词 + 名词。</p>
+<h2 id="HTTP-Method-和-Endpoints-的设计"><a href="#HTTP-Method-和-Endpoints-的设计" class="headerlink" title="HTTP Method 和 Endpoints 的设计"></a>HTTP Method 和 Endpoints 的设计</h2><p>我们也经常可以在一些Web API上看到动词，例如下面这组操作用户的Web API：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GET http://api.example.com/v1/get_users</span><br><span class="line">POST http://api.example.com/v1/create_user</span><br><span class="line">PUT http://api.example.com/v1/update_user?id=123</span><br><span class="line">DELETE http://api.example.com/v1/delete_user?id=123</span><br></pre></td></tr></table></figure>
+<p>拿上述的第一个Web API为例，这个URI的作用是获取用户列表，它使用了HTTP GET方法。虽然这么设计Web API也能工作，但这么设计有一些问题：首先HTTP GET和URI中的get重复了，另外一般在URI中有动词也不太符合而且也不符合URI表示资源这个原则，这个URI这样设计会好很多：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET http://api.example.com/v1/users</span><br></pre></td></tr></table></figure>
+<p>其他几个Web API也有类似的问题，要么是HTTP Method和URI中的内容有重复，要么是URI包含了动词，首先这不大符合URI的设计规范，而且这么做也没有一个统一的标准，试想一下删除用户的Web API也可以设计成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DELETE http://api.example.com/v1/remove_user?id=123</span><br></pre></td></tr></table></figure>
+<p>如果没有统一的设计标准，一旦之后Web API数量增加，就会造成各种奇形怪状的Web API层出不穷，非常不利于维护，当然也影响美观。</p>
+<p>下面以user资源为例，列出了各种操作对应的HTTP Method 和 Endpoints的规范设计方式：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">操作含义</th>
+<th style="text-align:left">HTTP Method</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">获取用户列表</td>
+<td style="text-align:left">GET</td>
+<td>/users</td>
+</tr>
+<tr>
+<td style="text-align:left">获取用户信息</td>
+<td style="text-align:left">GET</td>
+<td>/users/:id</td>
+</tr>
+<tr>
+<td style="text-align:left">创建用户</td>
+<td style="text-align:left">POST</td>
+<td>/users</td>
+</tr>
+<tr>
+<td style="text-align:left">更新用户(完整更新)</td>
+<td style="text-align:left">PUT</td>
+<td>/users/:id</td>
+</tr>
+<tr>
+<td style="text-align:left">更新用户(部分更新)</td>
+<td style="text-align:left">PATCH</td>
+<td>/users/:id</td>
+</tr>
+<tr>
+<td style="text-align:left">删除用户</td>
+<td style="text-align:left">DELETE</td>
+<td>/users/:id</td>
+</tr>
+</tbody>
+</table>
+<p>首先说说为什么这么设计，对于一个Web系统中的某种资源来说，绝大部分情况下不止一个，也就是说资源是一个集合的概念，就算只有唯一一个资源，也可以看做是集合只有一个元素的特殊情况。</p>
+<p>比较容易让人混淆的是PUT和PATCH方法的含义，其中PUT是指“完整更新”，客户端需要发送资源的完整信息来更新这个资源，PATCH是指“部分更新”，客户端只需要发送需要更新的个别字段即可完成资源的更新。以user这个资源举例说明的话，假设user有name, age, icon三个属性，有一个id为123的user如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span>: <span class="string">"Foo"</span>,</span><br><span class="line">  <span class="attr">"age"</span>: <span class="number">29</span>,</span><br><span class="line">  <span class="attr">"icon"</span>: <span class="string">"http://www.example.com/icon.png</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这时我们希望更新该user的age字段为30，如果使用PUT，body需要包含所有这三个属性，其中不打算做更新的字段保持原来的值即可：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"name"</span>: <span class="string">"Foo"</span>,</span><br><span class="line">  <span class="attr">"age"</span>: <span class="number">30</span>,</span><br><span class="line">  <span class="attr">"icon"</span>: <span class="string">"http://www.example.com/icon.png</span></span><br><span class="line"><span class="string">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果用PATCH则不必包含所有属性，只需要列出age字段即可：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"age"</span>: <span class="number">30</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外，在设计Web API的 HTTP Method 和 Endpoint 有以下几个需要注意的地方：</p>
+<ol>
+<li>一般情况下（search之类的特殊URI例外），不应该在URI中出现动词，URI表示资源，应该是名词。</li>
+<li>资源名称应该是复数形式。</li>
+<li>注意根据Web API的功能选择适当的HTTP Method：GET操作不应该对服务器端资源造成任何修改，应该是幂等的。POST用来创建资源，PUT用来完整更新资源，PATCH用来局部更新资源，DELETE用来删除资源。</li>
+<li>Endpoints中不要使用空格和需要编码的字符。</li>
+<li>使用连字符来连接多个单词，常用的连字符有”-“和”_”，不建议使用驼峰法，因为URI本身并不区分字母大小写。</li>
+</ol>
+<p>另外比较常见的 Web API Endpoint 经常是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">https://api.example.com/v1</span><br><span class="line">https://www.example.com/api/v1</span><br></pre></td></tr></table></figure>
+<p>注意如果主机名已经有”api”了，一般path中就不需要再出现”api”，否则path中会出现”api”以示这是一个Web API Endpoint。选择哪种方式其实也没有一个唯一答案。一般来说能选则第一种尽量选第一种。</p>
+<h3 id="URI中使用动词的特殊情况"><a href="#URI中使用动词的特殊情况" class="headerlink" title="URI中使用动词的特殊情况"></a>URI中使用动词的特殊情况</h3><p>有时候一个行为可能无法很好地映射到一个资源上，一个典型的情形是搜索，典型的Web API搜索URI是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://api.example.com/v1/search?query=xxx</span><br></pre></td></tr></table></figure>
+<p>这么设计搜索API基本是一种约定俗成的规范，像这类特殊的URI其实可以不拘泥于动词 + 名词的形式，只要这个URI能准确表达出意图，一般也没什么问题。</p>
+<h3 id="查询参数"><a href="#查询参数" class="headerlink" title="查询参数"></a>查询参数</h3><p>分除了host, path以外，Web API还有一个很重要的组成部分：query，也就是查询参数。查询参数的作用是更详细的描述URI所指定的资源。对于是把一些参数放在path中还是放在query中，主要是看这个参数相对于资源的意义。我个人的理解是，如果这个参数具有唯一描述某个资源的能力，比如id，推荐将其放在path中。比如下面的实例描述了一个公司的某个职员：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/api/v1/companies/123/employees/456</span><br></pre></td></tr></table></figure>
+<p>这里用公司ID和职员ID来唯一定位到资源。还有一种设计方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/api/v1/companies/123?employee_id=456</span><br></pre></td></tr></table></figure>
+<p>这种方式当然也没问题，不过在URI的长度不是特别长的情况下，建议使用第一种方式。</p>
+<p>有时候我们想通过一系列的参数来对资源进行查询，这一般是一种范围性的查询，不像用ID那样直接定位到唯一一个资源，此时可以使用query去设计URI。例如想要获取某个公司开发部门的，且性别为男的员工，且以名字升序排列：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/api/v1/companies/123?department=development&amp;gender=male&amp;sort=name</span><br></pre></td></tr></table></figure>
+<p>通过区分参数的性质来设计，我们也能让API更加优雅。</p>
+<h3 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h3><p>在获取资源列表的时候，比如获取用户列表，由于用户可能非常多，一次性获取全部用户不现实，因此很自然地会用分页来获取。分页的方案大致可以分为两种：绝对位置分页和相对位置分页。</p>
+<h4 id="基于相对位置的分页方案"><a href="#基于相对位置的分页方案" class="headerlink" title="基于相对位置的分页方案"></a>基于相对位置的分页方案</h4><p>使用页数和每页资源个数来分页获取用户：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET http://api.example.com/v1/users?page=2&amp;limit=50&amp;sort=+name</span><br></pre></td></tr></table></figure>
+<p>我们在查询参数中指定了page和limit，这种分页方案以页数为单位，每次获取由limit指定的个数的资源，并指定了排序规则为用户名升序排列(+为升序，-为降序)。这种分页方案很直接，但是有一个问题，由于指定了页数，也就是说我们需要skip前面几页的资源。这在数据库中的操作是这样的，首先查询出所符合查询条件的所有条目，然后skip掉指定数量的条目，skip数量=(page - 1) * limit。这时如果资源集合非常大，页数也指定得很大，数据库就需要skip掉非常多的条目，这会导致查询越来越慢。</p>
+<p>基于页数和每页条目数的分页方案还有一种变体，就是指定offset和size，比如在基于页数和每页条目数的分页方案中的参数为page=2&amp;limit=50，也就是要跳过前面一页（50个个条目），对于offset和size的方案就是offset=50&amp;size=50。这两种方式其实质都是一样的，基于资源的相对位置来分页。</p>
+<p>基于资源的相对位置来分页还有一个问题就是在数据插入/删除频繁的场景下回重复获取。比如记录A位于第50条，使用page=1&amp;limit=50获取时，记录A位于最后一个位置，如果在获取下一页之前，由于某种情况删除了1-50条之间的任意一条或几条，获取下一页的时候，记录A还将出现在返回列表中。</p>
+<p>在数据量不大或者插入/删除不太频繁的场景下，基于相对位置的分页工作得还可以。但如果要彻底避免大量skip和重复获取的问题，就要使用基于绝对位置的分页方案了。</p>
+<h4 id="基于绝对位置的分页方案"><a href="#基于绝对位置的分页方案" class="headerlink" title="基于绝对位置的分页方案"></a>基于绝对位置的分页方案</h4><p>基于绝对位置的分页不再以资源在数据库中的顺序为参考点，而是以一个能快速定位具体资源的方式做为参考点，比如主键或者任何unique key。一般资源都有主键，可以考虑用下面这种方式来获取分页的资源列表：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET http://api.example.com/v1/users?max_id=12345&amp;limit=50</span><br></pre></td></tr></table></figure>
+<p>这种方案中的一般做法是，将当前获取到的资源列表的最后一条的unique key作为定位点，向后获取limit参数指定的数量的条目。数据库通过在这个unique key上加上合适的索引来加速这种查询，因此查询效率非常高。</p>
+<h4 id="返回“是否还有后续数据”"><a href="#返回“是否还有后续数据”" class="headerlink" title="返回“是否还有后续数据”"></a>返回“是否还有后续数据”</h4><p>为了让前端做分页，不可避免的需要告知前端“是否还有后续数据”的信息。这里面又有两种常见的情况：</p>
+<ol>
+<li>需要知道总页数</li>
+<li>不需要知道总页数</li>
+</ol>
+<p>需要知道总页数的情况相当常见，比如我们有很多订单，前端对订单列表做分页，用户往往需要知道“总共有多少订单”、“分页的总数”这类信息。这时服务端需要维护资源总数的信息。但是实时计算出资源总数有时候不现实（比如那些动辄上百万个的资源），这时候后端会使用一些其他技巧来实现，不过这不在本文的讨论范围内。</p>
+<p>还有一种情况是不需要知道总页数，比如新闻资讯列表、社交媒体的timeline等。假设此时每页有N个资源，那么当后端在实际获取资源时，每次都获取N+1数量的资源，如果能获取到N+1个，就说明还有下一页，否则当前页就是最后一页。如果还有下一页，就需要把多获取的这个排除掉，只返回N个给客户端。这种方式的成本和实现难度都很低。</p>
+<h2 id="授权"><a href="#授权" class="headerlink" title="授权"></a>授权</h2><p>在使用一些需要用户身份认证的Web API时需要做授权操作，OAuth 2.0已经成为Web API授权的事实标准，OAuth 2.0 支持4种授权模式：</p>
+<ol>
+<li>Authorization Code</li>
+<li>Implicit</li>
+<li>Resource Owner Password Credentials</li>
+<li>Client Credentials</li>
+</ol>
+<p>OAuth 2.0详细的信息可以查看这里<a href="http://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html" target="_blank" rel="noopener">OAuth 2.0介绍</a>。</p>
+<h2 id="响应数据设计"><a href="#响应数据设计" class="headerlink" title="响应数据设计"></a>响应数据设计</h2><h3 id="响应数据格式"><a href="#响应数据格式" class="headerlink" title="响应数据格式"></a>响应数据格式</h3><p>目前主流的Web API设计中，响应数据格式大部分是JSON。在比较早以前Web API中曾大量使用XML，但JSON由于其简洁易用性等优点很快被广大开发者所接受，慢慢替代了XML称为最主流的Web API响应数据格式。现在基本上很难找到哪个Web API是不支持JSON格式的，很多Web API甚至只支持JSON而不支持XML。</p>
+<h3 id="Web-API-常用的HTTP状态码"><a href="#Web-API-常用的HTTP状态码" class="headerlink" title="Web API 常用的HTTP状态码"></a>Web API 常用的HTTP状态码</h3><p>HTTP相应状态码有五大类：1xx, 2xx, 3xx, 4xx, 5xx：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">HTTP响应吗类型</th>
+<th style="text-align:left">含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1xx</td>
+<td style="text-align:left">信息状态码</td>
+</tr>
+<tr>
+<td style="text-align:left">2xx</td>
+<td style="text-align:left">成功状态码</td>
+</tr>
+<tr>
+<td style="text-align:left">3xx</td>
+<td style="text-align:left">重定向状态码</td>
+</tr>
+<tr>
+<td style="text-align:left">4xx</td>
+<td style="text-align:left">客户端错误状态码</td>
+</tr>
+<tr>
+<td style="text-align:left">5xx</td>
+<td style="text-align:left">服务端错误状态码</td>
+</tr>
+</tbody>
+</table>
+<p>可以参考<a href="http://www.runoob.com/http/http-status-codes.html" target="_blank" rel="noopener">常用的Web API HTTP状态码</a>。</p>
+<h3 id="更详细的状态码——应用级别的状态码"><a href="#更详细的状态码——应用级别的状态码" class="headerlink" title="更详细的状态码——应用级别的状态码"></a>更详细的状态码——应用级别的状态码</h3><p>由于HTTP状态码只能表达问题的大类，在一些业务规则比较复杂的场景下，出错的时候我们希望服务端为客户端提供足够详细的出错信息，此时可以在响应体中提供应用级别的状态码和状态信息，一个参考例子：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"error"</span>: <span class="literal">true</span>,</span><br><span class="line">  <span class="attr">"errorCode"</span>: <span class="string">"xxxx"</span>,</span><br><span class="line">  <span class="attr">"errorMessage"</span>: <span class="string">"xxxx"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在设计应用级别的状态码和状态信息时也应该注意分类，并在Web API文档中详细说明各个状态码的含义。</p>
+<h2 id="HTTP中的缓存"><a href="#HTTP中的缓存" class="headerlink" title="HTTP中的缓存"></a>HTTP中的缓存</h2><p>相比于从内存和硬盘中获取数据，网络请求的速度实在是太慢了，因此一些情况下将从服务器端获得的资源缓存起来就很关键，这能大大提高响应速度和降低服务器带宽/计算成本。</p>
+<p>HTTP中的缓存概念大致分为两部分：</p>
+<ul>
+<li>过期模型</li>
+<li>验证模型</li>
+</ul>
+<p>过期模型指明了一个资源何时过期，一旦资源过期，客户端就必须抛弃这个资源，重新从服务端获取。先来看看HTTP协议中和过期模型有关的响应首部：</p>
+<ul>
+<li>Expires</li>
+<li>Cache-Control</li>
+</ul>
+<h3 id="过期模型"><a href="#过期模型" class="headerlink" title="过期模型"></a>过期模型</h3><h4 id="Expires响应首部"><a href="#Expires响应首部" class="headerlink" title="Expires响应首部"></a>Expires响应首部</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">expires: Sat, 21 Dec 2019 09:32:24 GMT</span><br></pre></td></tr></table></figure>
+<p>Expires响应首部指明了资源过期的时间点，表示资源在这个时间点之后是过期的，这是一个绝对值。需要注意的是Expires用的是服务器的时间，如果客户端和服务器时间不一致，会导致一些误差。</p>
+<h4 id="Cache-Control响应首部"><a href="#Cache-Control响应首部" class="headerlink" title="Cache-Control响应首部"></a>Cache-Control响应首部</h4><p>Cache-Control的用法比较多，比如可以指明资源要经过多少时间后才过期：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cache-control: max-age=3600</span><br></pre></td></tr></table></figure>
+<p>这指明了资源经过1小时候过期，max-age的单位是秒。</p>
+<p>或者可以指明某个资源不需要被客户端缓存：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cache-control: no-store</span><br></pre></td></tr></table></figure>
+<p>还可以指明在请求该资源时，需要先询问服务器是否有更新的版本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cache-control: no-cache</span><br></pre></td></tr></table></figure>
+<h3 id="验证模型"><a href="#验证模型" class="headerlink" title="验证模型"></a>验证模型</h3><p>过期模型只能通过查看响应首部中Expires和Cache-Control来得知资源的过期与否，验证模型则需要客户端向服务端询问资源的过期情况，这被称为“附带条件的请求”。客户端需要在请求中附带资源最后的更新日期(Last Modified Time)或实体标签(ETag)，比如</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">etag: &quot;5c137a66-c1a3&quot;</span><br><span class="line">last-modified: Fri, 14 Dec 2018 09:39:50 GMT</span><br></pre></td></tr></table></figure>
+<p>Last-Modified指明了资源最后一次更新的时间，ETag可以认为是资源的标识符，如果资源被更新了，它的标识符就会变化，这有资源的版本有点类似。</p>
+<p>另外ETag还有“强验证”和“弱验证”两种，强验证大概是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">etag: &quot;5c137a66-c1a3&quot;</span><br></pre></td></tr></table></figure>
+<p>弱验证需要在双引号之前加上一个”W/“：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">etag: W/&quot;5c137a66-c1a3&quot;</span><br></pre></td></tr></table></figure>
+<p>二者的差别在于，强验证下，客户端缓存的资源和服务端的资源只要有任何一点不同，都会被判断为不同，需要重新从服务器获获取资源的最新数据。弱验证宽松很多，并不要求资源的完全一致，只要资源从使用意义来看没差别就不需要重新获取数据，比如一些网页上的广告信息。</p>
+<p>这里不打算详细讲解HTTP缓存相关的内容，有需要可以参考Google和Mozilla官方关于HTTP Cache的资料：</p>
+<ul>
+<li><a href="https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=zh-cn" target="_blank" rel="noopener">http-caching</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank" rel="noopener">HTTP caching</a></li>
+</ul>
+<h2 id="在请求和响应中指明媒体类型和可接受的数据格式"><a href="#在请求和响应中指明媒体类型和可接受的数据格式" class="headerlink" title="在请求和响应中指明媒体类型和可接受的数据格式"></a>在请求和响应中指明媒体类型和可接受的数据格式</h2><p>使用Content-Type指明媒体类型很重要，这关系到服务端是否能正确理解客户端发来的请求和客户端能否正确解析服务端发来的响应。例如在返回JSON格式数据的Web API中，响应首部中应该指明响应的Content-Type：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">...</span><br><span class="line">content-type: application/json; charset=utf-8</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>如果客户端向服务端请求时所带的数据也是JSON格式的，也应该在请求头中说明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /api/v1/projects HTTP/1.1</span><br><span class="line">Host: api.example.com</span><br><span class="line">Accept: application/json</span><br><span class="line">Content-Type: application/json</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>Content-Type相当于客户端和服务端对数据格式的协商内容，任何一方再和另一方通信时，指明Content-Type就相当于告知对方：我给你的数据是什么媒体类型的。另一方得到这个信息后就可以才去针对这个媒体类型的操作。比如一个创建商品的接口既可以接受JSON数据也可以接受XML数据，那么客户端在发送请求时就必须指明所发送的数据是什么媒体类型的，否则服务端很可能将无法正确处理请求。相反，如果一个获取商品信息的接口同时支持返回JSON和XML两种格式的数据，那么也同样要指明响应数据的格式，否则客户端可能无法正确解析。</p>
+<p>另外，还可以通过Accept首部指明接受何种类型的数据，比如上面的POST请求中，指明了<code>Accept: application/json</code>，这就告知服务端，客户端只能接受JSON格式的数据。</p>
+<p>总而言之，Content-Type和Accept首部对于客户端和服务端双方通信数据的格式约定非常重要。</p>
+<h3 id="定义私有首部"><a href="#定义私有首部" class="headerlink" title="定义私有首部"></a>定义私有首部</h3><p>有些时候HTTP协议中预定义的首部不能满足我们的需求，还需要定义私有首部。比如需要对客户端进行限速的场景，一般做法是指定一个<code>X-RateLimit-Limit</code>首部：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">X-RateLimit-Limit: 60</span><br></pre></td></tr></table></figure>
+<p>至于这个限速的时间单位是多少，不同应用的单位可能不一样，有使用小时的也有使用天的，需要开发者自己去查看Web API文档。</p>
+<p>一般来说，以”X-“开头的首部是私有首部。</p>
+<h2 id="跨域"><a href="#跨域" class="headerlink" title="跨域"></a>跨域</h2><p>现代Web应用中大量使用Ajax来获取数据，但浏览器的同源策略限制了这一技术的使用。同源策略简单说就是：协议名、主机、端口号这三个数据唯一确定了一个“源”。处于安全方面的考虑，默认情况下浏览器不允许通过Ajax请求不同“源”下的资源。在服务端经过特殊配置后允许不同源的客户端请求，这称为“跨域”。但是既然是Web API，就是要公开出来给其他人用，势必需要支持跨域，否则公开没有任何意义。</p>
+<p>其实有一种方式可以绕过浏览器同源策略（需要客户端和服务器端做一定的支持），就是<a href="http://www.runoob.com/json/json-jsonp.html" target="_blank" rel="noopener">JSONP</a>，但实际上JSONP称不上是什么特别优秀的实践，很多时候是处于无奈才使用。所以如果不是特别需要，建议不要使用JSONP。</p>
+<p>目前Web API 主流的跨域方案是跨域资源共享<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS" target="_blank" rel="noopener">Cross-Origin Resource Sharing</a>，如果需要允许某个域具有访问我方服务器，可以在请求头中带上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access-Control-Allow-Origin: http://www.example.com</span><br></pre></td></tr></table></figure>
+<p>如果要允许任何域访问，可以用”*”指定：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Access-Control-Allow-Origin: *</span><br></pre></td></tr></table></figure>
+<p>还有一种方式是服务器端可以在域名的根目录下，放置<code>crossdomain.xml</code>文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">cross-domain-policy</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">allow-access-from</span> <span class="attr">domain</span>=<span class="string">"www.example.com"</span> /&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">allow-access-from</span> <span class="attr">domain</span>=<span class="string">"*.foo.com"</span> /&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">allow-access-from</span> <span class="attr">domain</span>=<span class="string">"110.56.67.189"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">cross-domain-policy</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如果要允许任意跨域，同样可以用”*”：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">cross-domain-policy</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">allow-access-from</span> <span class="attr">domain</span>=<span class="string">"*"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">cross-domain-policy</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html" target="_blank" rel="noopener">OAuth 2.0介绍</a></li>
+<li><a href="http://www.runoob.com/http/http-status-codes.html" target="_blank" rel="noopener">常用的Web API HTTP状态码</a></li>
+<li><a href="https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=zh-cn" target="_blank" rel="noopener">http-caching</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" target="_blank" rel="noopener">HTTP caching</a></li>
+<li><a href="http://www.runoob.com/json/json-jsonp.html" target="_blank" rel="noopener">JSONP</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS" target="_blank" rel="noopener">CORS</a></li>
+</ul>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Web/">Web</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/API/">API</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/01/01/RxJS入坑笔记(一)——基础知识/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          RxJS入坑笔记(一)——基础知识
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/11/27/使用nginx实现简单的负载均衡和高可用/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">使用nginx实现简单的负载均衡和高可用</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Web-API的基本概念"><span class="nav-number">1.</span> <span class="nav-text">Web API的基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-Method-和-Endpoints-的设计"><span class="nav-number">2.</span> <span class="nav-text">HTTP Method 和 Endpoints 的设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#URI中使用动词的特殊情况"><span class="nav-number">2.1.</span> <span class="nav-text">URI中使用动词的特殊情况</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询参数"><span class="nav-number">2.2.</span> <span class="nav-text">查询参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分页"><span class="nav-number">2.3.</span> <span class="nav-text">分页</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基于相对位置的分页方案"><span class="nav-number">2.3.1.</span> <span class="nav-text">基于相对位置的分页方案</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#基于绝对位置的分页方案"><span class="nav-number">2.3.2.</span> <span class="nav-text">基于绝对位置的分页方案</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#返回“是否还有后续数据”"><span class="nav-number">2.3.3.</span> <span class="nav-text">返回“是否还有后续数据”</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#授权"><span class="nav-number">3.</span> <span class="nav-text">授权</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#响应数据设计"><span class="nav-number">4.</span> <span class="nav-text">响应数据设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#响应数据格式"><span class="nav-number">4.1.</span> <span class="nav-text">响应数据格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Web-API-常用的HTTP状态码"><span class="nav-number">4.2.</span> <span class="nav-text">Web API 常用的HTTP状态码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更详细的状态码——应用级别的状态码"><span class="nav-number">4.3.</span> <span class="nav-text">更详细的状态码——应用级别的状态码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP中的缓存"><span class="nav-number">5.</span> <span class="nav-text">HTTP中的缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#过期模型"><span class="nav-number">5.1.</span> <span class="nav-text">过期模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Expires响应首部"><span class="nav-number">5.1.1.</span> <span class="nav-text">Expires响应首部</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cache-Control响应首部"><span class="nav-number">5.1.2.</span> <span class="nav-text">Cache-Control响应首部</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#验证模型"><span class="nav-number">5.2.</span> <span class="nav-text">验证模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在请求和响应中指明媒体类型和可接受的数据格式"><span class="nav-number">6.</span> <span class="nav-text">在请求和响应中指明媒体类型和可接受的数据格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#定义私有首部"><span class="nav-number">6.1.</span> <span class="nav-text">定义私有首部</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨域"><span class="nav-number">7.</span> <span class="nav-text">跨域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">8.</span> <span class="nav-text">参考资料</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Redis中数据类型和内部编码的关系 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Redis数据结构">
+  
+  
+  
+  
+  <meta name="description" content="Redis中常用的数据类型主要有：字符串、列表、哈希、集合和有序集合，这些是键的type，那么这些type的底层实现是怎样的呢，本文将简单介绍一下各种数据类型对应的底层实现数据结构。在之前的几篇Redis源码分析文章中已经介绍了相关内容，不过这里作为一个整合会集中给出这些信息。 首先要知道的是Redis之所以会对不同的数据类型使用不同的内部编码方式主要还是为了节省内存，由于Redis会在内存中存放">
+<meta name="keywords" content="Redis,数据结构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis中数据类型和内部编码的关系">
+<meta property="og:url" content="https://nullcc.github.io/2018/01/23/Redis中数据类型和内部编码的关系/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="Redis中常用的数据类型主要有：字符串、列表、哈希、集合和有序集合，这些是键的type，那么这些type的底层实现是怎样的呢，本文将简单介绍一下各种数据类型对应的底层实现数据结构。在之前的几篇Redis源码分析文章中已经介绍了相关内容，不过这里作为一个整合会集中给出这些信息。 首先要知道的是Redis之所以会对不同的数据类型使用不同的内部编码方式主要还是为了节省内存，由于Redis会在内存中存放">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.017Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis中数据类型和内部编码的关系">
+<meta name="twitter:description" content="Redis中常用的数据类型主要有：字符串、列表、哈希、集合和有序集合，这些是键的type，那么这些type的底层实现是怎样的呢，本文将简单介绍一下各种数据类型对应的底层实现数据结构。在之前的几篇Redis源码分析文章中已经介绍了相关内容，不过这里作为一个整合会集中给出这些信息。 首先要知道的是Redis之所以会对不同的数据类型使用不同的内部编码方式主要还是为了节省内存，由于Redis会在内存中存放">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Redis中数据类型和内部编码的关系" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Redis中数据类型和内部编码的关系
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/01/23/Redis中数据类型和内部编码的关系/" class="article-date">
+	  <time datetime="2018-01-22T16:00:00.000Z" itemprop="datePublished">一月 23, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Redis中常用的数据类型主要有：字符串、列表、哈希、集合和有序集合，这些是键的<code>type</code>，那么这些type的底层实现是怎样的呢，本文将简单介绍一下各种数据类型对应的底层实现数据结构。在之前的几篇Redis源码分析文章中已经介绍了相关内容，不过这里作为一个整合会集中给出这些信息。</p>
+<p>首先要知道的是Redis之所以会对不同的数据类型使用不同的内部编码方式主要还是为了节省内存，由于Redis会在内存中存放大量数据，因此根据数据特定来量身定做内部编码是非常有必要的。本文引用的全部源码都来自于Redis(version 3.2.11)。</p>
+<a id="more"></a>
+<p>在<code>server.h</code>文件中，使用宏定义给出了Redis支持的所有对象编码：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Objects encoding. Some kind of objects like Strings and Hashes can be</span></span><br><span class="line"><span class="comment"> * internally represented in multiple ways. The 'encoding' field of the object</span></span><br><span class="line"><span class="comment"> * is set to one of this fields for this object. */</span></span><br><span class="line"><span class="comment">/* 对象编码。一些对象比如字符串和哈希表在内部可以以不同的方式实现。这些对象的'encoding'字段</span></span><br><span class="line"><span class="comment"> * 是下面的其中一个。 */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 原始编码</span></span><br><span class="line">#define OBJ_ENCODING_RAW 0     /* Raw representation */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 整型编码</span></span><br><span class="line">#define OBJ_ENCODING_INT 1     /* Encoded as integer */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 哈希表编码</span></span><br><span class="line">#define OBJ_ENCODING_HT 2      /* Encoded as hash table */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 压缩字典编码</span></span><br><span class="line">#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 链表编码</span></span><br><span class="line">#define OBJ_ENCODING_LINKEDLIST 4 /* Encoded as regular linked list */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 压缩链表编码</span></span><br><span class="line">#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 整数集合编码</span></span><br><span class="line">#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 跳跃表编码</span></span><br><span class="line">#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */</span><br><span class="line"></span><br><span class="line"><span class="comment">// 嵌入式字符串编码</span></span><br><span class="line">#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */</span><br><span class="line"></span><br><span class="line"><span class="comment">// quicklist编码</span></span><br><span class="line">#define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */</span><br></pre></td></tr></table></figure>
+<p>下面就对这五种数据类型的内部编码进行介绍。</p>
+<h2 id="字符串（string）"><a href="#字符串（string）" class="headerlink" title="字符串（string）"></a>字符串（string）</h2><p>string的内部编码有三种：</p>
+<ol>
+<li>int（8字节长整型）</li>
+<li>embstr（长度小于或等于44个字节的字符串）</li>
+<li>raw（长度大于44个字节的字符串）</li>
+</ol>
+<p>我们通过源码来理解这个事实，下面是<code>object.c</code>中的<code>createStringObject</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 从long long类型创建一个字符串对象 */</span></span><br><span class="line">robj *createStringObjectFromLongLong(<span class="keyword">long</span> <span class="keyword">long</span> value) &#123;</span><br><span class="line">    robj *o;</span><br><span class="line">    <span class="comment">/* value ∈ [0, 10000)，这部分数字经常用到，内存中会预先创建一个这个范围的整数对象数组，</span></span><br><span class="line"><span class="comment">     * 对其增加引用计数后直接返回这个整数对象即可。 */</span></span><br><span class="line">    <span class="keyword">if</span> (value &gt;= <span class="number">0</span> &amp;&amp; value &lt; OBJ_SHARED_INTEGERS) &#123;</span><br><span class="line">        incrRefCount(shared.integers[value]);</span><br><span class="line">        o = shared.integers[value];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">/* value ∈ [LONG_MIN, LONG_MAX]，需要创建一个字符串对象，编码类型为OBJ_ENCODING_INT，即整数对象 */</span></span><br><span class="line">        <span class="keyword">if</span> (value &gt;= LONG_MIN &amp;&amp; value &lt;= LONG_MAX) &#123;</span><br><span class="line">            o = createObject(OBJ_STRING, NULL);</span><br><span class="line">            o-&gt;encoding = OBJ_ENCODING_INT;</span><br><span class="line">            o-&gt;ptr = (<span class="keyword">void</span>*)((<span class="keyword">long</span>)value);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 超出long类型，将其编码成OBJ_STRING</span></span><br><span class="line">            o = createObject(OBJ_STRING,sdsfromlonglong(value));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> o;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码负责从一个long long类型的值创建一个string对象，可以看到当<code>value ∈ [LONG_MIN, LONG_MAX]</code>时，string的内部编码使用的是<code>OBJ_ENCODING_INT</code>，一个long long类型的值占用8字节，因此当string对象中保存的是8字节长整型时，内部会使用<code>int</code>编码方式。</p>
+<p>继续看<code>embstr</code>和<code>raw</code>的情况，下面是<code>object.c</code>中的<code>createStringObject</code>函数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Create a string object with EMBSTR encoding if it is smaller than</span></span><br><span class="line"><span class="comment"> * REIDS_ENCODING_EMBSTR_SIZE_LIMIT, otherwise the RAW encoding is</span></span><br><span class="line"><span class="comment"> * used.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * The current limit of 44 is chosen so that the biggest string object</span></span><br><span class="line"><span class="comment"> * we allocate as EMBSTR will still fit into the 64 byte arena of jemalloc. */</span></span><br><span class="line">#define OBJ_ENCODING_EMBSTR_SIZE_LIMIT 44</span><br><span class="line">robj *createStringObject(<span class="keyword">const</span> <span class="keyword">char</span> *ptr, size_t len) &#123;</span><br><span class="line">    <span class="keyword">if</span> (len &lt;= OBJ_ENCODING_EMBSTR_SIZE_LIMIT)</span><br><span class="line">        <span class="keyword">return</span> createEmbeddedStringObject(ptr,len);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> createRawStringObject(ptr,len);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的意思是当字符串长度小于<code>OBJ_ENCODING_EMBSTR_SIZE_LIMIT</code>时，使用<code>embstr</code>编码，否则使用<code>raw</code>编码。<code>OBJ_ENCODING_EMBSTR_SIZE_LIMIT</code>大小是44，需要注意的是在之前的一些版本中<code>OBJ_ENCODING_EMBSTR_SIZE_LIMIT</code>曾经为32和39，那么这个值是怎么来的呢，下面根据源代码进行分析。</p>
+<p><code>createStringObject</code>函数的注释中提到Redis会使用<code>jemalloc</code>来进行内存分配，<code>jemalloc</code>对此会分配64字节的内存。要详细了解<code>jemalloc</code>的内存分配策略和优势可以查阅相关资料。</p>
+<p>下面是<code>server.h</code>中的部分代码，定义了<code>robj</code>结构体：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LRU时钟占用的位数</span></span><br><span class="line">#define LRU_BITS 24</span><br><span class="line"></span><br><span class="line"><span class="comment">// redis对象结构体</span></span><br><span class="line">typedef struct redisObject &#123;</span><br><span class="line">    unsigned type:<span class="number">4</span>;  <span class="comment">// 对象类型 4bit</span></span><br><span class="line">    unsigned encoding:<span class="number">4</span>;  <span class="comment">// 对象编码 4bit</span></span><br><span class="line">    unsigned lru:LRU_BITS; <span class="comment">/* lru time (relative to server.lruclock) */</span>  <span class="comment">// LRU时间 24bit</span></span><br><span class="line">    <span class="keyword">int</span> refcount;  <span class="comment">// 对象引用计数 4字节</span></span><br><span class="line">    <span class="keyword">void</span> *ptr;  <span class="comment">// 对象的数据指针 8字节</span></span><br><span class="line">&#125; robj;</span><br></pre></td></tr></table></figure>
+<p>可以计算出在64位机器上一个<code>robj</code>所占用的字节数为：4bit + 4bit + 24bit + 4字节 + 8字节 = 16字节。</p>
+<p>再看<code>sds.h</code>中对<code>sdshdr8</code>的定义（除<code>sdshdr5</code>以外，<code>sds.h</code>中的<code>sdshdr8</code>、<code>sdshdr16</code>、<code>sdshdr32</code>和<code>sdshdr64</code>结构都是相同的，其中<code>sdshdr5</code>未被使用）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">struct <span class="title">__attribute__</span> <span class="params">((__packed__)</span>) sdshdr8 </span>&#123;</span><br><span class="line">    uint8_t len; <span class="comment">/* used */</span> <span class="comment">// 已使用的字符串长度 1字节</span></span><br><span class="line">    uint8_t alloc; <span class="comment">/* excluding the header and null terminator */</span>  <span class="comment">// 分配的内存空间大小，不包括头部和空终止符 1字节</span></span><br><span class="line">    unsigned <span class="keyword">char</span> flags; <span class="comment">/* 3 lsb of type, 5 unused bits */</span>  <span class="comment">// 3个最低有效位表示类型，5个最高有效位未使用 1字节</span></span><br><span class="line">    <span class="keyword">char</span> buf[];  <span class="comment">// 字符数组 1字节</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以计算出在一个sdshdr占用的字节数为：1字节 + 1字节 + 1字节 + 1字节 = 4字节。</p>
+<p>所以对于分配了64字节，内部编码为<code>embstr</code>的字符串对象来说，字符串真正可用的字节数为：64字节 - 16字节 - 4字节 = 44字节。刚才提到了Redis之前的一些版本中<code>OBJ_ENCODING_EMBSTR_SIZE_LIMIT</code>的值为32和39，主要是<code>sdshdr</code>和<code>robj</code>的大小不同导致的。</p>
+<h2 id="列表（list）"><a href="#列表（list）" class="headerlink" title="列表（list）"></a>列表（list）</h2><p>关于list的内部编码，不同版本的方法有所区别，先看Redis 3.2版本之前的做法：</p>
+<ol>
+<li>ziplist (压缩列表，当list中的元素个数小于list-max-ziplist-entries，默认512，且每个元素的大小都小于list-max-ziplist-value，默认64字节)</li>
+<li>linkedlist（链表，当list中的元素不满足ziplist的条件时，内部实现使用linkedlist）</li>
+</ol>
+<p>在Redis 3.0版本的源码的<code>redis.conf</code>文件中可以看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">list-max-ziplist-entries <span class="number">512</span></span><br><span class="line">list-max-ziplist-value <span class="number">64</span></span><br></pre></td></tr></table></figure>
+<p>在Redis 3.2版本以及之后的版本，引入了一种叫做<code>quicklist</code>的数据结构，<code>quicklist</code>综合了<code>ziplist</code>和<code>linkedlist</code>的优点。从外部看，<code>quicklist</code>也是一个<code>linkedlist</code>，不过它的每个节点都是一个<code>ziplist</code>。我们来看看在<code>redis.conf</code>中的说明，在Redis 3.2.11版本的源码的<code>redis.conf</code>文件中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># Lists are also encoded in a special way to save a lot of space.</span><br><span class="line"># The number of entries allowed per internal list node can be specified</span><br><span class="line"># as a fixed maximum size or a maximum number of elements.</span><br><span class="line"># For a fixed maximum size, use -5 through -1, meaning:</span><br><span class="line"># -5: max size: 64 Kb  &lt;-- not recommended for normal workloads</span><br><span class="line"># -4: max size: 32 Kb  &lt;-- not recommended</span><br><span class="line"># -3: max size: 16 Kb  &lt;-- probably not recommended</span><br><span class="line"># -2: max size: 8 Kb   &lt;-- good</span><br><span class="line"># -1: max size: 4 Kb   &lt;-- good</span><br><span class="line"># Positive numbers mean store up to _exactly_ that number of elements</span><br><span class="line"># per list node.</span><br><span class="line"># The highest performing option is usually -2 (8 Kb size) or -1 (4 Kb size),</span><br><span class="line"># but if your use case is unique, adjust the settings as necessary.</span><br><span class="line">list-max-ziplist-size -<span class="number">2</span></span><br></pre></td></tr></table></figure>
+<p>刚才我们提到在3.2+版本以后Redis使用<code>quicklist</code>来作为list类型的底层实现，其中的每个节点都是一个<code>ziplist</code>，这里<code>list-max-ziplist-size</code>的值为<code>-2</code>就表示每个<code>ziplist</code>的大小不能超过8kb（请注意是小写的b不是大写的B）。因此在3.2+版本的Redis中，list类型的表现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; lpush a 1 2 3</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; type a</span><br><span class="line">list</span><br><span class="line">127.0.0.1:6379&gt; object encoding a</span><br><span class="line">&quot;quicklist&quot;</span><br></pre></td></tr></table></figure>
+<h2 id="哈希（hash）"><a href="#哈希（hash）" class="headerlink" title="哈希（hash）"></a>哈希（hash）</h2><ol>
+<li>ziplist（压缩列表，当hash中的元素个数小于hash-max-ziplist-entries，默认512，且每个元素的大小都小于hash-max-ziplist-value，默认64字节）</li>
+<li>hashtable（哈希表，当hash中的元素不满足ziplist的条件时，内部实现使用hashtable）</li>
+</ol>
+<p>在<code>redis.conf</code>文件中可以看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hash-max-ziplist-entries <span class="number">512</span></span><br><span class="line">hash-max-ziplist-value <span class="number">64</span></span><br></pre></td></tr></table></figure>
+<p>在<code>t_hash.c</code>的<code>hashTypeSet</code>函数中有如下一段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (hashTypeLength(o) &gt; server.hash_max_ziplist_entries)</span><br><span class="line">    hashTypeConvert(o, OBJ_ENCODING_HT);</span><br></pre></td></tr></table></figure>
+<p>这个if语句就是判断hash中元素个数是否超过<code>hash-max-ziplist-entries</code>设置的值，如果超过就将其转换成<code>hashtable</code>实现。</p>
+<h2 id="集合（set）"><a href="#集合（set）" class="headerlink" title="集合（set）"></a>集合（set）</h2><ol>
+<li>intset（整数集合，当set中的元素都是整数且个数小于set-max-intset-entries，默认512）</li>
+<li>hashtable（哈希表，当set中的元素不满足intset的条件时，内部实现使用hashtable）</li>
+</ol>
+<p>在<code>redis.conf</code>文件中可以看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set-max-intset-entries <span class="number">512</span></span><br></pre></td></tr></table></figure>
+<p>在<code>t_set.c</code>的<code>setTypeAdd</code>函数中有如下一段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (intsetLen(subject-&gt;ptr) &gt; server.set_max_intset_entries)</span><br><span class="line">    setTypeConvert(subject,OBJ_ENCODING_HT);</span><br></pre></td></tr></table></figure>
+<p>这个if语句就是判断set中元素个数是否超过<code>set-max-intset-entries</code>设置的值，如果超过就将其转换成<code>hashtable</code>实现。</p>
+<h2 id="有序集合（zset）"><a href="#有序集合（zset）" class="headerlink" title="有序集合（zset）"></a>有序集合（zset）</h2><ol>
+<li>ziplist（压缩链表，当zset中的元素个数小于zset-max-ziplist-entries，默认128，且每个元素的值都小于zset-max-ziplist-value，默认64字节）</li>
+<li>skiplist（跳跃表，当zset不满足ziplist的条件时，内部实现使用skiplist）</li>
+</ol>
+<p>在<code>redis.conf</code>文件中可以看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zset-max-ziplist-entries <span class="number">128</span></span><br><span class="line">zset-max-ziplist-value <span class="number">64</span></span><br></pre></td></tr></table></figure>
+<p>在<code>t_zset.c</code>的<code>zsetConvertToZiplistIfNeeded</code>函数中有如下一段代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (zset-&gt;zsl-&gt;length &lt;= server.zset_max_ziplist_entries &amp;&amp;</span><br><span class="line">        maxelelen &lt;= server.zset_max_ziplist_value)</span><br><span class="line">            zsetConvert(zobj,OBJ_ENCODING_ZIPLIST);</span><br></pre></td></tr></table></figure>
+<p>这个if语句就是判断zset中元素个数是否超过<code>zset-max-ziplist-entries</code>设置的值且其中长度最大的元素是否超过<code>zset-max-ziplist-value</code>，如果超过就将其转换成<code>skiplist</code>实现。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/数据库/">数据库</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构/">数据结构</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/01/28/二叉树的几种遍历方式/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          二叉树的几种遍历方式
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/01/01/论坛爬虫设计与实现/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">论坛爬虫设计与实现</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#字符串（string）"><span class="nav-number">1.</span> <span class="nav-text">字符串（string）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#列表（list）"><span class="nav-number">2.</span> <span class="nav-text">列表（list）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哈希（hash）"><span class="nav-number">3.</span> <span class="nav-text">哈希（hash）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集合（set）"><span class="nav-number">4.</span> <span class="nav-text">集合（set）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#有序集合（zset）"><span class="nav-number">5.</span> <span class="nav-text">有序集合（zset）</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>
