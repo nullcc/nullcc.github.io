@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Linux下好用的命令收集 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Linux">
+  
+  
+  
+  
+  <meta name="description" content="本文主要记录一些Linux下好用的命令，主要是个人在日常使用中经常使用的，此文会不断更新">
+<meta name="keywords" content="Linux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux下好用的命令收集">
+<meta property="og:url" content="https://nullcc.github.io/2018/04/13/Linux下好用的命令收集/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文主要记录一些Linux下好用的命令，主要是个人在日常使用中经常使用的，此文会不断更新">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.014Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux下好用的命令收集">
+<meta name="twitter:description" content="本文主要记录一些Linux下好用的命令，主要是个人在日常使用中经常使用的，此文会不断更新">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Linux下好用的命令收集" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Linux下好用的命令收集
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/04/13/Linux下好用的命令收集/" class="article-date">
+	  <time datetime="2018-04-12T16:00:00.000Z" itemprop="datePublished">四月 13, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Linux/">Linux</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文主要记录一些Linux下好用的命令，主要是个人在日常使用中经常使用的，此文会不断更新</p>
+<a id="more"></a>
+<h3 id="系统信息"><a href="#系统信息" class="headerlink" title="系统信息"></a>系统信息</h3><p>arch 机器的处理器架构<br>uname -m 机器的处理器架构<br>uname -r 内核版本<br>cat /proc/cpuinfo 显示cpu info的信息<br>cat /proc/version 显示内核版本的详细信息<br>date 显示系统日期<br>cal 显示日历<br>cal [year] 显示具体年份的日历</p>
+<h3 id="系统启动、重启和关机"><a href="#系统启动、重启和关机" class="headerlink" title="系统启动、重启和关机"></a>系统启动、重启和关机</h3><p>shutdown -h now 关闭系统<br>init 0 关闭系统<br>telinit 0 关闭系统<br>shutdown -h hours:minutes &amp; 按预定时间关闭系统<br>shutdown -c 取消按预定时间关闭系统<br>shutdown -r now 重启<br>reboot 重启<br>logout 注销 </p>
+<h3 id="文件和目录"><a href="#文件和目录" class="headerlink" title="文件和目录"></a>文件和目录</h3><p>cd .. 返回上一级目录<br>cd - 返回上次所在的目录<br>pwd 查看当前所在目录<br>ls -l 显示文件和目录的详细信息<br>ls -a 显示所有文件和目录(包括隐藏文件)<br>mkdir [dir] 创建一个目录<br>mkdir [dir1] [dir2] 创建多个目录<br>mkdir -p [path to dir] 创建一个目录树<br>rm -f [file] 删除一个文件<br>rm -rf [dir] 删除一个目录<br>mv [file1] [file2] 重命名文件file1为file2<br>cp [file1] [file2] 复制文件<br>cp -a [dir1] [dir2] 复制目录<br>cp -a [dir] . 复制一个目录到当前工作目录<br>ln -s [file] [link] 创建一个指向文件或目录的软链接<br>ln [file] [link] 创建一个指向文件或目录的物理链接(硬链接)<br>scp /opt/soft/nginx-0.5.38.tar.gz <a href="mailto:root@10.10.10.10" target="_blank" rel="noopener">root@10.10.10.10</a>:/opt/soft/scptest 上传本地文件到远程机器指定目录<br>scp -r /opt/soft/mongodb <a href="mailto:root@10.10.10.10" target="_blank" rel="noopener">root@10.10.10.10</a>:/opt/soft/scptest 上传本地目录到远程机器指定目录<br>scp <a href="mailto:root@10.10.10.10" target="_blank" rel="noopener">root@10.10.10.10</a>:/opt/soft/nginx-0.5.38.tar.gz /opt/soft/ 从远程机器复制文件到本地<br>scp -r <a href="mailto:root@10.10.10.10" target="_blank" rel="noopener">root@10.10.10.10</a>:/opt/soft/mongodb /opt/soft/ 从远程机器复制目录到本地</p>
+<h3 id="文件查找"><a href="#文件查找" class="headerlink" title="文件查找"></a>文件查找</h3><p>find / -name [file] 从/开始查找指定的文件<br>find / -user [user] 从/开始查找属于指定用户的文件或目录<br>find / -name *.zip 从/开始查找以.zip结尾的文件<br>which cd 显示一个二进制文件或可执行文件的完整路径<br>whereis cd 显示一个二进制文件、源码和man的位置<br>grep -rnw [/path/to/folder] -e ‘patten’  在指定目录下递归查找匹配模式</p>
+<h3 id="磁盘空间"><a href="#磁盘空间" class="headerlink" title="磁盘空间"></a>磁盘空间</h3><p>df -h 显示已挂载的分区列表<br>du -sh * 查看当前目录下文件/文件夹的大小</p>
+<h3 id="用户和组"><a href="#用户和组" class="headerlink" title="用户和组"></a>用户和组</h3><p>useradd [user] 创建一个新用户<br>passwd [user] 修改指定用户的密码(只有root用户可以运行)<br>groupadd [group] 创建一个新的用户组<br>groupdel [group] 删除指定用户组<br>groupmod -n [new group name] [old group name] 重命名一个用户组<br>useradd -G [group] [user] 创建一个新用户并把他加入指定用户组<br>id [user] 显示用户的用户ID(uid)和组ID(gid)</p>
+<h3 id="查看文件内容"><a href="#查看文件内容" class="headerlink" title="查看文件内容"></a>查看文件内容</h3><p>cat [file] 从第一个字节开始正向查看文件内容<br>tac [file] 从最后一个字节开始反向查看文件内容<br>more [file] 查看长文件的内容(space显示下一屏，Enter显示下一行)<br>less [file] 和more很相似，但less允许用户向前后向后浏览文件(PageUp向上翻页，PageDown向下翻页)<br>head -2 [file] 查看一个文件的前两行<br>tail -2 [file] 查看一个文件的最后两行<br>tail -f [file] 实时查看被追加到指定文件的内容(常用来实时打印日志)</p>
+<h3 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h3><p>ps -ef 以全格式显示所有进程<br>ps -ef | grep java 显示所有java进程<br>ps aux 和ps -ef类似，只不过ps aux是BSD风格，ps -ef是System V风格，且aux会截断command列，而-ef不会，一般推荐使用ps -ef<br>kill -9 [pid] 强制终止一个进程<br>pstree 树形显示进程<br>lsof -i:[port] 查看占用指定端口的进程</p>
+<h3 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h3><p>ifconfig eth0 显示一个以太网卡的配置<br>ifup eth0 启用eth0网络设备<br>ifdown eth0 禁用eth0网络设备<br>nslookup [host] 查询host的IP地址</p>
+<h3 id="I-O重定向"><a href="#I-O重定向" class="headerlink" title="I/O重定向"></a>I/O重定向</h3><p>/dev/null 空设备文件<br>0 stdin标准输入<br>1 stdout标准输出<br>2 stderr标准错误</p>
+<p>> 标准输出重定向，覆盖原文件内容<br>>&gt; 标准输出重定向，不覆盖原文件内容，追加写入<br>2&gt; 错误输出重定向，覆盖原文件内容<br>2&gt;&gt; 错误输出重定向，不覆盖原文件内容，追加写入<br>2&gt;&amp;1 将标准错误重定向到标准输出</p>
+<h3 id="misc"><a href="#misc" class="headerlink" title="misc"></a>misc</h3><p>!! 显示上一次执行的命令<br>cat /etc/shells 查看存在的shell<br>echo $SHELL 查看正在使用的shell<br>chsh -s /bin/${shell_type} 改变当前用户默认使用的shell类型</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/Linux/">Linux</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux/">Linux</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/04/13/Dockerfile指令解析/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Dockerfile指令解析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/04/11/docker常用命令/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">docker常用命令</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#系统信息"><span class="nav-number">1.</span> <span class="nav-text">系统信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#系统启动、重启和关机"><span class="nav-number">2.</span> <span class="nav-text">系统启动、重启和关机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#文件和目录"><span class="nav-number">3.</span> <span class="nav-text">文件和目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#文件查找"><span class="nav-number">4.</span> <span class="nav-text">文件查找</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘空间"><span class="nav-number">5.</span> <span class="nav-text">磁盘空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用户和组"><span class="nav-number">6.</span> <span class="nav-text">用户和组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看文件内容"><span class="nav-number">7.</span> <span class="nav-text">查看文件内容</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#进程"><span class="nav-number">8.</span> <span class="nav-text">进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络"><span class="nav-number">9.</span> <span class="nav-text">网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#I-O重定向"><span class="nav-number">10.</span> <span class="nav-text">I/O重定向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#misc"><span class="nav-number">11.</span> <span class="nav-text">misc</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

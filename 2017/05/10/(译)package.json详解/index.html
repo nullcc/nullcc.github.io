@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>(译)package.json详解 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="node">
+  
+  
+  
+  
+  <meta name="description" content="本文翻译了package.json。">
+<meta name="keywords" content="node">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(译)package.json详解">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/10/(译)package.json详解/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文翻译了package.json。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.011Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="(译)package.json详解">
+<meta name="twitter:description" content="本文翻译了package.json。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-(译)package.json详解" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      (译)package.json详解
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/10/(译)package.json详解/" class="article-date">
+	  <time datetime="2017-05-09T16:00:00.000Z" itemprop="datePublished">五月 10, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文翻译了<a href="https://docs.npmjs.com/files/package.json" target="_blank" rel="noopener">package.json</a>。</p>
+<a id="more"></a>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文囊括了所有package.json文件中你需要知道的细节。注意package.json必须是纯JSON的，而不仅仅是一个JavaScript对象字面量。<br>该文件描述的很多行为都受npm-config中的配置影响。</p>
+<p>下面分别介绍package.json中各个字段的含义和用法。</p>
+<h2 id="name"><a href="#name" class="headerlink" title="name"></a>name</h2><p>name和version字段是package.json文件中最重要的字段。这是必须的字段，如果你的npm包没有指定这两个字段，将无法被安装。name和version字段被假定组合成一个唯一的标识符。包内容的更改和包版本的更改是同步的。</p>
+<p>name字段的含义不需要过多解释，就是npm包名。</p>
+<p>几个规则：</p>
+<ol>
+<li>name的长度必须小于等于214个字符。</li>
+<li>name不能以”.”(点)或者”_”(下划线)开头。</li>
+<li>name中不能包含大写字母。</li>
+<li>name最终将被用作URL的一部分、命令行的参数和文件夹名。因此，name不能含有非URL安全的字符。</li>
+</ol>
+<p>几个建议：</p>
+<ol>
+<li>不要使用已存在的name作为包名。</li>
+<li>不要在name中使用”js”和”node”，这会假定这是js文件，一旦你写一个package.json文件，你就可以在”engines”字段中指定解释器引擎。</li>
+<li>name字段可能会被作为传输传递给require()函数，因此它最好是简短的、自描述的。</li>
+<li>你可能会需要在深入开发一个包之前先检查npm的registry来确认某个name是否被使用过，可以参考<a href="https://www.npmjs.com/。" target="_blank" rel="noopener">https://www.npmjs.com/。</a></li>
+</ol>
+<p>一个name可以用scope来指定一个前缀，比如@myorg/mypackage，可以参考<a href="https://docs.npmjs.com/misc/scope" target="_blank" rel="noopener">npm-scope</a>。</p>
+<h2 id="version"><a href="#version" class="headerlink" title="version"></a>version</h2><p>name和version字段是package.json文件中最重要的字段。这是必须的字段，如果你的npm包没有指定这两个字段，将无法被安装。name和version字段被假定组合成一个唯一的标识符。包内容的更改和包版本的更改是同步的。</p>
+<p>version字段必须能够被<a href="https://github.com/isaacs/node-semver" target="_blank" rel="noopener">node-semver</a>解析，node-semver作为依赖项被捆绑进了npm中。(可以使用npm install semver来使用)</p>
+<p>关于版本号和范围的信息可以参考<a href="https://docs.npmjs.com/misc/semver" target="_blank" rel="noopener">semver</a>。</p>
+<h2 id="description"><a href="#description" class="headerlink" title="description"></a>description</h2><p>npm包的描述，description是一个字符串。它可以帮助人们在使用npm search时找到这个包。</p>
+<h2 id="keywords"><a href="#keywords" class="headerlink" title="keywords"></a>keywords</h2><p>npm包的关键字，keywords是一个字符串的数组。它可以帮助人们在使用npm search时找到这个包。</p>
+<h2 id="homepage"><a href="#homepage" class="headerlink" title="homepage"></a>homepage</h2><p>项目主页的url。</p>
+<p>注意： 这和”url”不一样。如果你放一个”url”字段，registry会以为是一个跳转到你发布在其他地方的地址，然后喊你滚粗。嗯，滚粗，没开玩笑。</p>
+<h2 id="bugs"><a href="#bugs" class="headerlink" title="bugs"></a>bugs</h2><p>改项目的issue跟踪页面或这报告issue的email地址。这对使用这个包遇到问题的用户会有帮助。</p>
+<p>差不多是这样：</p>
+<pre><code>{
+    &quot;url&quot; : &quot;https://github.com/owner/project/issues&quot;,
+    &quot;email&quot; : &quot;project@hostname.com&quot;
+}
+</code></pre><p>你可以择其一或者两个都写上。如果只想提供一个url，你可以对”bugs”字段指定一个字符串而不是object。</p>
+<p>如果提供了一个url，它会被用于npm bugs命令。</p>
+<h2 id="license"><a href="#license" class="headerlink" title="license"></a>license</h2><p>你应该对你的包指定一个license来让用户知道他们的使用权利和和任何限制。</p>
+<p>如果你正在使用BSD-2-Clause或MIT这样的通用许可证，可以为你的license添加一个当前SPDX的许可证标识符，比如：</p>
+<pre><code>{ &quot;license&quot; : &quot;BSD-3-Clause&quot; }
+</code></pre><p>你可以查看<a href="https://spdx.org/licenses/" target="_blank" rel="noopener">SPDX许可证标识符的完整列表</a>，理想情况下你应该挑选一个经过<a href="https://opensource.org/licenses/alphabetical" target="_blank" rel="noopener">OSI</a>核准的标识符。</p>
+<p>如果你的包在多个通用许可证下被授权，使用一个(SPDX许可证表达式语法v2.0)[<a href="https://npmjs.com/package/spdx]，比如：" target="_blank" rel="noopener">https://npmjs.com/package/spdx]，比如：</a></p>
+<pre><code>{ &quot;license&quot; : &quot;(ISC OR GPL-3.0)&quot; }
+</code></pre><p>如果你正在使用的许可未被授予一个SPDX标识符，或者你正在使用自定义的许可证，使用如下：</p>
+<pre><code>{ &quot;license&quot; : &quot;SEE LICENSE IN &lt;filename&gt;&quot; }
+</code></pre><p>然后在包的根目录下提供一个叫<filename>的许可证文件。</filename></p>
+<p>一些旧的包使用license对象或一个”license”属性包含一个license的数组：</p>
+<pre><code>// Not valid metadata
+    { &quot;license&quot; :
+        {
+            &quot;type&quot; : &quot;ISC&quot;，
+            &quot;url&quot; : &quot;http://opensource.org/licenses/ISC&quot;
+        }
+    }
+
+// Not valid metadata
+{
+    &quot;licenses&quot; :
+    [
+        {
+            &quot;type&quot;: &quot;MIT&quot;,
+            &quot;url&quot;: &quot;http://www.opensource.org/licenses/mit-license.php&quot;
+        },
+        {   &quot;type&quot;: &quot;Apache-2.0&quot;,
+            &quot;url&quot;: &quot;http://opensource.org/licenses/apache2.0.php&quot;
+        }
+    ]
+}
+</code></pre><p>上述这种风格的写法已经被废弃了，取而代之的是SPDX表达式：</p>
+<pre><code>{ &quot;license&quot;: &quot;ISC&quot; }
+
+{ &quot;license&quot;: &quot;(MIT OR Apache-2.0)&quot; }
+</code></pre><p>最后，如果你不希望授权别人以任何形式使用私有包或未发布的包，可以这样写：</p>
+<pre><code>{ &quot;license&quot;: &quot;UNLICENSED&quot;}
+</code></pre><p>也可以设置：</p>
+<pre><code>&quot;private&quot;: true
+</code></pre><p>来防止意外的发布。</p>
+<h2 id="关于人的字段-author-contributors"><a href="#关于人的字段-author-contributors" class="headerlink" title="关于人的字段: author, contributors"></a>关于人的字段: author, contributors</h2><p>author是一个人，contributors是一些人的数组。person是一个对象，拥有必须的name字段和可选的url和email字段，像这样：</p>
+<pre><code>{
+    &quot;name&quot; : &quot;Barney Rubble&quot;,
+    &quot;email&quot; : &quot;b@rubble.com&quot;,
+    &quot;url&quot; : &quot;http://barnyrubble.tumblr.com/&quot;
+}
+</code></pre><p>或者你也可以使用单个字符串的精简形式，npm会帮你解析它：</p>
+<pre><code>&quot;Barney Rubble &lt;b@rubble.com&gt; (http://barnyrubble.tumblr.com/)&quot;
+</code></pre><p>这里email和url也是可选的。</p>
+<p>npm也会使用你提供的npm用户信息来设置一个顶级的”maintainers”字段。</p>
+<h2 id="files"><a href="#files" class="headerlink" title="files"></a>files</h2><p>files字段是一个被项目包含的文件名数组，如果你在里面放一个文件夹名，那么这个文件夹中的所有文件都会被包含进项目中(除非是那些在其他规则中被忽略的文件)。</p>
+<p>你还可以在包的根目录或子目录下提供一个”.npmignore”文件来忽略项目包含文件，即使这些文件被包含在files字段中。.npmignore文件和.gitignore的功能很像。</p>
+<p>某些文件总是被包含的，不论是否在规则中指定了它们：</p>
+<pre><code>package.json
+README (and its variants)
+CHANGELOG (and its variants)
+LICENSE / LICENCE
+</code></pre><p>相反地，一些文件总是被忽略：</p>
+<pre><code>.git
+CVS
+.svn
+.hg
+.lock-wscript
+.wafpickle-N
+*.swp
+.DS_Store
+._*
+npm-debug.log
+</code></pre><h2 id="main"><a href="#main" class="headerlink" title="main"></a>main</h2><p>main字段指定了模块的入口程序文件。就是说，如果你的模块名叫”foo”，用户安装了它，并且调用了 require(“foo”)，则这个main字段指定的模块的导出对象会被返回。</p>
+<p>这应该是一个相对于包根目录的模块标识。</p>
+<p>对于大部分模块来说，main字段除了指定一个主入口文件以外没什么其他用处了。</p>
+<h2 id="bin"><a href="#bin" class="headerlink" title="bin"></a>bin</h2><p>许多包有一个或多个可执行文件希望被安装到系统路径。在npm下要这么做非常容易(事实上，npm就是这么运行的)。</p>
+<p>这需要在你的package.json中提供一个bin字段，它是一个命令名和本地文件名的映射。在安装时，如果是全局安装，npm将会使用符号链接把这些文件链接到prefix/bin，如果是本地安装，会链接到./node_modules/.bin/。</p>
+<p>比如，要使用myapp作为命令时可以这么做：</p>
+<pre><code>{ &quot;bin&quot; : { &quot;myapp&quot; : &quot;./cli.js&quot; } }
+</code></pre><p>这么一来，当你安装myapp，npm会从cli.js文件创建一个到/usr/local/bin/myapp的符号链接(这使你可以直接在命令行执行myapp)。</p>
+<p>如果你只有一个可执行文件，那么它的名字应该和包名相同，此时只需要提供这个文件路径(字符串)，比如：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;my-program&quot;,
+    &quot;version&quot;: &quot;1.2.5&quot;,
+    &quot;bin&quot;: &quot;./path/to/program&quot;
+}
+</code></pre><p>这和以下这种写法相同：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;my-program&quot;,
+    &quot;version&quot;: &quot;1.2.5&quot;,
+    &quot;bin&quot; : { &quot;my-program&quot; : &quot;./path/to/program&quot; }
+}
+</code></pre><h2 id="man"><a href="#man" class="headerlink" title="man"></a>man</h2><p>指定一个单一的文件名或一个文件名数组来让man程序使用。</p>
+<p>如果只给man字段提供一个文件，则安装完毕后，它就是man <pkgname>的结果，这和此文件名无关，比如：</pkgname></p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;version&quot; : &quot;1.2.3&quot;,
+    &quot;description&quot; : &quot;A packaged foo fooer for fooing foos&quot;,
+    &quot;main&quot; : &quot;foo.js&quot;,
+    &quot;man&quot; : &quot;./man/doc.1&quot;
+}
+</code></pre><p>上面这个配置将会在执行man foo时就会使用./man/doc.1这个文件。</p>
+<p>如果指定的文件名并未以包名开头，那么它会被冠以前缀，像这样：</p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;version&quot; : &quot;1.2.3&quot;,
+    &quot;description&quot; : &quot;A packaged foo fooer for fooing foos&quot;,
+    &quot;main&quot; : &quot;foo.js&quot;,
+    &quot;man&quot; : [ &quot;./man/foo.1&quot;, &quot;./man/bar.1&quot; ]
+}
+</code></pre><p>这将会为man foo和man foo-bar创建文件。</p>
+<p>man文件必须以一个数字结尾，和一个可选的.gz后缀(当它被压缩时)。这个数字说明了这个文件被安装到哪个节中。</p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;version&quot; : &quot;1.2.3&quot;,
+    &quot;description&quot; : &quot;A packaged foo fooer for fooing foos&quot;,
+    &quot;main&quot; : &quot;foo.js&quot;,
+    &quot;man&quot; : [ &quot;./man/foo.1&quot;, &quot;./man/foo.2&quot; ]
+}
+</code></pre><p>会为使用man foo和man 2 foo而创建。</p>
+<h2 id="directories"><a href="#directories" class="headerlink" title="directories"></a>directories</h2><p> CommonJS Packages规范说明了几种你可以用directories对象来标示你的包结构的方法。如果你去看<a href="https://registry.npmjs.org/npm/latest" target="_blank" rel="noopener">npm’s package.json</a>，你会看到它标示出出doc、lib和man。</p>
+<p>在未来，这个信息可能会被用到。</p>
+<h3 id="directories-lib"><a href="#directories-lib" class="headerlink" title="directories.lib"></a>directories.lib</h3><p>告诉你库文件夹的位置，目前没有什么地方需要用到lib文件夹，但是这是重要的元信息。</p>
+<h3 id="directories-bin"><a href="#directories-bin" class="headerlink" title="directories.bin"></a>directories.bin</h3><p>如果你在directories.bin中指定一个bin目录，在这个目录中的所有文件都会被当做在bin来使用。</p>
+<p>由于bin指令的工作方式，同时指定一个bin路径和设置directories.bin将是一个错误。如果你想指定独立的文件，使用bin，如果想执行某个文件夹里的所有文件，使用directories.bin。</p>
+<h3 id="directories-man"><a href="#directories-man" class="headerlink" title="directories.man"></a>directories.man</h3><p>directories.man指定的文件夹里都是man文件，系统通过遍历这个文件夹来生成一个man的数组。</p>
+<h3 id="directories-doc"><a href="#directories-doc" class="headerlink" title="directories.doc"></a>directories.doc</h3><p>把markdown文件放在这。也许某一天这些文件将被漂亮地展示出来，不过这仅仅是也许。</p>
+<h3 id="directories-example"><a href="#directories-example" class="headerlink" title="directories.example"></a>directories.example</h3><p>把示例脚本放在这。也许某一天会被用到。</p>
+<h2 id="repository"><a href="#repository" class="headerlink" title="repository"></a>repository</h2><p>指明你的代码被托管在何处，这对那些想要参与到这个项目中的人来说很有帮助。如果git仓库在github上，用npm docs命令将会找到你。</p>
+<p>像这样：</p>
+<pre><code>&quot;repository&quot; :
+    {
+        &quot;type&quot; : &quot;git&quot;,
+        &quot;url&quot; : &quot;https://github.com/npm/npm.git&quot;
+    }
+
+&quot;repository&quot; :
+    {
+        &quot;type&quot; : &quot;svn&quot;,
+        &quot;url&quot; : &quot;https://v8.googlecode.com/svn/trunk/&quot;
+    }
+</code></pre><p>url应该是公开且可用的(可能是只读的)，这个url应该可以被版本控制系统不经修改地处理。不应该是一个在浏览器中打开的html项目页面，这个url是给计算机使用的。</p>
+<p>对于github、github gist、Bitbucket或GitLab的仓库，你可以在npm install中使用相同的缩写形式：</p>
+<pre><code>&quot;repository&quot;: &quot;npm/npm&quot;
+
+&quot;repository&quot;: &quot;gist:11081aaa281&quot;
+
+&quot;repository&quot;: &quot;bitbucket:example/repo&quot;
+
+&quot;repository&quot;: &quot;gitlab:another/repo&quot;
+</code></pre><h2 id="scripts"><a href="#scripts" class="headerlink" title="scripts"></a>scripts</h2><p>scripts字段是一个由脚本命令组成的字典，这些命令运行在包的各个生命周期中。这里的键是生命周期事件名，值是要运行的命令。可以参考(npm-scripts)[<a href="https://docs.npmjs.com/files/package.json#directorieslib]获取配置scripts的更多信息。" target="_blank" rel="noopener">https://docs.npmjs.com/files/package.json#directorieslib]获取配置scripts的更多信息。</a></p>
+<h2 id="config"><a href="#config" class="headerlink" title="config"></a>config</h2><p>config字段是一个对象，可以用来配置包脚本中的跨版本参数，比如如下这个实例：</p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;config&quot; : { &quot;port&quot; : &quot;8080&quot; }
+}
+</code></pre><p>然后有一个start命令引用npm_package_config_port环境变量，用户也可以用如下方式改写：</p>
+<pre><code>npm config set foo:port 8001
+</code></pre><p>可以参考(npm-config)[<a href="https://docs.npmjs.com/misc/config]和(npm-scripts)[https://docs.npmjs.com/misc/scripts]获得更多关于包配置的信息。" target="_blank" rel="noopener">https://docs.npmjs.com/misc/config]和(npm-scripts)[https://docs.npmjs.com/misc/scripts]获得更多关于包配置的信息。</a></p>
+<h2 id="dependencies"><a href="#dependencies" class="headerlink" title="dependencies"></a>dependencies</h2><p>dependencies字段是一个对象，它指定了依赖的包名和其版本范围的映射。版本范围是个有一个或多个空白分隔描述符的字符串。dependencies字段还可以用tarball或者git URL。</p>
+<p>请不要将测试或过渡性的依赖放到dependencies中，请参考下面的devDependencies。</p>
+<p>可以参考<a href="https://docs.npmjs.com/misc/semver" target="_blank" rel="noopener">semver</a>获取更多关于指定版本范围的细节信息。</p>
+<ol>
+<li>version 必须确切匹配这个version</li>
+<li>>version 必须大于这个version</li>
+<li>>=version 必须大于等于这个version</li>
+<li>&lt; version 必须小于这个version</li>
+<li>&lt;=version 必须小于等于这个version</li>
+<li>~version 大约相当于version，参考<a href="https://docs.npmjs.com/misc/semver" target="_blank" rel="noopener">semver</a></li>
+<li>^version 与version兼容，参考<a href="https://docs.npmjs.com/misc/semver" target="_blank" rel="noopener">semver</a></li>
+<li>1.2.x 可以是1.2.0、1.2.1等，但不能是1.3.0</li>
+<li>http://… 参考下面的URL作为依赖项</li>
+<li>* 匹配任何版本</li>
+<li>“”(空字符串) 匹配任何版本，和*一样</li>
+<li>version1 - version2 相当于 &gt;=version1 &lt;=version2</li>
+<li>range1 || range2 range1或range2其中一个满足时采用该version</li>
+<li>git… 参考下面的Git URL作为依赖项</li>
+<li>user/repo 参考下面的GitHub URLs</li>
+<li>tag 一个以tag发布的指定版本，参考<a href="https://docs.npmjs.com/cli/tag" target="_blank" rel="noopener">npm-tag</a></li>
+<li>path/path/path 参考下面的本地Paths</li>
+</ol>
+<p>举个栗子，下面这种写法是合法的：</p>
+<pre><code>{
+    &quot;dependencies&quot; :{
+        &quot;foo&quot; : &quot;1.0.0 - 2.9999.9999&quot;,
+        &quot;bar&quot; : &quot;&gt;=1.0.2 &lt;2.1.2&quot;,
+        &quot;baz&quot; : &quot;&gt;1.0.2 &lt;=2.3.4&quot;,
+        &quot;boo&quot; : &quot;2.0.1&quot;,
+        &quot;qux&quot; : &quot;&lt;1.0.0 || &gt;=2.3.1 &lt;2.4.5 || &gt;=2.5.2 &lt;3.0.0&quot;,
+        &quot;asd&quot; : &quot;http://asdf.com/asdf.tar.gz&quot;,
+        &quot;til&quot; : &quot;~1.2&quot;,
+        &quot;elf&quot; : &quot;~1.2.3&quot;,
+        &quot;two&quot; : &quot;2.x&quot;,
+        &quot;thr&quot; : &quot;3.3.x&quot;,
+        &quot;lat&quot; : &quot;latest&quot;,
+        &quot;dyl&quot; : &quot;file:../dyl&quot;
+    }
+}
+</code></pre><h3 id="URLs作为依赖项"><a href="#URLs作为依赖项" class="headerlink" title="URLs作为依赖项"></a>URLs作为依赖项</h3><p>可以在version上指定一个压缩包的url。</p>
+<p>当执行npm install时这个压缩包会被下载并且安装到本地。</p>
+<h3 id="Git-URLs作为依赖项"><a href="#Git-URLs作为依赖项" class="headerlink" title="Git URLs作为依赖项"></a>Git URLs作为依赖项</h3><p>Git URLs可以是如下几种形式之一：</p>
+<pre><code>git://github.com/user/project.git#commit-ish
+git+ssh://user@hostname:project.git#commit-ish
+git+ssh://user@hostname/project.git#commit-ish
+git+http://user@hostname/project/blah.git#commit-ish
+git+https://user@hostname/project/blah.git#commit-ish
+</code></pre><p>commit-ish可以是任何tag、sha或者branch，并作为一个参数提供给git进行checkout，默认值是master。</p>
+<h3 id="GitHub-URLs"><a href="#GitHub-URLs" class="headerlink" title="GitHub URLs"></a>GitHub URLs</h3><p>从1.1.65版本开始，你可以引用Github urls作为版本号，比如”foo”: “user/foo-project”。也可以包含一个commit-ish后缀，举个栗子：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;foo&quot;,
+    &quot;version&quot;: &quot;0.0.0&quot;,
+    &quot;dependencies&quot;: {
+        &quot;express&quot;: &quot;visionmedia/express&quot;,
+        &quot;mocha&quot;: &quot;visionmedia/mocha#4727d357ea&quot;
+    }
+}
+</code></pre><h3 id="本地路径"><a href="#本地路径" class="headerlink" title="本地路径"></a>本地路径</h3><p>从版本2.0.0开始你可以提供一个包的本地路径。本地路径可以在你使用npm install -S或npm install –save时被保存，具体形式如下：</p>
+<pre><code>../foo/bar
+~/foo/bar
+./foo/bar
+/foo/bar
+</code></pre><p>在下面这种情况下它会被规范化成为一个相对路径并且加入到你的package.json文件中，比如：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;baz&quot;,
+    &quot;dependencies&quot;: {
+        &quot;bar&quot;: &quot;file:../foo/bar&quot;
+    }
+}
+</code></pre><p>这个特性有助于当你不想从一个外部服务器安装npm包的情况，比如本地离线开发和创建测试，但最好不要在发布包到公共registry时这样使用。</p>
+<h2 id="devDependencies"><a href="#devDependencies" class="headerlink" title="devDependencies"></a>devDependencies</h2><p>如果有人计划在他们的项目中下载和使用你的模块，但他们可能并不想或并不需要你开发所使用的外部测试和文档框架。</p>
+<p>在这种情况下，最好将这些附加的项放在devDependencies中。</p>
+<p>这些项将会在根目录下执行npm link或npm install时被安装，并且可以像其他npm配置参数一样被管理。可以参考<a href="https://docs.npmjs.com/misc/config" target="_blank" rel="noopener">npm-config</a>获得更多信息。</p>
+<p>对于那些非特定平台的构建步骤，比如编译CoffeeScript或把其他语言转换成JavaScript，可以使用prepublish脚本来处理，并且把这个过程的依赖包放在devDependencies中。</p>
+<p>举个栗子：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;ethopia-waza&quot;,
+    &quot;description&quot;: &quot;a delightfully fruity coffee varietal&quot;,
+    &quot;version&quot;: &quot;1.2.3&quot;,
+    &quot;devDependencies&quot;: {
+        &quot;coffee-script&quot;: &quot;~1.6.3&quot;
+    },
+    &quot;scripts&quot;: {
+        &quot;prepublish&quot;: &quot;coffee -o lib/ -c src/waza.coffee&quot;
+    },
+    &quot;main&quot;: &quot;lib/waza.js&quot;
+}
+</code></pre><p>prepublish脚本会在publishing前运行，这样用户就可以不用自己去require来编译就能使用。在开发模式下(比如本地运行npm install)，将会执行这个脚本，这样测试就非常方便了。</p>
+<h2 id="peerDependencies"><a href="#peerDependencies" class="headerlink" title="peerDependencies"></a>peerDependencies</h2><p>在某些情况下，当一个主机无法require依赖包时，你会想要告诉它还有哪些工具或库与这个依赖包兼容。这通常被成为一个插件。尤其是在host文档中声明的模块会暴露一个特定的接口。</p>
+<p>举个栗子：</p>
+<pre><code>{
+    &quot;name&quot;: &quot;tea-latte&quot;,
+    &quot;version&quot;: &quot;1.3.5&quot;,
+    &quot;peerDependencies&quot;: {
+        &quot;tea&quot;: &quot;2.x&quot;
+    }
+}
+</code></pre><p>这将确保tea-latte这个包只会和2.x版本的tea一起被安装。执行npm install tea-latte可能产生以下关系图：</p>
+<pre><code>├── tea-latte@1.3.5
+└── tea@2.2.0
+</code></pre><p>注意：如果没有在依赖树中显式声明比它们更高的依赖版本，版本1和版本2的npm将会自动安装peerDependencies。在npm的下一个大版本npm3中，情况将完全不同。你将收到一个警告，告诉你peerDependency还没有被安装。在npm1和npm2中这个行为经常会导致混乱，新的npm版本的设计将会极力避免这种情况。</p>
+<p>试图安装一个有冲突的依赖项的插件将会导致一个错误。因此你必须确保你的插件的依赖项版本范围尽可能大，并且不要把版本锁死在一个特点的补丁版本上。</p>
+<p>假设主机使用semver进行编译，只改变这个包的主版本将会导致你的插件不可用。因此，如果你的插件的某个依赖包运行在每个1.x版本下，使用”^1.0”或”1.x”。如果你需要的功能在1.5.2版本中，使用”&gt;= 1.5.2 &lt; 2”。</p>
+<h2 id="bundledDependencies"><a href="#bundledDependencies" class="headerlink" title="bundledDependencies"></a>bundledDependencies</h2><p>在发布包时，包名的数组会被打包进去。</p>
+<p>如果拼写成”bundleDependencies”(少个d)，也是可以的。</p>
+<h2 id="optionalDependencies"><a href="#optionalDependencies" class="headerlink" title="optionalDependencies"></a>optionalDependencies</h2><p>如果一个依赖项可用，但希望在这个依赖项无法被找到或者安装时失败npm还能继续处理(不中断)，那么你可以把它放在optionalDependencies中。和dependencies一样，optionalDependencies是一个包名和版本号或url的映射。区别在于optionalDependencies中的依赖构建失败时不会导致npm整体安装失败。</p>
+<p>但是你的程序依然有责任处理这种缺失的依赖项，比如这样：</p>
+<pre><code>try {
+    var foo = require(&apos;foo&apos;)
+    var fooVersion = require(&apos;foo/package.json&apos;).version
+} catch (er) {
+    foo = null
+}
+if ( notGoodFooVersion(fooVersion) ) {
+    foo = null
+}
+
+// .. then later in your program ..
+
+if (foo) {
+    foo.doFooThings()
+}
+</code></pre><p>optionalDependencies中的项会覆盖dependencies中的同名项，所以一个特定名字的项最好只出现在一个地方。</p>
+<h2 id="engines"><a href="#engines" class="headerlink" title="engines"></a>engines</h2><p>你可以指定node的工作版本：</p>
+<pre><code>{ &quot;engines&quot; : { &quot;node&quot; : &quot;&gt;=0.10.3 &lt;0.12&quot; } }
+</code></pre><p>和dependencies类似，如果你不指定一个node版本(或者你用’*’指定)，则任何一个node版本都可以。</p>
+<p>如果你指定了一个’engines’字段，则npm将会在某处包含这个node版本。如果忽略’engines’字段，则npm只会仅仅假设这个包工作在node下。</p>
+<p>你还可以使用’engines’字段来指定可以安装这个包的npm版本，举个栗子：</p>
+<pre><code>{ &quot;engines&quot; : { &quot;npm&quot; : &quot;~1.0.20&quot; } }
+</code></pre><p>请注意，除非用户设置了engine-strict标记，否则这个字段只是一个建议值。</p>
+<h2 id="engineStrict"><a href="#engineStrict" class="headerlink" title="engineStrict"></a>engineStrict</h2><p>这个特性在npm 3.0.0中已经废弃。</p>
+<p>npm 3.0.0之前的版本，这个特性用来处理那些设置了engine-strict标记的包。</p>
+<h2 id="os"><a href="#os" class="headerlink" title="os"></a>os</h2><p>可以指定模块运行的操作系统：</p>
+<pre><code>&quot;os&quot; : [ &quot;darwin&quot;, &quot;linux&quot; ]
+</code></pre><p>也可以使用操作系统黑名单来替代白名单，只要在前面加个’!’：</p>
+<pre><code>&quot;os&quot; : [ &quot;!win32&quot; ]
+</code></pre><p>主机的操作系统可以通过process.platform来确定。</p>
+<p>虽然找不到什么很好的理由支持这么做，但是这里还可以黑名单和白名单混用。</p>
+<h2 id="cpu"><a href="#cpu" class="headerlink" title="cpu"></a>cpu</h2><p>如果你的代码只能运行在特定的cpu架构上，你可以指明：</p>
+<pre><code>&quot;cpu&quot; : [ &quot;x64&quot;, &quot;ia32&quot; ]
+</code></pre><p>和os选项类似，你还可以使用黑名单：</p>
+<pre><code>&quot;cpu&quot; : [ &quot;!arm&quot;, &quot;!mips&quot; ]
+</code></pre><p>主机的cpu架构可以通过process.arch来确定。</p>
+<h2 id="preferGlobal"><a href="#preferGlobal" class="headerlink" title="preferGlobal"></a>preferGlobal</h2><p>如果你的包是一个需要进行全局安装的命令行应用，需要设置preferGlobal为true，如果这个包被本地安装会报出一个警告。</p>
+<p>这个选项并不会阻止用户本地安装这个包，但这么做确实能在包未按照预期被安装造成诸多麻烦时提供一些提示。</p>
+<h2 id="private"><a href="#private" class="headerlink" title="private"></a>private</h2><p>如果你在包的package.json中设置”private”: true，则npm会拒绝发布它。</p>
+<p>这是防止私有包被以外发布的一种方法。如果你希望包装某个包只能被发布到特定的一个registry中(比如，一个内部的registry)，则可以使用下面的publishConfig字典来描述以在publish-time重写registry配置参数。</p>
+<h2 id="publishConfig"><a href="#publishConfig" class="headerlink" title="publishConfig"></a>publishConfig</h2><p>这是一个在publish-time时会用到的配置集合。当你想设置tag、registry或access时特别有用，所以你可以确保一个给定的包无法在没有被打上”latest”标记时就被发布到全局公共的registry。</p>
+<p>任何配置都可以被覆盖，当然可能只有”tag”, “registry”和”access”和发布意图有关。</p>
+<p>参考<a href="https://docs.npmjs.com/misc/config" target="_blank" rel="noopener">npm-config</a>来查看那些可以被覆盖的配置项列表。</p>
+<h2 id="DEFAULT-VALUES"><a href="#DEFAULT-VALUES" class="headerlink" title="DEFAULT VALUES"></a>DEFAULT VALUES</h2><p>npm会基于包内容设置一些默认值。</p>
+<ul>
+<li><p>“scripts”: {“start”: “node server.js”}</p>
+<p>  如果包的根目录中有一个server.js，那么npm会用它来作为入口文件：运行node server.js。</p>
+</li>
+<li><p>“scripts”:{“preinstall”: “node-gyp rebuild”}</p>
+<p>  如果包的根目录中有一个binding.gyp文件，那么npm会在运行preinstall命令编译时使用它。</p>
+</li>
+<li><p>“contributors”: […]</p>
+<p>  如果包的根目录中有一个AUTHORS文件，那么npm会把它的每一个行格式化成Name \&lt; email > (url)的形式，其中email和url是可选的。以一个#或者空白符开头的行将被忽略。</p>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a href="https://docs.npmjs.com/misc/semver" target="_blank" rel="noopener">semver</a><br><a href="https://docs.npmjs.com/cli/init" target="_blank" rel="noopener">npm-init</a><br><a href="https://docs.npmjs.com/cli/version" target="_blank" rel="noopener">npm-version</a><br><a href="https://docs.npmjs.com/cli/config" target="_blank" rel="noopener">npm-config</a><br><a href="https://docs.npmjs.com/misc/config" target="_blank" rel="noopener">npm-config</a><br><a href="https://docs.npmjs.com/cli/help" target="_blank" rel="noopener">npm-help</a><br><a href="https://docs.npmjs.com/misc/faq" target="_blank" rel="noopener">npm-faq</a><br><a href="https://docs.npmjs.com/cli/install" target="_blank" rel="noopener">npm-install</a><br><a href="https://docs.npmjs.com/cli/publish" target="_blank" rel="noopener">npm-publish</a><br><a href="https://docs.npmjs.com/cli/uninstall" target="_blank" rel="noopener">npm-uninstall</a></p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/node/">node</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/10/(译)npm-scripts详解/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          (译)npm-scripts详解
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/10/MongoDB索引(1)——入门篇：学习使用MongoDB数据库索引/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">MongoDB索引(1)——入门篇：学习使用MongoDB数据库索引</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#name"><span class="nav-number">2.</span> <span class="nav-text">name</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#version"><span class="nav-number">3.</span> <span class="nav-text">version</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#description"><span class="nav-number">4.</span> <span class="nav-text">description</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#keywords"><span class="nav-number">5.</span> <span class="nav-text">keywords</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#homepage"><span class="nav-number">6.</span> <span class="nav-text">homepage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bugs"><span class="nav-number">7.</span> <span class="nav-text">bugs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#license"><span class="nav-number">8.</span> <span class="nav-text">license</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关于人的字段-author-contributors"><span class="nav-number">9.</span> <span class="nav-text">关于人的字段: author, contributors</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#files"><span class="nav-number">10.</span> <span class="nav-text">files</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#main"><span class="nav-number">11.</span> <span class="nav-text">main</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bin"><span class="nav-number">12.</span> <span class="nav-text">bin</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#man"><span class="nav-number">13.</span> <span class="nav-text">man</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#directories"><span class="nav-number">14.</span> <span class="nav-text">directories</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#directories-lib"><span class="nav-number">14.1.</span> <span class="nav-text">directories.lib</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#directories-bin"><span class="nav-number">14.2.</span> <span class="nav-text">directories.bin</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#directories-man"><span class="nav-number">14.3.</span> <span class="nav-text">directories.man</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#directories-doc"><span class="nav-number">14.4.</span> <span class="nav-text">directories.doc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#directories-example"><span class="nav-number">14.5.</span> <span class="nav-text">directories.example</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#repository"><span class="nav-number">15.</span> <span class="nav-text">repository</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#scripts"><span class="nav-number">16.</span> <span class="nav-text">scripts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#config"><span class="nav-number">17.</span> <span class="nav-text">config</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dependencies"><span class="nav-number">18.</span> <span class="nav-text">dependencies</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#URLs作为依赖项"><span class="nav-number">18.1.</span> <span class="nav-text">URLs作为依赖项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Git-URLs作为依赖项"><span class="nav-number">18.2.</span> <span class="nav-text">Git URLs作为依赖项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GitHub-URLs"><span class="nav-number">18.3.</span> <span class="nav-text">GitHub URLs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#本地路径"><span class="nav-number">18.4.</span> <span class="nav-text">本地路径</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#devDependencies"><span class="nav-number">19.</span> <span class="nav-text">devDependencies</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#peerDependencies"><span class="nav-number">20.</span> <span class="nav-text">peerDependencies</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bundledDependencies"><span class="nav-number">21.</span> <span class="nav-text">bundledDependencies</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#optionalDependencies"><span class="nav-number">22.</span> <span class="nav-text">optionalDependencies</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#engines"><span class="nav-number">23.</span> <span class="nav-text">engines</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#engineStrict"><span class="nav-number">24.</span> <span class="nav-text">engineStrict</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#os"><span class="nav-number">25.</span> <span class="nav-text">os</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cpu"><span class="nav-number">26.</span> <span class="nav-text">cpu</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#preferGlobal"><span class="nav-number">27.</span> <span class="nav-text">preferGlobal</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#private"><span class="nav-number">28.</span> <span class="nav-text">private</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#publishConfig"><span class="nav-number">29.</span> <span class="nav-text">publishConfig</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DEFAULT-VALUES"><span class="nav-number">30.</span> <span class="nav-text">DEFAULT VALUES</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">31.</span> <span class="nav-text">参考资料</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

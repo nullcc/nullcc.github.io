@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>(译)Redis的发布和订阅 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Redis">
+  
+  
+  
+  
+  <meta name="description" content="本文翻译自Pub/Sub。">
+<meta name="keywords" content="Redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(译)Redis的发布和订阅">
+<meta property="og:url" content="https://nullcc.github.io/2018/02/22/(译)Redis的发布和订阅/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文翻译自Pub/Sub。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.011Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="(译)Redis的发布和订阅">
+<meta name="twitter:description" content="本文翻译自Pub/Sub。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-(译)Redis的发布和订阅" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      (译)Redis的发布和订阅
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/02/22/(译)Redis的发布和订阅/" class="article-date">
+	  <time datetime="2018-02-21T16:00:00.000Z" itemprop="datePublished">二月 22, 2018</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文翻译自<a href="https://redis.io/topics/pubsub" target="_blank" rel="noopener">Pub/Sub</a>。</p>
+<a id="more"></a>
+<p><code>SUBSCRIBE</code>、<code>UNSUBSCRIBE</code>和<code>PUBLISH</code>实现了发布/订阅消息传递模式（这里引用维基百科），发送者（发布者）不需要编程就可以将消息发送给指定的接收者（订阅者）。相反，已发布的消息具有信道特性，发布者不需要知道有哪些订阅者（如果有的话）。订阅者关注一个或多个它感兴趣的信道，只接收它感兴趣的信道的信息，而不需要知道有哪些发布者（如果有的话）。这种对发布者和订阅者的解耦允许更大和更具动态性地网络拓扑结构，</p>
+<p>例如为了订阅foo和bar两个信道，客户端发送一个<code>SUBSCRIBE</code>命令并提供信道的名称：</p>
+<pre><code>SUBSCRIBE foo bar
+</code></pre><p>其他客户端向这些信道发送的消息将会被Redis推送给所有订阅了这些信道的客户端。</p>
+<p>一个订阅了一个或多个信道的客户端不应该发布命令，尽管它可以对其他信道执行订阅或取消订阅。订阅和取消订阅操作的回复信息都以消息的形式发送，以便客户端可以读取连贯的消息流，其中第一个元素指明了消息的类型。</p>
+<p>在一个订阅了信道的客户端允许执行的命令有<code>SUBSCRIBE</code>、<code>PSUBSCRIBE</code>、<code>UNSUBSCRIBE</code>、<code>PUNSUBSCRIBE</code>、<code>PING</code>和<code>QUIT</code>。</p>
+<p>请注意redis-cli在订阅模式下将不接受任何命令，此时只能用<code>Ctrl-C</code>退出订阅模式。</p>
+<h2 id="推送消息的格式"><a href="#推送消息的格式" class="headerlink" title="推送消息的格式"></a>推送消息的格式</h2><p>一个应答消息是一个具有三个元素的数组。</p>
+<p>第一个元素是消息的类型：</p>
+<p>subscribe：表示我们成功订阅了应答中第二个元素中指明的信道。第三个参数表示我们当前订阅的信道个数。</p>
+<p>unsubscribe：表示我们成功退订了应答中第二个元素指明的信道。第三个参数表示我们当前订阅的信道个数。当最后一个参数是0时，我们不再订阅任何信道，此时客户端可以发布任何Redis命令了，因为我们已经退出了发布/订阅状态。</p>
+<p>message：表示接收到一个从其他客户端使用<code>PUBLISH</code>命令发布的消息。第二个参数表示信道名称，第三个参数为实际的消息载荷。</p>
+<h2 id="数据库-amp-作用域"><a href="#数据库-amp-作用域" class="headerlink" title="数据库 &amp; 作用域"></a>数据库 &amp; 作用域</h2><p>发布/订阅和键空间无关。它不受任何东西的干扰，包括数据库编号。</p>
+<p>在db 10上发布消息，可以被在db 1上的订阅者监听到。</p>
+<p>如果你需要某种形式的作用域，可以使用环境名称（test、staging、production等等）作为信道的前缀。</p>
+<h2 id="协议示例"><a href="#协议示例" class="headerlink" title="协议示例"></a>协议示例</h2><pre><code>SUBSCRIBE first second
+*3
+$9
+subscribe
+$5
+first
+:1
+*3
+$9
+subscribe
+$6
+second
+:2
+</code></pre><p>此时，另一个客户端向信道second执行一个发布操作：</p>
+<pre><code>&gt; PUBLISH second Hello
+</code></pre><p>下面是第一个客户端收到的：</p>
+<pre><code>*3
+$7
+message
+$6
+second
+$5
+Hello
+</code></pre><p>现在客户端使用不带额外参数的<code>UNSUBSCRIBE</code>命令退订所有已订阅的信道：</p>
+<pre><code>UNSUBSCRIBE
+*3
+$11
+unsubscribe
+$6
+second
+:1
+*3
+$11
+unsubscribe
+$5
+first
+:0
+</code></pre><h2 id="模式匹配的订阅"><a href="#模式匹配的订阅" class="headerlink" title="模式匹配的订阅"></a>模式匹配的订阅</h2><p>Redis的发布/订阅实现支持模式匹配。客户端可以使用glob风格的模式匹配来订阅所有发送给名字匹配指定模式的信道。</p>
+<p>比如：</p>
+<pre><code>PSUBSCRIBE news.*
+</code></pre><p>此时客户端将接收到所有发送到news.art.figurative、news.music.jazz等信道的的消息。所有glob风格的模式都是合法的，支持多个通配符。</p>
+<pre><code>PUNSUBSCRIBE news.*
+</code></pre><p>这个命令将是的客户端退订匹配news.*模式的所有信道。此调用不会影响其他信道的订阅。</p>
+<p>因模式匹配而受到的消息以不同的格式发送：</p>
+<ul>
+<li>消息的类型是<code>pmessage</code>：表示这是由其他客户端使用PUBLISH命令发布的消息，通过模式匹配了订阅。第二个元素是被匹配模式的原始形式，第三个参数是信道名称，最后一个参数是实际的消息载荷。</li>
+</ul>
+<p>与<code>SUBSCRIBE</code>和<code>UNSUBSCRIBE</code>命令一样，<code>PSUBSCRIBE</code>和<code>PUNSUBSCRIBE</code>命令使用psubscribe和punsubscribe来表示命令类型，并使用与subscribe和unsubscribe信息相同的格式。</p>
+<h2 id="同时匹配模式和信道名的消息订阅"><a href="#同时匹配模式和信道名的消息订阅" class="headerlink" title="同时匹配模式和信道名的消息订阅"></a>同时匹配模式和信道名的消息订阅</h2><p>如果一条发布的消息匹配了多个已订阅的模式，同时匹配模式和信道名的消息订阅，客户端将多次收到同一条消息。如下面的例子所示：</p>
+<pre><code>SUBSCRIBE foo
+PSUBSCRIBE f*
+</code></pre><p>上例中，如果一条消息被发送到信道foo，客户端将收到两条消息：一条类型为message的消息和一条类型为pmessage的消息。</p>
+<h2 id="模式匹配订阅计数的含义"><a href="#模式匹配订阅计数的含义" class="headerlink" title="模式匹配订阅计数的含义"></a>模式匹配订阅计数的含义</h2><p>在subscribe、unsubscribe、psubscribe和punsubscribe消息类型中，最后一个参数表示当前仍在订阅的信道数量。这个数字实际上是客户端当前仍然订阅的信道和模式的总数。所以只有当退订所有信道和模式时，这个计数值变为0，客户端才会退出发布/订阅模式。</p>
+<h2 id="编程示例"><a href="#编程示例" class="headerlink" title="编程示例"></a>编程示例</h2><p>Pieter Noordhuis提供了一个很好的例子，使用EventMachine和Redis构建一个<a href="https://gist.github.com/pietern/348262" target="_blank" rel="noopener">多用户高性能的网络聊天项目</a>。</p>
+<h2 id="客户端库实现的提示"><a href="#客户端库实现的提示" class="headerlink" title="客户端库实现的提示"></a>客户端库实现的提示</h2><p>由于所有收到的消息都包含原始的订阅信息，所以客户端可以使用一个哈希表保存已注册的回调函数，然后将原始的订阅信息（消息类型为message时为信道名，消息类型为pmessage时为匹配的模式）传递给回调函数（可以是匿名函数、块、函数指针）。</p>
+<p>当接收到消息时，可以进行复杂度为O(1)的查找，以便将消息传递给已注册的回调函数。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/24/(译)将Redis作为LRU缓存使用/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          (译)将Redis作为LRU缓存使用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/22/Python性能测试基础/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Python性能测试基础</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#推送消息的格式"><span class="nav-number">1.</span> <span class="nav-text">推送消息的格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库-amp-作用域"><span class="nav-number">2.</span> <span class="nav-text">数据库 &amp; 作用域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#协议示例"><span class="nav-number">3.</span> <span class="nav-text">协议示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模式匹配的订阅"><span class="nav-number">4.</span> <span class="nav-text">模式匹配的订阅</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#同时匹配模式和信道名的消息订阅"><span class="nav-number">5.</span> <span class="nav-text">同时匹配模式和信道名的消息订阅</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模式匹配订阅计数的含义"><span class="nav-number">6.</span> <span class="nav-text">模式匹配订阅计数的含义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编程示例"><span class="nav-number">7.</span> <span class="nav-text">编程示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#客户端库实现的提示"><span class="nav-number">8.</span> <span class="nav-text">客户端库实现的提示</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

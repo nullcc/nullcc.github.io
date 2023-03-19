@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Python包导入详解 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Python">
+  
+  
+  
+  
+  <meta name="description" content="在Python导入包有以下四种情况：  主程序导入系统内置模块或已安装的依赖模块。 主程序和模块程序在同一目录下。 主程序所在目录是模块所在目录的上级目录。 主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块。">
+<meta name="keywords" content="Python">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python包导入详解">
+<meta property="og:url" content="https://nullcc.github.io/2017/06/09/Python包导入详解/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="在Python导入包有以下四种情况：  主程序导入系统内置模块或已安装的依赖模块。 主程序和模块程序在同一目录下。 主程序所在目录是模块所在目录的上级目录。 主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.017Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Python包导入详解">
+<meta name="twitter:description" content="在Python导入包有以下四种情况：  主程序导入系统内置模块或已安装的依赖模块。 主程序和模块程序在同一目录下。 主程序所在目录是模块所在目录的上级目录。 主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Python包导入详解" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Python包导入详解
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/06/09/Python包导入详解/" class="article-date">
+	  <time datetime="2017-06-08T16:00:00.000Z" itemprop="datePublished">六月 9, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>在Python导入包有以下四种情况：</p>
+<ol>
+<li>主程序导入系统内置模块或已安装的依赖模块。</li>
+<li>主程序和模块程序在同一目录下。</li>
+<li>主程序所在目录是模块所在目录的上级目录。</li>
+<li>主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块。</li>
+</ol>
+<a id="more"></a>
+<p>下面依次来看看。</p>
+<h2 id="主程序导入系统内置模块或已安装的依赖模块"><a href="#主程序导入系统内置模块或已安装的依赖模块" class="headerlink" title="主程序导入系统内置模块或已安装的依赖模块"></a>主程序导入系统内置模块或已安装的依赖模块</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br></pre></td></tr></table></figure>
+<p>这种写法是直接导入包名，使用该模块下的函数时都必须带上<code>json</code>前缀，比如<code>json.loads()`</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br></pre></td></tr></table></figure>
+<p>这种写法是导入包中具体的某个模块，这里导入的是<code>datetime</code>包中的<code>datetime</code>模块，可以直接使用这个<code>datetime</code>模块，比如<code>datetime.now()</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os.path</span><br></pre></td></tr></table></figure>
+<p>这种写法是导入os包中的path模块，使用时必须以<code>os.path</code>为前缀调用该模块下的函数，比如<code>os.path.exists(a_file_path)</code>检查某个文件是否存在</p>
+<h2 id="主程序和模块程序在同一目录下"><a href="#主程序和模块程序在同一目录下" class="headerlink" title="主程序和模块程序在同一目录下"></a>主程序和模块程序在同一目录下</h2><p>文件目录结构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">--src</span><br><span class="line">  |--a.py</span><br><span class="line">  |--main.py</span><br></pre></td></tr></table></figure>
+<p>在<code>main.py</code>中导入<code>a.py</code>中的模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> a <span class="keyword">import</span> A</span><br></pre></td></tr></table></figure>
+<h2 id="主程序所在目录是模块所在目录的上级目录"><a href="#主程序所在目录是模块所在目录的上级目录" class="headerlink" title="主程序所在目录是模块所在目录的上级目录"></a>主程序所在目录是模块所在目录的上级目录</h2><p>文件目录结构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">--src</span><br><span class="line">  |--a</span><br><span class="line">     |--__init__.py</span><br><span class="line">     |--a.py</span><br><span class="line">  |--main.py</span><br></pre></td></tr></table></figure>
+<p>在<code>main.py</code>中导入<code>a.py</code>中的模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> a.a <span class="keyword">import</span> A</span><br></pre></td></tr></table></figure>
+<h2 id="主程序导入上级目录中的模块或其他目录-与主程序所在目录平级-下的模块"><a href="#主程序导入上级目录中的模块或其他目录-与主程序所在目录平级-下的模块" class="headerlink" title="主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块"></a>主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块</h2><p>文件目录结构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">--src</span><br><span class="line">  |--a.py</span><br><span class="line">  |--b</span><br><span class="line">     |--__init__.py</span><br><span class="line">     |--b.py</span><br><span class="line">  |--sub</span><br><span class="line">     |--main.py</span><br></pre></td></tr></table></figure>
+<p>在<code>sub/main.py</code>中导入<code>a.py</code>和<code>b.py</code>中的模块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line">sys.path.append(os.path.abspath(os.path.dirname(__file__) + <span class="string">'/'</span> + <span class="string">'..'</span>))</span><br><span class="line"><span class="keyword">from</span> a <span class="keyword">import</span> A</span><br><span class="line"><span class="keyword">from</span> b.b <span class="keyword">import</span> B</span><br></pre></td></tr></table></figure>
+<p>这种情况下需要在<code>sys.path</code>中添加父目录，才能让Python找到具体模块的路径。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/编程语言/">编程语言</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Python/">Python</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/06/12/Python中的魔术方法/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Python中的魔术方法
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/18/elasticsearch基本原理/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">ElasticSearch基本原理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#主程序导入系统内置模块或已安装的依赖模块"><span class="nav-number">1.</span> <span class="nav-text">主程序导入系统内置模块或已安装的依赖模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主程序和模块程序在同一目录下"><span class="nav-number">2.</span> <span class="nav-text">主程序和模块程序在同一目录下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主程序所在目录是模块所在目录的上级目录"><span class="nav-number">3.</span> <span class="nav-text">主程序所在目录是模块所在目录的上级目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主程序导入上级目录中的模块或其他目录-与主程序所在目录平级-下的模块"><span class="nav-number">4.</span> <span class="nav-text">主程序导入上级目录中的模块或其他目录(与主程序所在目录平级)下的模块</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

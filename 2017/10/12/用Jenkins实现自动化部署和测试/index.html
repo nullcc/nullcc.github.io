@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>用Jenkins实现自动化部署和测试 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="自动化部署Jenkins">
+  
+  
+  
+  
+  <meta name="description" content="在日常开发和产品在测试环境和生产环境部署时，遇到的一个痛点就是如何高效地完成部署+测试这个环节。很多团队一直采用手工部署的方式，这在系统规模不大的情况下没问题，但是当系统发展到一定规模以后，手工对多服务和多机进行部署无疑是一个巨大的工作量，过程机械繁琐还容易出错。这时候就很有必要升级为自动化部署和测试。">
+<meta name="keywords" content="自动化部署,Jenkins">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用Jenkins实现自动化部署和测试">
+<meta property="og:url" content="https://nullcc.github.io/2017/10/12/用Jenkins实现自动化部署和测试/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="在日常开发和产品在测试环境和生产环境部署时，遇到的一个痛点就是如何高效地完成部署+测试这个环节。很多团队一直采用手工部署的方式，这在系统规模不大的情况下没问题，但是当系统发展到一定规模以后，手工对多服务和多机进行部署无疑是一个巨大的工作量，过程机械繁琐还容易出错。这时候就很有必要升级为自动化部署和测试。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_1.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_2.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_3.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_5.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_6.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_7.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_8.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_9.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_10.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_11.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.037Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用Jenkins实现自动化部署和测试">
+<meta name="twitter:description" content="在日常开发和产品在测试环境和生产环境部署时，遇到的一个痛点就是如何高效地完成部署+测试这个环节。很多团队一直采用手工部署的方式，这在系统规模不大的情况下没问题，但是当系统发展到一定规模以后，手工对多服务和多机进行部署无疑是一个巨大的工作量，过程机械繁琐还容易出错。这时候就很有必要升级为自动化部署和测试。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/jenkins_1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-用Jenkins实现自动化部署和测试" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      用Jenkins实现自动化部署和测试
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/10/12/用Jenkins实现自动化部署和测试/" class="article-date">
+	  <time datetime="2017-10-11T16:00:00.000Z" itemprop="datePublished">十月 12, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/自动化部署/">自动化部署</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>在日常开发和产品在测试环境和生产环境部署时，遇到的一个痛点就是如何高效地完成部署+测试这个环节。很多团队一直采用手工部署的方式，这在系统规模不大的情况下没问题，但是当系统发展到一定规模以后，手工对多服务和多机进行部署无疑是一个巨大的工作量，过程机械繁琐还容易出错。这时候就很有必要升级为自动化部署和测试。</p>
+<a id="more"></a>
+<p>自动化部署和测试的方案有很多，本文主要介绍如何使用Jenkins来实现自动化部署和测试。</p>
+<p><a href="https://jenkins.io/" target="_blank" rel="noopener">Jenkins</a>是一个Java开发的开源的持续集成工具(CI)，它提供了一个软件平台，主要用于实现软件的自动化构建、测试和部署。下面是系统配置：</p>
+<p>操作系统：Ubuntu 16.04 LTS<br>Jenkins版本：Jenkins 2.73.2。</p>
+<p>运行以下命令安装Jenkins：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -</span><br><span class="line">sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ &gt; /etc/apt/sources.list.d/jenkins.list'</span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install jenkins</span><br></pre></td></tr></table></figure>
+<p>安装完毕后，Jenkins会以守护进程的模式运行在后台，我们可以直接在浏览其中访问这台机器的8080端口，在我的机器上是<a href="http://172.16.130.130:8080/：" target="_blank" rel="noopener">http://172.16.130.130:8080/：</a></p>
+<p><img src="/assets/images/post_imgs/jenkins_1.png" alt="Jenkins解锁"></p>
+<p>为了解锁Jenkins，我们需要访问<code>/var/lib/jenkins/secrets/initialAdminPassword</code>这个文件获取一个超级管理员的密码，这在每台机器上部署的密码是不一样的，找到以后填入即可。继续下一步后，Jenkins会进行一些系统初始化的工作，可能会耗费一点时间。然后进入下面的界面：</p>
+<p><img src="/assets/images/post_imgs/jenkins_2.png" alt="Jenkins定制"></p>
+<p>我们选择<code>Install suggested plugins</code>，安装系统推荐的插件，作为演示案例已经足够了。</p>
+<p>之后系统会自动安装一些插件，安装完毕后会跳转到下面的界面要求我们创建一个管理员账号：</p>
+<p><img src="/assets/images/post_imgs/jenkins_3.png" alt="Jenkins创建管理员账号"></p>
+<p>创建后就可以进入Jenkins的管理界面了：</p>
+<p><img src="/assets/images/post_imgs/jenkins_4.png" alt="Jenkins管理界面"></p>
+<p>点击<code>创建一个新任务</code>：</p>
+<p><img src="/assets/images/post_imgs/jenkins_5.png" alt="Jenkins创建一个新任务"></p>
+<p>点击OK进入配置项目界面，有一些基础选项需要填写，我们把一个叫做<code>flask_demo</code>的示例程序放在Github上，可以利用Jenkins的Github Plugin来为我们自动拉取代码自动部署，配置如下：</p>
+<p>通用配置：<br><img src="/assets/images/post_imgs/jenkins_6.png" alt="Jenkins新任务配置_通用"></p>
+<p>源码管理配置：<br><img src="/assets/images/post_imgs/jenkins_7.png" alt="Jenkins新任务配置_源码管理"></p>
+<p>构建触发器和构建环境配置（由于是示例，暂时不填）：<br><img src="/assets/images/post_imgs/jenkins_8.png" alt="Jenkins新任务配置_构建触发器和构建环境"></p>
+<p>构建和构建后操作配置：<br><img src="/assets/images/post_imgs/jenkins_9.png" alt="Jenkins新任务配置_构建和构建后操作"></p>
+<p>其中构建中的<code>Execute Shell</code>是一组shell命令，如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">pwd</span><br><span class="line">ps -ef|grep supervisord|grep -v grep|awk '&#123;print $2&#125;'|xargs kill -9</span><br><span class="line">cd ..</span><br><span class="line">sudo rm -r /home/nullcc/flask_demo</span><br><span class="line">cp -r ./flask_demo /home/nullcc</span><br><span class="line">cd /home/nullcc/flask_demo</span><br><span class="line">virtualenv -p python3.5 --no-site-packages venv</span><br><span class="line">. venv/bin/activate</span><br><span class="line">pip install -r requirements.txt</span><br><span class="line">deactivate</span><br><span class="line">sudo supervisord -c /etc/supervisord.conf</span><br></pre></td></tr></table></figure>
+<p>主要的作用是把拉取的源码复制到部署目录下，并配置virtualenv，然后启动supervisor管理相应Python进程。上述shell代码只是一个很简单且不正式的例子，但是作为示例已经可以工作了。生产环境中的这部分shell脚本可能会非常复杂。也可以是用一些现成的自动化部署工具，比如Ruby的<code>Capistrano</code>、node的<code>shipit</code>等都是不错的自动化web部署工具，这些工具在多机部署时非常有用。</p>
+<p>配置完后可以在Jenkins首页看到一个项目构建列表：</p>
+<p><img src="/assets/images/post_imgs/jenkins_10.png" alt="Jenkins项目构建信息列表"></p>
+<p>这个列表展示了所有项目的构建情况，类似最近一次构建是失败还是成功，构建持续时间等。</p>
+<p>构建项目时，在首页还可以看到一个构建进度指示：</p>
+<p><img src="/assets/images/post_imgs/jenkins_11.png" alt="Jenkins项目构建进度条"></p>
+<p>Jenkins支持通过web hook触发自动构建，在Github等一些仓库的项目设置中可以进行配置。比如Github中的项目，可以在项目的Settings下的Webhooks选项下进行配置，具体的配置方法需要参考不同源码管理平台下的文档。</p>
+<p>Jenkins还有很多强大的功能，比如按照日程表构建、构建后通过Email通知、和Github等平台的互操作等，有待进一步探索。</p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/自动化部署/">自动化部署</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Jenkins/">Jenkins</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/自动化部署/">自动化部署</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/10/12/使用nginx+gunicorn部署flask/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          使用nginx+gunicorn部署flask
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/10/11/Python多线程详解/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Python多线程详解</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav">无</ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

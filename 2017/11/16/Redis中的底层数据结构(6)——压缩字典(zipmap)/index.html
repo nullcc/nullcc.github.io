@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Redis中的底层数据结构(6)——压缩字典(zipmap) | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Redis数据结构">
+  
+  
+  
+  
+  <meta name="description" content="本文将详细说明Redis中——压缩字典的实现。 在Redis源码（这里使用3.2.11版本）中，压缩字典的实现在zipmap.h和zipmap.c中。">
+<meta name="keywords" content="Redis,数据结构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis中的底层数据结构(6)——压缩字典(zipmap)">
+<meta property="og:url" content="https://nullcc.github.io/2017/11/16/Redis中的底层数据结构(6)——压缩字典(zipmap)/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文将详细说明Redis中——压缩字典的实现。 在Redis源码（这里使用3.2.11版本）中，压缩字典的实现在zipmap.h和zipmap.c中。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/redis_data_structure_8.png">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.020Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis中的底层数据结构(6)——压缩字典(zipmap)">
+<meta name="twitter:description" content="本文将详细说明Redis中——压缩字典的实现。 在Redis源码（这里使用3.2.11版本）中，压缩字典的实现在zipmap.h和zipmap.c中。">
+<meta name="twitter:image" content="https://nullcc.github.io/assets/images/post_imgs/redis_data_structure_8.png">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Redis中的底层数据结构(6)——压缩字典(zipmap)" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Redis中的底层数据结构(6)——压缩字典(zipmap)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/11/16/Redis中的底层数据结构(6)——压缩字典(zipmap)/" class="article-date">
+	  <time datetime="2017-11-15T16:00:00.000Z" itemprop="datePublished">十一月 16, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文将详细说明Redis中——压缩字典的实现。</p>
+<p>在Redis源码（这里使用3.2.11版本）中，压缩字典的实现在<code>zipmap.h</code>和<code>zipmap.c</code>中。</p>
+<a id="more"></a>
+<h2 id="Redis压缩字典概述"><a href="#Redis压缩字典概述" class="headerlink" title="Redis压缩字典概述"></a>Redis压缩字典概述</h2><h3 id="1-Redis压缩字典的数据结构示意图："><a href="#1-Redis压缩字典的数据结构示意图：" class="headerlink" title="1.Redis压缩字典的数据结构示意图："></a>1.Redis压缩字典的数据结构示意图：</h3><p><img src="/assets/images/post_imgs/redis_data_structure_8.png" alt="Redis的压缩字典"></p>
+<p>在<code>zipmap.c</code>中提到：</p>
+<p>zipmap是一个空间效率非常高的数据结构，它的key查找时间复杂度是O(n)。</p>
+<p>举个例子，一个zipmap，其中的key-value映射关系为：”foo” =&gt; “bar”, “hello” =&gt; “world”，它的内存布局如下：</p>
+<p>\&lt;zmlen>\&lt;len>“foo”\&lt;len>\&lt;free>“bar”\&lt;len>“hello”\&lt;len>\&lt;free>“world”</p>
+<p>一个zipmap由下面几个部分组成：</p>
+<p>\&lt;zmlen>：保存zipmap当前的元素数量，占用1字节。当zipmap中元素数量大于或等于254时，这个字段不再有效，取而代之的是我们需要遍历整个zipmap来计算它的元素数量。</p>
+<p>\&lt;len>：保存了它后面的字符串(key或value)的长度。\&lt;len>的长度是1字节或5字节。如果它的第一个字节的值在0~253之间，它是的值就是这个字节的大小。如果第一个字节是254，则它的大小是后面四个字节表示的值。单字节值为255则表示zipmap的结束。</p>
+<p>\&lt;free>：表示字符串后面未被使用的空闲字节，修改一个key的value会产生空闲字节。比如先把key “foo”的值设为”bar”，然后再把key “foo”的值设为”hi”，就会产生一个空闲字节。\&lt;free>总是一个8 bit的无符号数，因为如果一个更新操作产生了很多空闲字节，zipmap将重新对这个字符串分配内存以确保空间的紧凑性。</p>
+<p>以上两个元素在哈希表中最紧凑的表达方式实际上是：</p>
+<p>“\x02\x03foo\x03\x00bar\x05hello\x05\x00world\xff”</p>
+<p>需要注意的是，由于key和value都有一个长度前缀，因此在zipmap中查找一个key的时间复杂度是O(N)，其中N为zipmap中元素的数量，而不是zipmap所占用的字节数。这将大大降低key查找的开销。</p>
+<h2 id="压缩字典的数据结构和函数原型"><a href="#压缩字典的数据结构和函数原型" class="headerlink" title="压缩字典的数据结构和函数原型"></a>压缩字典的数据结构和函数原型</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建一个新的zipmap</span></span><br><span class="line">unsigned <span class="keyword">char</span> *zipmapNew(<span class="keyword">void</span>);</span><br><span class="line"><span class="comment">// 对zipmap设置key-value</span></span><br><span class="line">unsigned <span class="keyword">char</span> *zipmapSet(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">char</span> *val, unsigned <span class="keyword">int</span> vlen, <span class="keyword">int</span> *update);</span><br><span class="line"><span class="comment">// 删除zipmap中的指定key</span></span><br><span class="line">unsigned <span class="keyword">char</span> *zipmapDel(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, <span class="keyword">int</span> *deleted);</span><br><span class="line"><span class="comment">// 在使用zipmapNext()函数遍历zipmap之前调用，用于跳过zipmap开头1字节的zmlen</span></span><br><span class="line">unsigned <span class="keyword">char</span> *zipmapRewind(unsigned <span class="keyword">char</span> *zm);</span><br><span class="line"><span class="comment">// 获取当前key的value，并返回下一个节点的地址</span></span><br><span class="line">unsigned <span class="keyword">char</span> *zipmapNext(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> **key, unsigned <span class="keyword">int</span> *klen, unsigned <span class="keyword">char</span> **value, unsigned <span class="keyword">int</span> *vlen);</span><br><span class="line"><span class="comment">// 获取指定key对应的value</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">zipmapGet</span><span class="params">(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">char</span> **value, unsigned <span class="keyword">int</span> *vlen)</span></span>;</span><br><span class="line"><span class="comment">// 查询是否存在指定key</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">zipmapExists</span><span class="params">(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen)</span></span>;</span><br><span class="line"><span class="comment">// 获取zipmap节点数量</span></span><br><span class="line"><span class="function">unsigned <span class="keyword">int</span> <span class="title">zipmapLen</span><span class="params">(unsigned <span class="keyword">char</span> *zm)</span></span>;</span><br><span class="line"><span class="comment">// 获取zipmap占用的字节数量</span></span><br><span class="line"><span class="function">size_t <span class="title">zipmapBlobLen</span><span class="params">(unsigned <span class="keyword">char</span> *zm)</span></span>;</span><br><span class="line"><span class="comment">// zipmap信息可读化输出</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">zipmapRepr</span><span class="params">(unsigned <span class="keyword">char</span> *p)</span></span>;</span><br></pre></td></tr></table></figure>
+<h2 id="压缩字典的实现"><a href="#压缩字典的实现" class="headerlink" title="压缩字典的实现"></a>压缩字典的实现</h2><p><code>zipmap.c</code>中的一些宏：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// zipmap最大的节点数量</span></span><br><span class="line">#define ZIPMAP_BIGLEN 254</span><br><span class="line"></span><br><span class="line"><span class="comment">// zipmap尾部标志</span></span><br><span class="line">#define ZIPMAP_END 255</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 表示&lt;free&gt;字段的最大值，该字段表示value后面的空闲字节数，&lt;free&gt;占用1字节，</span></span><br><span class="line"><span class="comment"> * 当用1字节无法表示时，zipmap会重新分配内存，以保证字符串尽量紧凑。 */</span></span><br><span class="line">#define ZIPMAP_VALUE_MAX_FREE 4</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 以下的宏返回编码整数_l的长度需要的字节数，当长度小于ZIPMAP_BIGLEN时返回1，其他值返回5。 */</span></span><br><span class="line">#define ZIPMAP_LEN_BYTES(_l) (((_l) &lt; ZIPMAP_BIGLEN) ? 1 : sizeof(unsigned int)+1)</span><br></pre></td></tr></table></figure>
+<p><code>zipmapNew</code>函数创建一个空的zipmap。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *zipmapNew(<span class="keyword">void</span>) &#123;</span><br><span class="line">    unsigned <span class="keyword">char</span> *zm = zmalloc(<span class="number">2</span>);  <span class="comment">// 为zipmap分配空间</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 空的zipmap只需要zmlen和end两个字节</span></span><br><span class="line">    zm[<span class="number">0</span>] = <span class="number">0</span>; <span class="comment">/* Length */</span></span><br><span class="line">    zm[<span class="number">1</span>] = ZIPMAP_END;</span><br><span class="line">    <span class="keyword">return</span> zm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapDecodeLength</code>函数返回p指向的数据的长度。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">int</span> <span class="title">zipmapDecodeLength</span><span class="params">(unsigned <span class="keyword">char</span> *p)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> len = *p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (len &lt; ZIPMAP_BIGLEN) <span class="keyword">return</span> len;  <span class="comment">// 如果长度小于ZIPMAP_BIGLEN，编码该长度只需要1字节，直接返回该长度</span></span><br><span class="line">    memcpy(&amp;len,p+<span class="number">1</span>,sizeof(unsigned <span class="keyword">int</span>));  <span class="comment">// 否则编码该长度需要5字节</span></span><br><span class="line">    memrev32ifbe(&amp;len);</span><br><span class="line">    <span class="keyword">return</span> len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapEncodeLength</code>函数计算编码len长度需要的字节数，并保存在p中。如果p为NULL，直接返回这个字节数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">int</span> <span class="title">zipmapEncodeLength</span><span class="params">(unsigned <span class="keyword">char</span> *p, unsigned <span class="keyword">int</span> len)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (p == NULL) &#123;</span><br><span class="line">        <span class="keyword">return</span> ZIPMAP_LEN_BYTES(len);  <span class="comment">// p为NULL时直接返回编码len所需的字节数</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (len &lt; ZIPMAP_BIGLEN) &#123;  <span class="comment">// len小于ZIPMAP_BIGLEN时，编码只需要1字节</span></span><br><span class="line">            p[<span class="number">0</span>] = len;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;  <span class="comment">// len大于或等于ZIPMAP_BIGLEN时，编码需要5字节</span></span><br><span class="line">            p[<span class="number">0</span>] = ZIPMAP_BIGLEN;</span><br><span class="line">            memcpy(p+<span class="number">1</span>,&amp;len,sizeof(len));</span><br><span class="line">            memrev32ifbe(p+<span class="number">1</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>+sizeof(len);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapLookupRaw</code>函数在zipmap中查找匹配的key，找到就返回该节点的指针，否则返回NULL。如果没有找到（返回NULL）且totlen不为NULL，就把totlen设置为zipmap占用的字节数，这样调用者就可以对原zipmap进行realloc使得它可以容纳更多元素。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> unsigned <span class="keyword">char</span> *zipmapLookupRaw(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">int</span> *totlen) &#123;</span><br><span class="line">    <span class="comment">// p: 当前节点指针，k: 匹配到的节点指针</span></span><br><span class="line">    unsigned <span class="keyword">char</span> *p = zm+<span class="number">1</span>, *k = NULL;</span><br><span class="line">    unsigned <span class="keyword">int</span> l,llen;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(*p != ZIPMAP_END) &#123;  <span class="comment">// 遍历整个zipmap</span></span><br><span class="line">        unsigned <span class="keyword">char</span> free;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* Match or skip the key */</span></span><br><span class="line">        l = zipmapDecodeLength(p);  <span class="comment">// 计算p指向节点的key的长度</span></span><br><span class="line">        llen = zipmapEncodeLength(NULL,l);  <span class="comment">// 编码l需要的字节数</span></span><br><span class="line">        <span class="comment">// p+llen是当前节点key的地址，l是当前节点的key的长度</span></span><br><span class="line">        <span class="keyword">if</span> (key != NULL &amp;&amp; k == NULL &amp;&amp; l == klen &amp;&amp; !memcmp(p+llen,key,l)) &#123;</span><br><span class="line">            <span class="comment">/* total不为NULL时，用户需要知道zipmap占用的字节数，</span></span><br><span class="line"><span class="comment">             * 因此需要继续往下遍历，所以用k先保存匹配的节点的指针，p用于继续往下遍历。 */</span></span><br><span class="line">            <span class="keyword">if</span> (totlen != NULL) &#123;</span><br><span class="line">                k = p;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;  <span class="comment">// total为NULL时，说明用户不关心zipmap占用的字节数，直接返回找到节点指针即可</span></span><br><span class="line">                <span class="keyword">return</span> p;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        p += llen+l;  <span class="comment">// llen+l = 编码当前节点key需要的字节数+key长度，更新以后p指向当前节点的value_len字段</span></span><br><span class="line">        <span class="comment">/* 跳过当前节点的value字段 */</span></span><br><span class="line">        l = zipmapDecodeLength(p);  <span class="comment">// 计算p指向节点的value的长度</span></span><br><span class="line">        p += zipmapEncodeLength(NULL,l);  <span class="comment">// 计算编码p指向节点的value的长度所需的字节数，并更新p指向当前节点的free</span></span><br><span class="line">        free = p[<span class="number">0</span>];  <span class="comment">// 获取free的大小</span></span><br><span class="line">        p += l+<span class="number">1</span>+free;  <span class="comment">//  跳过当前节点的free字段、free指明的空闲大小和value的长度</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (totlen != NULL) *totlen = (unsigned <span class="keyword">int</span>)(p-zm)+<span class="number">1</span>;  <span class="comment">// 赋值totlen</span></span><br><span class="line">    <span class="keyword">return</span> k;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapRequiredLength</code>函数计算以klen为长度的key和以vlen为长度的value的节点需要的空间大小。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">long</span> <span class="title">zipmapRequiredLength</span><span class="params">(unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">int</span> vlen)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> l;</span><br><span class="line"></span><br><span class="line">    l = klen+vlen+<span class="number">3</span>;  <span class="comment">// 编码key_len需要的空间(最少1字节) + 编码value_len需要的空间(最少1字节) + free(1字节)</span></span><br><span class="line">    <span class="keyword">if</span> (klen &gt;= ZIPMAP_BIGLEN) l += <span class="number">4</span>;  <span class="comment">// key_len所能编码的大小超过ZIPMAP_BIGLEN时，需要扩容到5字节</span></span><br><span class="line">    <span class="keyword">if</span> (vlen &gt;= ZIPMAP_BIGLEN) l += <span class="number">4</span>;  <span class="comment">// value_len所能编码的大小超过ZIPMAP_BIGLEN时，需要扩容到5字节</span></span><br><span class="line">    <span class="keyword">return</span> l;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapRawKeyLength</code>函数返回指定节点的key占用的空间大小。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">int</span> <span class="title">zipmapRawKeyLength</span><span class="params">(unsigned <span class="keyword">char</span> *p)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> l = zipmapDecodeLength(p);  <span class="comment">// key本身的长度</span></span><br><span class="line">    <span class="keyword">return</span> zipmapEncodeLength(NULL,l) + l;  <span class="comment">// key占用的空间大小 = key本身的长度 + 编码key的长度所需的字节数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapRawValueLength</code>函数返回value占用的总空间（value_len + free（本身和其表示的大小之和） + value）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">int</span> <span class="title">zipmapRawValueLength</span><span class="params">(unsigned <span class="keyword">char</span> *p)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> l = zipmapDecodeLength(p);  <span class="comment">// value本身的长度</span></span><br><span class="line">    unsigned <span class="keyword">int</span> used;  <span class="comment">// value使用的空间大小</span></span><br><span class="line"></span><br><span class="line">    used = zipmapEncodeLength(NULL,l);  <span class="comment">// 编码value长度所需的字节数，即value_len</span></span><br><span class="line">    used += p[used] + <span class="number">1</span> + l;  <span class="comment">// p[used]表示free字段中保存的value后的空闲空间大小，1表示free本身占用1字节，l为value长度</span></span><br><span class="line">    <span class="keyword">return</span> used;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapRawEntryLength</code>函数，如果p指向一个key，此函数返回该节点占用的空间大小（节点占用空间 = key占用大小 + value占用大小 + 尾部空闲空间大小）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> unsigned <span class="keyword">int</span> <span class="title">zipmapRawEntryLength</span><span class="params">(unsigned <span class="keyword">char</span> *p)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> l = zipmapRawKeyLength(p);  <span class="comment">// key占用的空间大小</span></span><br><span class="line">    <span class="keyword">return</span> l + zipmapRawValueLength(p+l);  <span class="comment">// value占用的空间大小（已经包括尾部空闲空间）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapResize</code>函数调整zipmap空间大小，len是新的大小。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 调整zipmap空间大小，len是新的大小 */</span></span><br><span class="line"><span class="keyword">static</span> inline unsigned <span class="keyword">char</span> *zipmapResize(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">int</span> len) &#123;</span><br><span class="line">    zm = zrealloc(zm, len);</span><br><span class="line">    zm[len-<span class="number">1</span>] = ZIPMAP_END;</span><br><span class="line">    <span class="keyword">return</span> zm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapSet</code>函数对指定的key设置value，如果key不存在就创建key。如果update非空且key已经存在， *update被设置为1（意味着是更新key而不是创建key），否则为0。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *zipmapSet(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">char</span> *val, unsigned <span class="keyword">int</span> vlen, <span class="keyword">int</span> *update) &#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> zmlen, offset;</span><br><span class="line">    <span class="comment">// reqlen: key-value对占用的空间</span></span><br><span class="line">    unsigned <span class="keyword">int</span> freelen, reqlen = zipmapRequiredLength(klen,vlen);</span><br><span class="line">    unsigned <span class="keyword">int</span> empty, vempty;</span><br><span class="line">    unsigned <span class="keyword">char</span> *p;</span><br><span class="line"></span><br><span class="line">    freelen = reqlen;</span><br><span class="line">    <span class="keyword">if</span> (update) *update = <span class="number">0</span>;</span><br><span class="line">    p = zipmapLookupRaw(zm,key,klen,&amp;zmlen);  <span class="comment">// 查找指定key，zmlen中保存了zipmap占用的空间大小</span></span><br><span class="line">    <span class="keyword">if</span> (p == NULL) &#123;</span><br><span class="line">        <span class="comment">/* 没有找到key，扩大zipmap大小 */</span></span><br><span class="line">        zm = zipmapResize(zm, zmlen+reqlen);</span><br><span class="line">        p = zm+zmlen-<span class="number">1</span>;</span><br><span class="line">        zmlen = zmlen+reqlen;  <span class="comment">// 新的zipmap大小 = 原zipmap大小 + 新key-value pair大小</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 增加zipmap节点数量 */</span></span><br><span class="line">        <span class="keyword">if</span> (zm[<span class="number">0</span>] &lt; ZIPMAP_BIGLEN) zm[<span class="number">0</span>]++;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">/* 找到key的节点，需要判断是否有足够空间存放新的value */</span></span><br><span class="line">        <span class="keyword">if</span> (update) *update = <span class="number">1</span>;</span><br><span class="line">        freelen = zipmapRawEntryLength(p);  <span class="comment">// 计算找到的节点的总长度</span></span><br><span class="line">        <span class="keyword">if</span> (freelen &lt; reqlen) &#123;</span><br><span class="line">            offset = p-zm;  <span class="comment">// 保存这个节点相对于zipmap首地址的偏移量</span></span><br><span class="line">            zm = zipmapResize(zm, zmlen-freelen+reqlen);  <span class="comment">// 扩容zipmap，增加reqlen-freelen大小的空间</span></span><br><span class="line">            p = zm+offset;  <span class="comment">// 恢复这个节点的指针</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">/* 当前节点后面的节点地址为p+freelen，把它移动到新的位置(p+reqlen) */</span></span><br><span class="line">            memmove(p+reqlen, p+freelen, zmlen-(offset+freelen+<span class="number">1</span>));</span><br><span class="line">            zmlen = zmlen-freelen+reqlen;  <span class="comment">// 新的zipmap占用空间大小</span></span><br><span class="line">            freelen = reqlen;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 现在我们有足够的空间来容纳key-value pair了。此时如果空闲空间太多，</span></span><br><span class="line"><span class="comment">     * 需要把后面的节点前移，并且缩小zipmap的大小以让空间更加紧凑。 */</span></span><br><span class="line">    empty = freelen-reqlen;</span><br><span class="line">    <span class="keyword">if</span> (empty &gt;= ZIPMAP_VALUE_MAX_FREE) &#123;  <span class="comment">// 空闲空间大于预设值，freelen &gt; reqlen</span></span><br><span class="line">        <span class="comment">/* 首先，把节点尾部的空闲字节 */</span></span><br><span class="line">        offset = p-zm;  <span class="comment">// 当前节点相对于zipmap的偏移量</span></span><br><span class="line">        <span class="comment">/* p+reqlen: 被更新节点的尾指针</span></span><br><span class="line"><span class="comment">         * p+freelen: 如果原zipmap中key不存在，则在此处reqlen=freelen，</span></span><br><span class="line"><span class="comment">         * 如果是更新key的value，执行到这里说明之前节点长度大于或等于reqlen，</span></span><br><span class="line"><span class="comment">         * 下面的memmove操作相当于把这个节点之后的所有数据前移freelen-reqlen个字节。</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        memmove(p+reqlen, p+freelen, zmlen-(offset+freelen+<span class="number">1</span>));</span><br><span class="line">        zmlen -= empty;  <span class="comment">// 更新zipmap的长度（减去压缩的空闲空间大小）</span></span><br><span class="line">        zm = zipmapResize(zm, zmlen);  <span class="comment">// 调整zipmap大小</span></span><br><span class="line">        p = zm+offset;  <span class="comment">// 恢复p指向当前节点</span></span><br><span class="line">        vempty = <span class="number">0</span>;  <span class="comment">// 经过数据迁移调整以后，这个节点已经没有空闲空间了</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        vempty = empty;  <span class="comment">// 这个节点的空闲空间大小</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Key: */</span></span><br><span class="line">    <span class="comment">/* 设置key */</span></span><br><span class="line">    p += zipmapEncodeLength(p,klen);  <span class="comment">// 编码klen长度需要的字节数，p跳过这个长度</span></span><br><span class="line">    memcpy(p,key,klen);  <span class="comment">// 设置key</span></span><br><span class="line">    p += klen;  <span class="comment">// 跳过key的长度</span></span><br><span class="line">    <span class="comment">/* Value: */</span></span><br><span class="line">    <span class="comment">/* 设置Value */</span></span><br><span class="line">    p += zipmapEncodeLength(p,vlen);  <span class="comment">// 编码vlen长度需要的字节数，p跳过这个长度</span></span><br><span class="line">    *p++ = vempty;  <span class="comment">// 设置value，同事p跳过free的长度（1字节）</span></span><br><span class="line">    memcpy(p,val,vlen);  <span class="comment">// 设置value</span></span><br><span class="line">    <span class="keyword">return</span> zm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapDel</code>函数删除指定的key，如果deleted非空且没有找到指定key，则把*deleted设置为0，如果找到此key且成功删除则设为1。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *zipmapDel(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, <span class="keyword">int</span> *deleted) &#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> zmlen, freelen;</span><br><span class="line">    <span class="comment">// 查找指定key，并获取zipmap占用的空间大小</span></span><br><span class="line">    unsigned <span class="keyword">char</span> *p = zipmapLookupRaw(zm,key,klen,&amp;zmlen);</span><br><span class="line">    <span class="keyword">if</span> (p) &#123;  <span class="comment">// 找到该key</span></span><br><span class="line">        freelen = zipmapRawEntryLength(p);  <span class="comment">// 目标节点的长度</span></span><br><span class="line">        memmove(p, p+freelen, zmlen-((p-zm)+freelen+<span class="number">1</span>));  <span class="comment">// 把目标节点后的所有数据迁移到目标节点的首地址，覆盖数据</span></span><br><span class="line">        zm = zipmapResize(zm, zmlen-freelen);  <span class="comment">// 调整zipmap大小</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* Decrease zipmap length */</span></span><br><span class="line">        <span class="keyword">if</span> (zm[<span class="number">0</span>] &lt; ZIPMAP_BIGLEN) zm[<span class="number">0</span>]--;  <span class="comment">// 减少zipmap节点数量</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (deleted) *deleted = <span class="number">1</span>;  <span class="comment">// 删除了1个节点</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (deleted) *deleted = <span class="number">0</span>;  <span class="comment">// 没有找到key</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> zm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapRewind</code>函数在使用zipmapNext()函数遍历zipmap之前调用，用于跳过zipmap开头1字节的zmlen。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *zipmapRewind(unsigned <span class="keyword">char</span> *zm) &#123;</span><br><span class="line">    <span class="keyword">return</span> zm+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapNext</code>函数遍历整个zipmap的所有元素。一次调用时，第一个参数指向的是zipmap+1。接下来的所有调用的返回值会作为下一次调用时的第一个参数。例子：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *i = zipmapRewind(my_zipmap);</span><br><span class="line"><span class="keyword">while</span>((i = zipmapNext(i,&amp;key,&amp;klen,&amp;value,&amp;vlen)) != NULL) &#123;</span><br><span class="line">  printf(<span class="string">"%d bytes key at $p\n"</span>, klen, key);</span><br><span class="line">  printf(<span class="string">"%d bytes value at $p\n"</span>, vlen, value);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">unsigned <span class="keyword">char</span> *zipmapNext(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> **key, unsigned <span class="keyword">int</span> *klen, unsigned <span class="keyword">char</span> **value, unsigned <span class="keyword">int</span> *vlen) &#123;</span><br><span class="line">    <span class="keyword">if</span> (zm[<span class="number">0</span>] == ZIPMAP_END) <span class="keyword">return</span> NULL;  <span class="comment">// 已经到zipmap尾部，结束遍历，返回NULL</span></span><br><span class="line">    <span class="keyword">if</span> (key) &#123;</span><br><span class="line">        *key = zm;</span><br><span class="line">        *klen = zipmapDecodeLength(zm);  <span class="comment">// 获取当前节点key的长度</span></span><br><span class="line">        *key += ZIPMAP_LEN_BYTES(*klen);  <span class="comment">// 跳过编码klen所需要的字节数，此时key指向当前节点key的地址</span></span><br><span class="line">    &#125;</span><br><span class="line">    zm += zipmapRawKeyLength(zm);  <span class="comment">// 更新zm指针，跳过当前节点的key占用的空间大小，此时zm指向当前节点value_len的地址</span></span><br><span class="line">    <span class="keyword">if</span> (value) &#123;</span><br><span class="line">        *value = zm+<span class="number">1</span>;  <span class="comment">// 跳过free（1字节）</span></span><br><span class="line">        *vlen = zipmapDecodeLength(zm);  <span class="comment">// 获取当前节点value的长度</span></span><br><span class="line">        *value += ZIPMAP_LEN_BYTES(*vlen);  <span class="comment">// 跳过编码vlen所需要的字节数，此时value指向当前节点value的地址</span></span><br><span class="line">    &#125;</span><br><span class="line">    zm += zipmapRawValueLength(zm);  <span class="comment">// 更新zm指针，跳过当前节点的value占用的空间大小，此时zm指向下一个节点的首地址</span></span><br><span class="line">    <span class="keyword">return</span> zm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapGet</code>函数在zipmap中查找指定key，并获取它的value和value的长度，如果找到这个key返回1，否则返回0。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">zipmapGet</span><span class="params">(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen, unsigned <span class="keyword">char</span> **value, unsigned <span class="keyword">int</span> *vlen)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">char</span> *p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((p = zipmapLookupRaw(zm,key,klen,NULL)) == NULL) <span class="keyword">return</span> <span class="number">0</span>;  <span class="comment">// 找不到指定key，返回0，否则返回目标节点的指针</span></span><br><span class="line">    p += zipmapRawKeyLength(p);  <span class="comment">// 跳过key_len字段</span></span><br><span class="line">    *vlen = zipmapDecodeLength(p);  <span class="comment">// 获取目标节点value_len</span></span><br><span class="line">    *value = p + ZIPMAP_LEN_BYTES(*vlen) + <span class="number">1</span>;  <span class="comment">// 计算编码目标节点value_len所需字节数，跳过这个字节数和free的1字节，此时指向value</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapExists</code>函数查询key是或否存在，存在返回1，否则返回0。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">zipmapExists</span><span class="params">(unsigned <span class="keyword">char</span> *zm, unsigned <span class="keyword">char</span> *key, unsigned <span class="keyword">int</span> klen)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> zipmapLookupRaw(zm,key,klen,NULL) != NULL;  <span class="comment">// 内部调用zipmap的key查找函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapLen</code>函数返回zipmap的节点数量。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">unsigned <span class="keyword">int</span> <span class="title">zipmapLen</span><span class="params">(unsigned <span class="keyword">char</span> *zm)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (zm[<span class="number">0</span>] &lt; ZIPMAP_BIGLEN) &#123;  <span class="comment">// zm_len小于ZIPMAP_BIGLEN时，节点数量就是它的值</span></span><br><span class="line">        len = zm[<span class="number">0</span>];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;  <span class="comment">// 否则需要遍历zipmap计算节点数量</span></span><br><span class="line">        unsigned <span class="keyword">char</span> *p = zipmapRewind(zm);</span><br><span class="line">        <span class="keyword">while</span>((p = zipmapNext(p,NULL,NULL,NULL,NULL)) != NULL) len++;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (len &lt; ZIPMAP_BIGLEN) zm[<span class="number">0</span>] = len;  <span class="comment">// 遍历完更新zm_len</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> len;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>zipmapBlobLen</code>函数返回zipmap占用的字节数，我们可以把zipmap序列化到磁盘（或者其他什么地方），只需要以zipmap头部指针为开始，顺序把它所占用字节数存储起来即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">size_t <span class="title">zipmapBlobLen</span><span class="params">(unsigned <span class="keyword">char</span> *zm)</span> </span>&#123;</span><br><span class="line">    unsigned <span class="keyword">int</span> totlen;</span><br><span class="line">    zipmapLookupRaw(zm,NULL,<span class="number">0</span>,&amp;totlen);</span><br><span class="line">    <span class="keyword">return</span> totlen;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/源码分析/">源码分析</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Redis/">Redis</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构/">数据结构</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/11/16/Redis中的底层数据结构(4)——整数集合(intset)/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Redis中的底层数据结构(4)——整数集合(intset)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/11/15/Redis中的底层数据结构(3)——字典(dict)/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Redis中的底层数据结构(3)——字典(dict)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis压缩字典概述"><span class="nav-number">1.</span> <span class="nav-text">Redis压缩字典概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Redis压缩字典的数据结构示意图："><span class="nav-number">1.1.</span> <span class="nav-text">1.Redis压缩字典的数据结构示意图：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#压缩字典的数据结构和函数原型"><span class="nav-number">2.</span> <span class="nav-text">压缩字典的数据结构和函数原型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#压缩字典的实现"><span class="nav-number">3.</span> <span class="nav-text">压缩字典的实现</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>

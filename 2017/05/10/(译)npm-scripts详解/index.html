@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>(译)npm-scripts详解 | 张先森的代码小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="node">
+  
+  
+  
+  
+  <meta name="description" content="本文翻译了npm-scripts。">
+<meta name="keywords" content="node">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(译)npm-scripts详解">
+<meta property="og:url" content="https://nullcc.github.io/2017/05/10/(译)npm-scripts详解/index.html">
+<meta property="og:site_name" content="张先森的代码小屋">
+<meta property="og:description" content="本文翻译了npm-scripts。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-04-15T03:41:13.011Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="(译)npm-scripts详解">
+<meta name="twitter:description" content="本文翻译了npm-scripts。">
+  
+    <link rel="alternate" href="/atom.xml" title="张先森的代码小屋" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/fashion.css">
+  <link rel="stylesheet" href="/css/glyphs.css">
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+
+
+<header id="allheader" class="site-header" role="banner" 
+   >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" rel="home" >
+                <img style="margin-bottom: 10px;"  width="124px" height="124px" alt="Hike News" src=" /css/images/logo.jpg">
+              </a>
+            
+          </h1>
+          
+          
+            <div class="site-description">明镜止水</div>
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-(译)npm-scripts详解" style="width: 66%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      (译)npm-scripts详解
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2017/05/10/(译)npm-scripts详解/" class="article-date">
+	  <time datetime="2017-05-09T16:00:00.000Z" itemprop="datePublished">五月 10, 2017</time>
+	</a>
+
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+ 
+      
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文翻译了<a href="https://docs.npmjs.com/misc/scripts" target="_blank" rel="noopener">npm-scripts</a>。</p>
+<a id="more"></a>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>npm在package.json中支持脚本属性，有以下几种脚本：</p>
+<ul>
+<li>prepublish：在包被发布前运行。(也会运行在无任何参数的本地npm install时)</li>
+<li>publish, postpublish：在包被发布后运行。</li>
+<li>preinstall：在包被安装前运行。</li>
+<li>install, postinstall：在包被安装后运行。</li>
+<li>preuninstall, uninstall：在被被卸载前运行。</li>
+<li>postuninstall：在包被卸载后运行。</li>
+<li>preversion, version：更改包版本前运行。</li>
+<li>postversion：更改包版本后运行。</li>
+<li>pretest, test, posttest：在运行npm test时会运行。</li>
+<li>prestop, stop, poststop：在运行npm stop时会运行。</li>
+<li>prestart, start, poststart：在运行npm start时会运行。</li>
+<li>prerestart, restart, postrestart在运行npm restart时会运行。注意，如果没有提供npm restart及脚本，npm restart会运行npm stop和npm start脚本。</li>
+</ul>
+<p>而且，还可以使用npm run-script <pkg> <stage>来运行任意脚本。名字中带有pre和post的脚本也会在相应的脚本被运行前后被执行(例如premyscript, myscript, postmyscript这三个脚本会顺序被执行)。</stage></pkg></p>
+<h2 id="一般用法"><a href="#一般用法" class="headerlink" title="一般用法"></a>一般用法</h2><p>如果你需要在你的包被使用前执行一些操作，并且不依赖于操作系统或目标系统的架构，可以用一个prepublish脚本，在里面包含类似如下的操作：</p>
+<ul>
+<li>把CoffeeScript源码编译成JavaScript。</li>
+<li>创建JavaScript代码的压缩版本。</li>
+<li>获取包需要用到的远端资源。</li>
+</ul>
+<p>这么做的好处是，这些操作会在固定的时间执行一次，从而降低复杂性和可变现。而且这意味着，你可以把coffee-script作为一个devDependency，因此你的用户并不需要安装它。你不需要在包中包含压缩版本的代码，这可以减小包的大小。你不需要依赖于目标用户的机器支持curl或wget等系统工具。</p>
+<h2 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h2><p>npm会基于包内容设置一些默认值。</p>
+<ul>
+<li><p>“scripts”: {“start”: “node server.js”}</p>
+<p>  如果包的根目录中有一个server.js，那么npm会用它来作为入口文件：运行node server.js。</p>
+</li>
+<li><p>“install”: “node-gyp rebuild”:</p>
+<p>  如果包的根目录中有一个binding.gyp文件，那么npm会在使用node-gyp编译时执行install命令。</p>
+</li>
+</ul>
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>如果用root权限使用npm，则会将uid变成root用户或者在用户配置中指定的值，默认是无用户。可以设置一个不安全标志来在使用root权限运行脚本时提示用户。</p>
+<h2 id="ENVIRONMENT"><a href="#ENVIRONMENT" class="headerlink" title="ENVIRONMENT"></a>ENVIRONMENT</h2><p>在包脚本的运行环境中，会展示很多关于当前包安装状态和进度的信息。</p>
+<h2 id="path"><a href="#path" class="headerlink" title="path"></a>path</h2><p>如果你的依赖包定义了可执行脚本，比如测试套件，那么这些可执行文件将会被加入到脚本执行路径中。所以，如果你的package.json中有这样的信息：</p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;dependencies&quot; : { &quot;bar&quot; : &quot;0.1.x&quot; },
+    &quot;scripts&quot;: { &quot;start&quot; : &quot;bar ./test&quot; }
+}
+</code></pre><p>那么你可以运行npm start来执行这个bar脚本，这个bar会在执行npm install时被导入到node_modules/.bin目录中去。</p>
+<h2 id="package-json的变量"><a href="#package-json的变量" class="headerlink" title="package.json的变量"></a>package.json的变量</h2><p>package.json中的字段会被附加上npm_package_前缀。举个例子，比如你的package.json中有{“name”:”foo”, “version”:”1.2.5”}这样的信息，那么你的包脚本会包含值为”foo”的环境变量npm_package_name，而npm_package_version的值为”1.2.5”。</p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置参数都会被冠以npm_config_的前缀。比如环境变量npm_config_root存放的就是root配置。</p>
+<h2 id="特殊的package-json-“config”-对象"><a href="#特殊的package-json-“config”-对象" class="headerlink" title="特殊的package.json “config” 对象"></a>特殊的package.json “config” 对象</h2><p>package.json中的config字段可以被这种形式改写：<name>[@<version>]:<key>。举个例子，如果package.json中是这样的：</key></version></name></p>
+<pre><code>{
+    &quot;name&quot; : &quot;foo&quot;,
+    &quot;config&quot; : { &quot;port&quot; : &quot;8080&quot; },
+    &quot;scripts&quot; : { &quot;start&quot; : &quot;node server.js&quot; }
+}
+</code></pre><p>然后server.js是这样的：</p>
+<pre><code>http.createServer(...).listen(process.env.npm_package_config_port)
+</code></pre><p>那么用户可以用这种方式来改写：</p>
+<pre><code>npm config set foo:port 80
+</code></pre><h2 id="当前生命周期事件"><a href="#当前生命周期事件" class="headerlink" title="当前生命周期事件"></a>当前生命周期事件</h2><p>最后，环境变量npm_lifecycle_event会被设置成具体某个生命周期阶段。所以，你可以写一个在不同生命周期阶段执行不同操作的的脚本。</p>
+<p>对象会被展平表示出来，比如package.json中有一个{“scripts”:{“install”:”foo.js”}}，那么你在脚本中可以这么写：</p>
+<pre><code>process.env.npm_package_scripts_install === &quot;foo.js&quot;
+</code></pre><h2 id="退出"><a href="#退出" class="headerlink" title="退出"></a>退出</h2><p>脚本是通过给sh传递参数来运行的。</p>
+<p>如果脚本的退出代码不是0，那么sh会终止脚本进程。</p>
+<p>注意这些脚本文件不需要一定要是nodejs或者javascript程序。它们只要是某种可执行文件即可。</p>
+<h2 id="钩子脚本"><a href="#钩子脚本" class="headerlink" title="钩子脚本"></a>钩子脚本</h2><p>如果你想在所有包的特定生命周期事件中运行特定的脚本，那么你可以使用钩子脚本。</p>
+<p>在node_modules/.hooks/{eventname}下放一个可执行文件，则该根目录下安装的所有包在到达包生命周期的这个事件阶段时会执行这个可执行文件。</p>
+<p>钩子脚本的运行机制和package.json的脚本一样。它们会和上述环境运行在不同的子进程中。</p>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><ul>
+<li><p>如果不是非常需要请不要以一个非零错误码退出。除了卸载脚本，这么做会导致npm运行出错，而且可能会导致回滚。如果只是少数几个错误或者只是禁止使用某些可选特性，比较好的做法是打印一个警告并且安全退出。</p>
+</li>
+<li><p>不要写脚本去做那些npm本身能帮你做的事情。请通过查看package.json来确定所有那些你能通过简单指定和描述做的事情。一般来说，这更具有鲁棒性和一致性。</p>
+</li>
+<li><p>检查env来决定往什么地方安装东西。具体来说，如果环境变量npm_config_binroot被设置成了/home/user/bin，那么久不要尝试去安装可执行文件到/usr/local/bin。因为用户可能是为了某种原因才这么设置的。</p>
+</li>
+<li><p>不要用sudo来运行你的脚本命令。如果因为某种原因需要root权限，那么就报告一个错误，用户会转而用sudo来运行npm。</p>
+</li>
+<li><p>不要使用install脚本。请使用一个.gyp文件来编译，用prepublish做一些杂事。你不应该明确地设置一个preinstall或者install脚本。如果你正在这么做，请考虑一下是否有其他选项。install和preinstall脚本的唯一合法使用方式是在目标架构上进行编译。</p>
+</li>
+</ul>
+<p>参考资料</p>
+<p><a href="https://docs.npmjs.com/cli/run-script" target="_blank" rel="noopener">npm-run-script</a><br><a href="https://docs.npmjs.com/files/package.json" target="_blank" rel="noopener">package.json</a><br><a href="https://docs.npmjs.com/misc/developers" target="_blank" rel="noopener">npm-developers</a><br><a href="https://docs.npmjs.com/cli/install" target="_blank" rel="noopener">npm-install</a></p>
+
+        <!-- <h3>看了文章如果觉得喜欢的话可以捐赠哦！支付宝二维码：</h3>
+        <img src="/assets/images/post_imgs/code_alipay.png" width=300 height=300> -->
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+	<span class="ico-folder"></span>
+    <a class="article-category-link" href="/categories/文档翻译/">文档翻译</a>
+
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/node/">node</a></li></ul>
+
+      
+        
+	<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: '4010e28e5153ab82b468',
+        clientSecret: '217df2318bd891ba87b82dae5d67d7ae77bc1f17',
+        id: md5(location.href),
+        repo: 'nullcc-blog-comments',
+        owner: 'nullcc',
+        admin: 'nullcc',
+        distractionFreeMode: 'true'
+    })
+    gitalk.render('gitalk-container')
+</script>
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/05/18/倒排索引基础知识/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          倒排索引基础知识
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/05/10/(译)package.json详解/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">(译)package.json详解</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一般用法"><span class="nav-number">2.</span> <span class="nav-text">一般用法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#默认值"><span class="nav-number">3.</span> <span class="nav-text">默认值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#USER"><span class="nav-number">4.</span> <span class="nav-text">USER</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ENVIRONMENT"><span class="nav-number">5.</span> <span class="nav-text">ENVIRONMENT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#path"><span class="nav-number">6.</span> <span class="nav-text">path</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#package-json的变量"><span class="nav-number">7.</span> <span class="nav-text">package.json的变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">8.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#特殊的package-json-“config”-对象"><span class="nav-number">9.</span> <span class="nav-text">特殊的package.json “config” 对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#当前生命周期事件"><span class="nav-number">10.</span> <span class="nav-text">当前生命周期事件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#退出"><span class="nav-number">11.</span> <span class="nav-text">退出</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#钩子脚本"><span class="nav-number">12.</span> <span class="nav-text">钩子脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#最佳实践"><span class="nav-number">13.</span> <span class="nav-text">最佳实践</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2023 张先森的代码小屋 All Rights Reserved.
+        
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?c3ffa09eef07ac510ef2ab126054b1cd";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+    
+</body>
+</html>
