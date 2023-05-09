@@ -24,9 +24,10 @@
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_2.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_3.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_4.png">
+<meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_7.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_5.png">
 <meta property="og:image" content="https://nullcc.github.io/assets/images/post_imgs/web_application_coverage_solution_6.png">
-<meta property="og:updated_time" content="2023-03-19T05:30:20.933Z">
+<meta property="og:updated_time" content="2023-05-09T01:04:24.352Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Web客户端应用代码覆盖率解决方案的设计与实现">
 <meta name="twitter:description" content="本文对Web客户端应用代码覆盖率的解决方案做了一些讨论，全文以一种模拟系统设计面试的场景的方式来讲述。">
@@ -358,8 +359,9 @@
 </ul>
 <h3 id="Code-Coverage-Client-1"><a href="#Code-Coverage-Client-1" class="headerlink" title="Code Coverage Client"></a>Code Coverage Client</h3><p>浏览器和Electron程序上的覆盖率收集机制不同。</p>
 <p>我们通过 CDP 收集浏览器覆盖率：</p>
-<p><img src="/assets/images/post_imgs/web_application_coverage_solution_4.png" alt="通过CDP收集浏览器覆盖率"></p>
+<p><img src="/assets/images/post_imgs/web_application_coverage_solution_4.png" alt="通过CDP收集浏览器上的JS代码覆盖率"></p>
 <p>Electron 应用程序在 Node.js 上运行，我们需要使用环境变量 <a href="https://nodejs.org/api/cli.html#node_v8_coveragedir" target="_blank" rel="noopener">NODE_V8_COVERAGE=dir</a> 启动Electron应用程序。通过设置此环境变量，Node.js 中的 V8 引擎在运行时会收集 coverage，并在进程退出时将 V8 coverage 输出到给定目录。</p>
+<p><img src="/assets/images/post_imgs/web_application_coverage_solution_7.png" alt="在Electron应用上收集JS代码覆盖率"></p>
 <p>现在我们已经完成了从浏览器和 Electron 应用程序收集覆盖率的详细设计。让我们考虑一下上一节中提到的问题：如何获取源代码？</p>
 <h3 id="Fetch-source-code"><a href="#Fetch-source-code" class="headerlink" title="Fetch source code"></a>Fetch source code</h3><p>我们有3种测试类型和2个平台需要考虑：</p>
 <ul>
